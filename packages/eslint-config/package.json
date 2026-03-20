@@ -1,0 +1,14 @@
+{
+  "name": "@repo/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./nextjs": "./nextjs.js",
+    "./base": "./base.js"
+  },
+  "peerDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": ">=16"
+  }
+}

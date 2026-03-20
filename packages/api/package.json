@@ -1,0 +1,22 @@
+{
+  "name": "@repo/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:generate": "prisma generate"
+  },
+  "exports": {
+    "./db": "./src/db.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.5",
+    "@prisma/client": "^7.5",
+    "@repo/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "prisma": "^7.5",
+    "typescript": "^5"
+  }
+}

@@ -8,20 +8,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Tech Stack
 
-- **Framework**: Next.js (App Router) with TypeScript
-- **Database**: PostgreSQL via Prisma ORM
-- **API**: GraphQL (extend existing schema as needed)
-- **Auth**: Planning Center OAuth SSO
-- **Styling**: Tailwind CSS with custom design tokens (CSS custom properties)
+- **Monorepo**: Turborepo with pnpm workspaces
+- **Framework**: Next.js 16 (App Router, Turbopack) with TypeScript
+- **API**: tRPC v11 (shared across web + future mobile)
+- **Database**: PostgreSQL via Prisma 7 ORM (`@prisma/adapter-pg` driver adapter)
+- **Auth**: Auth.js v5 with custom Planning Center OIDC provider
+- **Background Jobs**: pg-boss (separate worker process)
+- **Styling**: Tailwind CSS v4 with custom design tokens (CSS custom properties)
 - **Icons**: Lucide React
 - **Font**: Outfit (400, 500, 600, 700) via Google Fonts
+- **Rich Text**: Tiptap 3 (guide editor, JSON content storage)
+- **Deployment**: Railway (web + worker services + Postgres)
 
-## Development Environment
+## Monorepo Structure
 
-Uses a devcontainer with:
-- Node 24 via fnm (`~/.fnm`)
-- Python 3.13 via uv
-- GitHub CLI (`gh`)
+```
+apps/
+  web/                    # Next.js 16 app (App Router)
+  worker/                 # Standalone pg-boss worker process
+packages/
+  api/                    # tRPC routers + Prisma schema + db client
+  auth/                   # Auth.js v5 + PCO OIDC provider
+  jobs/                   # pg-boss queue definitions + PCO sync logic
+  shared/                 # Zod schemas, types, env validation
+  typescript-config/      # Shared tsconfig bases
+  eslint-config/          # Shared ESLint flat configs
+```
+
+Internal packages export `.ts` source directly — no build step. Next.js transpiles via Turbopack.
 
 ## Package Manager
 
@@ -32,32 +46,46 @@ Uses **pnpm** (not npm/yarn). All commands use `pnpm` or `pnpm exec`.
 ```bash
 # Node (after fnm setup)
 eval "$(fnm env)" && fnm use default
-pnpm install
-pnpm dev             # Start dev server (Turbopack)
-pnpm build           # Production build
-pnpm lint            # Lint
 
-# Database
-pnpm exec prisma generate    # Generate Prisma client
-pnpm exec prisma migrate dev # Run migrations
-pnpm exec prisma db push     # Push schema changes (dev)
+# Monorepo
+pnpm install             # Install all workspace deps
+pnpm dev                 # Start all dev servers (Turbopack)
+pnpm build               # Production build
+pnpm lint                # Lint all packages
+pnpm type-check          # TypeScript check all packages
+
+# Database (from root)
+pnpm --filter @repo/api exec prisma generate    # Generate Prisma client
+pnpm --filter @repo/api exec prisma migrate dev # Run migrations
+pnpm --filter @repo/api exec prisma db push     # Push schema changes (dev)
+
+# Single package
+pnpm --filter @repo/web dev     # Start only web
+pnpm --filter worker dev        # Start only worker
 ```
 
 ## Architecture
 
 ### Data Model Split
-- **PCO-synced (read-only)**: Team, Person, TeamMember, Role, serving schedules, campus info. Sync already exists — do NOT build team membership management UI.
-- **App-native (full CRUD)**: Goal, Feedback, Guide — stored in PostgreSQL, managed via GraphQL mutations.
+- **PCO-synced (read-only)**: Person, ServiceType, Team, Position, Leader, Assignment. Each has `remoteId` + `provider` composite unique key. Synced via pg-boss hourly cron. Do NOT build team membership management UI.
+- **App-native (full CRUD)**: Goal, Feedback, Guide — stored in PostgreSQL, managed via tRPC mutations.
+
+### Prisma 7 Specifics
+- Generator provider: `"prisma-client"` (not `"prisma-client-js"`)
+- Driver adapter `@prisma/adapter-pg` is mandatory
+- Generated client output: `packages/api/generated/prisma/client/`
+- Schema: `packages/api/prisma/schema.prisma`
+- Computed fields via `$extends`: `descriptionMarkdown` on Team and Position
 
 ### Role-Based Access
 - **All members**: View teams, their own goals/feedback, guides, settings
-- **Team leaders**: Write feedback, approve/decline goals, create/edit/publish guides. Leader status comes from PCO team position/role data.
+- **Team leaders**: Write feedback, approve/decline goals, create/edit/publish guides. Leader status from PCO `Leader` table.
 
 ### Responsive Layout
 - **Mobile (<768px)**: Full-width content, bottom tab bar (pill-shaped, 62px height, 4 tabs: My Teams, Goals, Guides, Settings)
 - **Desktop (>=768px)**: 260px left sidebar + main content area (padding 40px 48px)
 
-### Route Structure
+### Route Structure (apps/web)
 ```
 (auth)/login           — PCO OAuth login
 (app)/teams            — My Teams list
@@ -73,6 +101,10 @@ pnpm exec prisma db push     # Push schema changes (dev)
 (app)/settings         — Settings
 (app)/profile          — Profile
 ```
+
+## Environment Variables
+
+See `.env.example`. Key vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET`, `PCO_API_ID`, `PCO_API_SECRET`.
 
 ## Design Reference
 
@@ -102,11 +134,6 @@ Uses the **compound-engineering** Claude Code plugin for workflow management:
 - `/ce:compound` — document solved problems for team knowledge
 - `/simplify` — review changed code for reuse, quality, efficiency
 
-## Implementation Priority
+## Implementation Plans
 
-1. Core Shell: Layout (sidebar + tab bar), auth, My Teams, Team View
-2. Read Screens: Role View, Settings, Profile, empty states
-3. Goals & Feedback: Lists, segment control, cards
-4. Guides: List, detail, role badges, search
-5. Leader Management: Feedback form, goal approval, guide editor with rich text
-6. Polish: Scroll fades, animations, loading/error states
+Tracked in `docs/plans/` — 8 sequential PRs from monorepo foundation through deployment.
