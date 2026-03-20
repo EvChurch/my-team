@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init.js";
-import { prisma } from "../db.js";
+import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
+import { prisma } from "../db";
 
 const feedbackTypeEnum = z.enum(["ENCOURAGEMENT", "GROWTH_AREA", "GENERAL"]);
 

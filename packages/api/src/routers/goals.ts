@@ -4,8 +4,8 @@ import {
   createTRPCRouter,
   protectedProcedure,
   leaderProcedure,
-} from "../init.js";
-import { prisma } from "../db.js";
+} from "../init";
+import { prisma } from "../db";
 
 const goalStatusEnum = z.enum(["PENDING", "APPROVED", "DECLINED", "COMPLETED"]);
 

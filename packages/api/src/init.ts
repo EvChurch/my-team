@@ -4,7 +4,7 @@ import { z } from "zod";
 import { cache } from "react";
 import type { Session } from "next-auth";
 import { auth } from "@repo/auth";
-import { prisma } from "./db.js";
+import { prisma } from "./db";
 
 /**
  * Context available to all tRPC procedures.

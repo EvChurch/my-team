@@ -1,5 +1,5 @@
-import { createTRPCRouter, protectedProcedure } from "../init.js";
-import { prisma } from "../db.js";
+import { createTRPCRouter, protectedProcedure } from "../init";
+import { prisma } from "../db";
 
 export const peopleRouter = createTRPCRouter({
   /**

@@ -1,9 +1,9 @@
-import { createTRPCRouter } from "../init.js";
-import { teamsRouter } from "./teams.js";
-import { goalsRouter } from "./goals.js";
-import { feedbackRouter } from "./feedback.js";
-import { guidesRouter } from "./guides.js";
-import { peopleRouter } from "./people.js";
+import { createTRPCRouter } from "../init";
+import { teamsRouter } from "./teams";
+import { goalsRouter } from "./goals";
+import { feedbackRouter } from "./feedback";
+import { guidesRouter } from "./guides";
+import { peopleRouter } from "./people";
 
 export const appRouter = createTRPCRouter({
   teams: teamsRouter,

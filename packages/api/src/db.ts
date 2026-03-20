@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client/client.js";
+import { PrismaClient } from "../generated/prisma/client/client";
 import { env } from "@repo/shared/env";
 
 function extractMarkdown(value: unknown): string | null {
