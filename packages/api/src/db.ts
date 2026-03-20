@@ -39,6 +39,8 @@ function createPrismaClient() {
   });
 }
 
+// Preserve the Prisma client across Next.js HMR reloads in development.
+// The double cast is necessary because globalThis has no prisma property in its type.
 const globalForPrisma = globalThis as unknown as {
   prisma?: ReturnType<typeof createPrismaClient>;
 };

@@ -10,7 +10,7 @@ datasource db {
 // --- Enums ---
 
 enum Provider {
-  pco
+  PCO
 }
 
 enum GoalStatus {
@@ -157,13 +157,13 @@ model Goal {
   progress    Int        @default(0)
   status      GoalStatus @default(PENDING)
   dueDate     DateTime?
-  personId    String
+  personId    String?
   teamId      String
   reviewedBy  String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  person   Person  @relation("GoalOwner", fields: [personId], references: [id], onDelete: Cascade)
+  person   Person?  @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
   team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   reviewer Person? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
@@ -177,19 +177,20 @@ model Feedback {
   id          String       @id @default(cuid())
   content     String
   type        FeedbackType
-  authorId    String
-  recipientId String
+  authorId    String?
+  recipientId String?
   teamId      String
   isShared    Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  author    Person @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  recipient Person @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  author    Person? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  recipient Person? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
   team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@index([recipientId])
+  @@index([recipientId, teamId])
   @@index([authorId])
 }
 
@@ -199,7 +200,7 @@ model Guide {
   content         Json
   category        GuideCategory
   status          GuideStatus   @default(DRAFT)
-  authorId        String
+  authorId        String?
   teamId          String
   roleId          String?
   isPinned        Boolean       @default(false)
@@ -207,10 +208,13 @@ model Guide {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  author Person    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author Person?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
   team   Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role   Position? @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
 
   @@index([teamId])
+  @@index([teamId, status])
+  @@index([teamId, roleId])
+  @@index([roleId])
   @@index([authorId])
 }

@@ -8,7 +8,7 @@
     "./env": "./src/env.ts"
   },
   "dependencies": {
-    "@t3-oss/env-nextjs": "^0.13",
+    "@t3-oss/env-core": "0.13.10",
     "zod": "^3"
   },
   "devDependencies": {
