@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RoleBadge } from "@/components/guides/role-badge";
 import { GuideContentRenderer } from "@/components/guides/guide-content-renderer";
+import { useToast } from "@/components/ui/toast";
 
 type GuideDetailContentProps = {
   guideId: string;
@@ -20,6 +21,7 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: guide } = useSuspenseQuery(
@@ -34,7 +36,11 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide deleted");
         router.push("/guides");
+      },
+      onError: () => {
+        toast("Failed to delete guide", "error");
       },
     }),
   );

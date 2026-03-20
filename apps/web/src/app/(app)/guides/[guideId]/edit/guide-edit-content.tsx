@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { GuideEditor } from "@/components/guides/guide-editor";
+import { useToast } from "@/components/ui/toast";
 
 type GuideEditContentProps = {
   guideId: string;
@@ -26,6 +27,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: guide } = useSuspenseQuery(
     trpc.guides.get.queryOptions({ guideId }),
@@ -46,6 +48,10 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide saved");
+      },
+      onError: () => {
+        toast("Failed to save guide", "error");
       },
     }),
   );
@@ -55,7 +61,11 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide published");
         router.push(`/guides/${guideId}`);
+      },
+      onError: () => {
+        toast("Failed to publish guide", "error");
       },
     }),
   );
@@ -64,7 +74,11 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide deleted");
         router.push("/guides");
+      },
+      onError: () => {
+        toast("Failed to delete guide", "error");
       },
     }),
   );

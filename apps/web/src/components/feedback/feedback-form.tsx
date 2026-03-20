@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { useToast } from "@/components/ui/toast";
 
 type Member = {
   id: string;
@@ -29,6 +30,7 @@ const feedbackTypes = [
 export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
   const trpc = useTRPC();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [recipientId, setRecipientId] = useState("");
   const [type, setType] = useState<"ENCOURAGEMENT" | "GROWTH_AREA" | "GENERAL">("ENCOURAGEMENT");
@@ -61,10 +63,12 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       },
       {
         onSuccess: () => {
+          toast("Feedback submitted");
           router.push("/goals?tab=feedback");
         },
         onError: (err) => {
           setError(err.message);
+          toast("Failed to submit feedback", "error");
         },
       },
     );

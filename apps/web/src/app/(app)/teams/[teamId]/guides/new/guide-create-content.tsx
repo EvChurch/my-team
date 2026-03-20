@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { GuideEditor } from "@/components/guides/guide-editor";
+import { useToast } from "@/components/ui/toast";
 
 type GuideCreateContentProps = {
   teamId: string;
@@ -25,6 +26,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
@@ -40,7 +42,11 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
     trpc.guides.create.mutationOptions({
       onSuccess: (guide) => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide saved as draft");
         router.push(`/guides/${guide.id}`);
+      },
+      onError: () => {
+        toast("Failed to create guide", "error");
       },
     }),
   );
@@ -49,7 +55,11 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
     trpc.guides.publish.mutationOptions({
       onSuccess: (guide) => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        toast("Guide published");
         router.push(`/guides/${guide.id}`);
+      },
+      onError: () => {
+        toast("Failed to publish guide", "error");
       },
     }),
   );
