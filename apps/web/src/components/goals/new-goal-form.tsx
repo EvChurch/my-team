@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/api/client";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 type NewGoalFormProps = {
   teams: { id: string; name: string }[];
@@ -13,6 +14,7 @@ type NewGoalFormProps = {
 export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -44,10 +46,12 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
+          toast("Goal created");
           onClose();
         },
         onError: (err) => {
           setError(err.message);
+          toast("Failed to create goal", "error");
         },
       },
     );

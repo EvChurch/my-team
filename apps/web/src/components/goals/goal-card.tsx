@@ -7,6 +7,7 @@ import { Calendar, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { useToast } from "@/components/ui/toast";
 
 type GoalCardProps = {
   id: string;
@@ -36,6 +37,7 @@ export function GoalCard({
 }: GoalCardProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [progressValue, setProgressValue] = useState(progress);
 
@@ -50,6 +52,10 @@ export function GoalCard({
         onSuccess: () => {
           setEditing(false);
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
+          toast("Progress updated");
+        },
+        onError: () => {
+          toast("Failed to update progress", "error");
         },
       },
     );

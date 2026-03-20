@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { useToast } from "@/components/ui/toast";
 
 type GoalApprovalCardProps = {
   id: string;
@@ -38,6 +39,7 @@ export function GoalApprovalCard({
 }: GoalApprovalCardProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const updateStatus = useMutation(trpc.goals.updateStatus.mutationOptions());
 
@@ -47,6 +49,10 @@ export function GoalApprovalCard({
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
+          toast(newStatus === "APPROVED" ? "Goal approved" : "Goal declined");
+        },
+        onError: () => {
+          toast("Something went wrong. Please try again.", "error");
         },
       },
     );

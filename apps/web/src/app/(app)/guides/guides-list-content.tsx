@@ -7,6 +7,7 @@ import { BookOpen, Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import { GuideCard } from "@/components/guides/guide-card";
 
 type GuidesListContentProps = {
@@ -47,7 +48,12 @@ export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentPr
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Mobile scroll fade */}
+      <div className="fixed bottom-[62px] left-0 right-0 md:hidden">
+        <ScrollFade />
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
@@ -94,7 +100,7 @@ function GuideSection({
     title: string;
     category: "QUICK_START" | "TROUBLESHOOTING" | "SOP";
     status: string;
-    role: { id: string; name: string } | null;
+    role: { id: string; name: string | null } | null;
   }>;
 }) {
   return (

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 
 type RoleViewContentProps = {
   teamId: string;
@@ -29,7 +30,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Header */}
       <div>
         <Link
@@ -193,6 +194,11 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
           />
         )}
       </section>
+
+      {/* Mobile scroll fade */}
+      <div className="fixed bottom-[62px] left-0 right-0 md:hidden">
+        <ScrollFade />
+      </div>
     </div>
   );
 }
