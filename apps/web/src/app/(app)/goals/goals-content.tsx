@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Target, MessageSquare, Plus, MessageSquarePlus } from "lucide-react";
 import { SegmentControl } from "@/components/ui/segment-control";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GoalCard } from "@/components/goals/goal-card";
@@ -56,7 +57,7 @@ export function GoalsContent({ personId }: GoalsContentProps) {
   const completedGoals = goals.filter((g) => g.status === "COMPLETED");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text-primary">
@@ -73,6 +74,11 @@ export function GoalsContent({ personId }: GoalsContentProps) {
         activeSegment={tab}
         onSegmentChange={handleTabChange}
       />
+
+      {/* Mobile scroll fade */}
+      <div className="fixed bottom-[62px] left-0 right-0 md:hidden">
+        <ScrollFade />
+      </div>
 
       {tab === "goals" ? (
         <GoalsTab
