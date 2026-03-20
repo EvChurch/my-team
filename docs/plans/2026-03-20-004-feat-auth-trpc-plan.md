@@ -1,7 +1,7 @@
 ---
 title: "feat: Auth + tRPC API Layer"
 type: feat
-status: active
+status: completed
 date: 2026-03-20
 sequence: 3 of 8
 origin: docs/plans/2026-03-20-001-feat-my-team-full-app-plan.md
