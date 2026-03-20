@@ -2,22 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import {
-  Church,
-  Users,
-  Target,
-  BookOpen,
-  Settings,
-  ChevronRight,
-} from "lucide-react";
+import { Church, ChevronRight } from "lucide-react";
 import { Avatar } from "../ui/avatar";
-
-const navItems = [
-  { href: "/teams", label: "My Teams", icon: Users },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/guides", label: "Guides", icon: BookOpen },
-  { href: "/settings", label: "Settings", icon: Settings },
-] as const;
+import { navItems } from "./nav-items";
 
 type SidebarProps = {
   userName?: string | null;
