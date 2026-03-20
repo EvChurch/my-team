@@ -12,4 +12,7 @@ export const env = createEnv({
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
+  // Allow build to succeed without env vars (e.g. CI, Docker build step).
+  // Set SKIP_ENV_VALIDATION=1 to bypass validation.
+  skipValidation: process.env.SKIP_ENV_VALIDATION === "1",
 });

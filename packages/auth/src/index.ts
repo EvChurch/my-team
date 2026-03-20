@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import PlanningCenter from "./planning-center.js";
+import PlanningCenter from "./planning-center";
 
 declare module "@auth/core/types" {
   interface User {

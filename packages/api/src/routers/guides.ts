@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init.js";
-import { prisma } from "../db.js";
+import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
+import { prisma } from "../db";
 
 const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
 
