@@ -1,7 +1,7 @@
 ---
 title: "feat: Read Screens"
 type: feat
-status: active
+status: completed
 date: 2026-03-20
 sequence: 5 of 8
 origin: docs/plans/2026-03-20-001-feat-my-team-full-app-plan.md
@@ -112,15 +112,15 @@ Build all read-only screens: My Teams, Team View, Role View, Settings, and Profi
 
 ## Acceptance Criteria
 
-- [ ] My Teams shows user's teams with correct data
-- [ ] Team View shows all sections with real or empty data
-- [ ] Leader badge and action buttons only visible to team leaders
-- [ ] Role View filters goals and guides by role
-- [ ] Settings page renders preferences and sign out works
-- [ ] Profile page shows user info and team list
-- [ ] All empty states match the spec pattern (icon + title + description)
-- [ ] All pages responsive at mobile (402px) and desktop (1440px)
-- [ ] Server-side prefetching works (no loading flash on initial render)
+- [x] My Teams shows user's teams with correct data
+- [x] Team View shows all sections with real or empty data
+- [x] Leader badge and action buttons only visible to team leaders
+- [x] Role View filters goals and guides by role
+- [x] Settings page renders preferences and sign out works
+- [x] Profile page shows user info and team list
+- [x] All empty states match the spec pattern (icon + title + description)
+- [x] All pages responsive at mobile (402px) and desktop (1440px)
+- [x] Server-side prefetching works (no loading flash on initial render)
 
 ## Scope Boundaries
 
