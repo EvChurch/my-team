@@ -6,6 +6,64 @@ const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
 
 export const guidesRouter = createTRPCRouter({
   /**
+   * List all guides across teams the user belongs to.
+   * Used by the /guides page.
+   */
+  listAll: protectedProcedure.query(async ({ ctx }) => {
+    const personId = ctx.personId;
+
+    // Find all team IDs where user is assigned or is a leader
+    const [assignments, leaderships] = await Promise.all([
+      prisma.assignment.findMany({
+        where: { personId },
+        select: { position: { select: { teamId: true } } },
+      }),
+      prisma.leader.findMany({
+        where: { personId },
+        select: { teamId: true },
+      }),
+    ]);
+
+    const leaderTeamIds = new Set(leaderships.map((l) => l.teamId));
+    const allTeamIds = [
+      ...new Set([
+        ...assignments.map((a) => a.position.teamId),
+        ...leaderTeamIds,
+      ]),
+    ];
+
+    if (allTeamIds.length === 0) return [];
+
+    return prisma.guide.findMany({
+      where: {
+        teamId: { in: allTeamIds },
+        OR: [
+          // Leaders see all guides for their teams
+          { teamId: { in: [...leaderTeamIds] } },
+          // Non-leader teams: only visible + published
+          {
+            isVisibleToTeam: true,
+            status: "PUBLISHED",
+          },
+        ],
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            firstName: true,
+            image: true,
+          },
+        },
+        team: { select: { id: true, name: true } },
+        role: { select: { id: true, name: true } },
+      },
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
+    });
+  }),
+
+  /**
    * List guides. Respects isVisibleToTeam for non-leaders.
    * Filter by teamId, roleId, category.
    */
