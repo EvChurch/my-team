@@ -1,4 +1,4 @@
-import { createEnv } from "@t3-oss/env-core";
+import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
@@ -10,9 +10,13 @@ export const env = createEnv({
     PCO_API_ID: z.string().min(1),
     PCO_API_SECRET: z.string().min(1),
   },
-  runtimeEnv: process.env,
+  client: {
+    // Add NEXT_PUBLIC_ client vars here as needed
+  },
+  experimental__runtimeEnv: {
+    // Map client vars here, e.g.:
+    // NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  },
   emptyStringAsUndefined: true,
-  // Allow build to succeed without env vars (e.g. CI, Docker build step).
-  // Set SKIP_ENV_VALIDATION=1 to bypass validation.
   skipValidation: process.env.SKIP_ENV_VALIDATION === "1",
 });
