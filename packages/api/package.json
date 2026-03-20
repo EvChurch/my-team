@@ -7,7 +7,8 @@
     "db:generate": "prisma generate"
   },
   "exports": {
-    "./db": "./src/db.ts"
+    "./db": "./src/db.ts",
+    "./prisma": "./generated/prisma/client/client.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5",
