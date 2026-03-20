@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Enums ---
+
+enum Provider {
+  pco
+}
+
+enum GoalStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  COMPLETED
+}
+
+enum FeedbackType {
+  ENCOURAGEMENT
+  GROWTH_AREA
+  GENERAL
+}
+
+enum GuideCategory {
+  QUICK_START
+  TROUBLESHOOTING
+  SOP
+}
+
+enum GuideStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// --- PCO-synced models (read-only from app perspective) ---
+
+model Person {
+  id        String   @id @default(cuid())
+  remoteId  String
+  provider  Provider
+  email     String?
+  fullName  String
+  firstName String
+  lastName  String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leaders     Leader[]
+  assignments Assignment[]
+
+  goalsOwned    Goal[]     @relation("GoalOwner")
+  goalsReviewed Goal[]     @relation("GoalReviewer")
+  feedbackAuthored  Feedback[] @relation("FeedbackAuthor")
+  feedbackReceived  Feedback[] @relation("FeedbackRecipient")
+  guidesAuthored    Guide[]
+
+  @@unique([remoteId, provider])
+}
+
+model ServiceType {
+  id        String   @id @default(cuid())
+  remoteId  String
+  provider  Provider
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams Team[]
+
+  @@unique([remoteId, provider])
+}
+
+model Team {
+  id            String       @id @default(cuid())
+  remoteId      String
+  provider      Provider
+  name          String
+  description   Json?
+  serviceTypeId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  serviceType ServiceType? @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
+  leaders     Leader[]
+  positions   Position[]
+  goals       Goal[]
+  feedback    Feedback[]
+  guides      Guide[]
+
+  @@unique([remoteId, provider])
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  remoteId    String
+  provider    Provider
+  teamId      String
+  name        String?
+  description Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+  guides      Guide[]      @relation("GuideRole")
+
+  @@unique([remoteId, provider])
+}
+
+model Leader {
+  id       String   @id @default(cuid())
+  remoteId String
+  provider Provider
+  personId String
+  teamId   String
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, teamId])
+  @@unique([remoteId, provider])
+}
+
+model Assignment {
+  id         String   @id @default(cuid())
+  remoteId   String
+  provider   Provider
+  personId   String
+  positionId String
+
+  person   Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, positionId])
+  @@unique([remoteId, provider])
+}
+
+// --- App-native models (full CRUD) ---
+
+model Goal {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  progress    Int        @default(0)
+  status      GoalStatus @default(PENDING)
+  dueDate     DateTime?
+  personId    String
+  teamId      String
+  reviewedBy  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  person   Person  @relation("GoalOwner", fields: [personId], references: [id], onDelete: Cascade)
+  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reviewer Person? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([personId])
+  @@index([teamId])
+}
+
+model Feedback {
+  id          String       @id @default(cuid())
+  content     String
+  type        FeedbackType
+  authorId    String
+  recipientId String
+  teamId      String
+  isShared    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  author    Person @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  recipient Person @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([recipientId])
+}
+
+model Guide {
+  id              String        @id @default(cuid())
+  title           String
+  content         Json
+  category        GuideCategory
+  status          GuideStatus   @default(DRAFT)
+  authorId        String
+  teamId          String
+  roleId          String?
+  isPinned        Boolean       @default(false)
+  isVisibleToTeam Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  author Person    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  team   Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role   Position? @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@index([teamId])
+}
