@@ -33,7 +33,7 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
   const deleteMutation = useMutation(
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         router.push("/guides");
       },
     }),

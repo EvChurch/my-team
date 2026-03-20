@@ -39,7 +39,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
   const createMutation = useMutation(
     trpc.guides.create.mutationOptions({
       onSuccess: (guide) => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         router.push(`/guides/${guide.id}`);
       },
     }),
@@ -48,7 +48,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
   const publishMutation = useMutation(
     trpc.guides.publish.mutationOptions({
       onSuccess: (guide) => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         router.push(`/guides/${guide.id}`);
       },
     }),

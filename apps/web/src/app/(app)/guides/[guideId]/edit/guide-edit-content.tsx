@@ -44,8 +44,8 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const updateMutation = useMutation(
     trpc.guides.update.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryFilter({ guideId }).queryKey });
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
       },
     }),
   );
@@ -53,8 +53,8 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const publishMutation = useMutation(
     trpc.guides.publish.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryFilter({ guideId }).queryKey });
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         router.push(`/guides/${guideId}`);
       },
     }),
@@ -63,7 +63,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const deleteMutation = useMutation(
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryFilter().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         router.push("/guides");
       },
     }),
