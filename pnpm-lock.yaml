@@ -20,6 +20,9 @@ importers:
       '@repo/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@t3-oss/env-nextjs':
+        specifier: 0.13.10
+        version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@3.25.76)
       '@tanstack/react-query':
         specifier: ^5
         version: 5.91.2(react@19.2.4)
@@ -46,7 +49,7 @@ importers:
         version: 0.577.0(react@19.2.4)
       next:
         specifier: 16.2.0
-        version: 16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.0(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: beta
         version: 5.0.0-beta.30(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -56,6 +59,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -80,7 +86,7 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       eslint-config-next:
         specifier: 16.2.0
-        version: 16.2.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+        version: 16.2.0(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
         version: 4.2.2
@@ -93,6 +99,12 @@ importers:
       '@repo/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@t3-oss/env-core':
+        specifier: 0.13.10
+        version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
+      zod:
+        specifier: 4.3.6
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -118,9 +130,6 @@ importers:
       '@repo/auth':
         specifier: workspace:*
         version: link:../auth
-      '@repo/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@tanstack/react-query':
         specifier: ^5
         version: 5.91.2(react@19.2.4)
@@ -151,7 +160,7 @@ importers:
         version: 19.2.14
       next:
         specifier: 16.2.0
-        version: 16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.0(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: beta
         version: 5.0.0-beta.30(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -170,9 +179,6 @@ importers:
       '@auth/core':
         specifier: ^0.41
         version: 0.41.0
-      '@repo/shared':
-        specifier: workspace:*
-        version: link:../shared
       next-auth:
         specifier: beta
         version: 5.0.0-beta.30(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -182,7 +188,7 @@ importers:
         version: link:../typescript-config
       next:
         specifier: 16.2.0
-        version: 16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.0(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -194,38 +200,19 @@ importers:
         version: 9.39.4(jiti@2.6.1)
       eslint-config-next:
         specifier: '>=16'
-        version: 16.2.0(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+        version: 16.2.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
 
   packages/jobs:
     dependencies:
       '@repo/api':
         specifier: workspace:*
         version: link:../api
-      '@repo/shared':
-        specifier: workspace:*
-        version: link:../shared
       jsona:
         specifier: ^1.12.1
         version: 1.14.0
       pg-boss:
         specifier: ^10.4.2
         version: 10.4.2
-      zod:
-        specifier: ^3
-        version: 3.25.76
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: ^5
-        version: 5.9.3
-
-  packages/shared:
-    dependencies:
-      '@t3-oss/env-nextjs':
-        specifier: 0.13.10
-        version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@3.25.76)
       zod:
         specifier: ^3
         version: 3.25.76
@@ -3465,6 +3452,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -4123,6 +4113,12 @@ snapshots:
       typescript: 5.9.3
       valibot: 1.2.0(typescript@5.9.3)
       zod: 3.25.76
+
+  '@t3-oss/env-core@0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)':
+    optionalDependencies:
+      typescript: 5.9.3
+      valibot: 1.2.0(typescript@5.9.3)
+      zod: 4.3.6
 
   '@t3-oss/env-nextjs@0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@3.25.76)':
     dependencies:
@@ -5874,10 +5870,10 @@ snapshots:
   next-auth@5.0.0-beta.30(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@auth/core': 0.41.0
-      next: 16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next: 16.2.0(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
-  next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  next@16.2.0(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@next/env': 16.2.0
       '@swc/helpers': 0.5.15
@@ -5886,7 +5882,7 @@ snapshots:
       postcss: 8.4.31
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      styled-jsx: 5.1.6(react@19.2.4)
+      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.4)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.2.0
       '@next/swc-darwin-x64': 16.2.0
@@ -6573,10 +6569,12 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  styled-jsx@5.1.6(react@19.2.4):
+  styled-jsx@5.1.6(@babel/core@7.29.0)(react@19.2.4):
     dependencies:
       client-only: 0.0.1
       react: 19.2.4
+    optionalDependencies:
+      '@babel/core': 7.29.0
 
   sucrase@3.35.1:
     dependencies:
@@ -6856,3 +6854,5 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.3.6: {}

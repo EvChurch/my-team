@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname, "../.."),
     resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
   },
-  transpilePackages: ["@repo/api", "@repo/auth", "@repo/shared"],
+  transpilePackages: ["@repo/api", "@repo/auth"],
   serverExternalPackages: ["@node-rs/argon2"],
 };
 

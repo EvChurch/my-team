@@ -1,6 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client/client";
-import { env } from "@repo/shared/env";
 
 function extractMarkdown(value: unknown): string | null {
   if (typeof value === "string") return value;
@@ -18,7 +17,7 @@ function extractMarkdown(value: unknown): string | null {
 
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL!,
   });
 
   return new PrismaClient({ adapter }).$extends({

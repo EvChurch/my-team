@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "@auth/core": "^0.41",
-    "@repo/shared": "workspace:*",
     "next-auth": "beta"
   },
   "devDependencies": {

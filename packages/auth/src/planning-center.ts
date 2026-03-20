@@ -1,5 +1,4 @@
 import type { OIDCConfig } from "next-auth/providers";
-import { env } from "@repo/shared/env";
 
 export interface PlanningCenterProfile {
   sub: string;
@@ -14,8 +13,8 @@ export default function PlanningCenter(): OIDCConfig<PlanningCenterProfile> {
     name: "Planning Center",
     type: "oidc",
     issuer: "https://api.planningcenteronline.com",
-    clientId: env.AUTH_PLANNING_CENTER_ID,
-    clientSecret: env.AUTH_PLANNING_CENTER_SECRET,
+    clientId: process.env.AUTH_PLANNING_CENTER_ID!,
+    clientSecret: process.env.AUTH_PLANNING_CENTER_SECRET!,
     authorization: { params: { scope: "openid people services" } },
     profile(profile) {
       return {

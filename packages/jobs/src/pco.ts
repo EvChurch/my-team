@@ -2,7 +2,6 @@ import Jsona from "jsona"
 import { z } from "zod"
 
 import type { Prisma } from "@repo/api/prisma"
-import { env } from "@repo/shared/env"
 
 const PCO_API = "https://api.planningcenteronline.com"
 const jsonaFormatter = new Jsona()
@@ -65,7 +64,7 @@ const teamsPayloadSchema = z.array(teamSchema)
 
 function pcoBasicAuth(): string {
   return Buffer.from(
-    `${env.PCO_API_ID}:${env.PCO_API_SECRET}`,
+    `${process.env.PCO_API_ID}:${process.env.PCO_API_SECRET}`,
     "utf8"
   ).toString("base64")
 }

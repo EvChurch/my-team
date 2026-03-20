@@ -1,3 +1,4 @@
+import "./env" // Validate env vars at startup
 import { getBoss } from "@repo/jobs/boss"
 import { startWorkers } from "@repo/jobs/workers"
 
