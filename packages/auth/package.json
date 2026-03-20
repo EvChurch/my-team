@@ -1,5 +1,5 @@
 {
-  "name": "@repo/auth",
+  "name": "@mt/auth",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "next-auth": "beta"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mt/typescript-config": "workspace:*",
     "next": "16.2.0",
     "typescript": "^5"
   }

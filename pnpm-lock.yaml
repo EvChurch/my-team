@@ -14,10 +14,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@repo/api':
+      '@mt/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@repo/auth':
+      '@mt/auth':
         specifier: workspace:*
         version: link:../../packages/auth
       '@t3-oss/env-nextjs':
@@ -63,10 +63,10 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
-      '@repo/eslint-config':
+      '@mt/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
-      '@repo/typescript-config':
+      '@mt/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@tailwindcss/postcss':
@@ -96,7 +96,7 @@ importers:
 
   apps/worker:
     dependencies:
-      '@repo/jobs':
+      '@mt/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
       '@t3-oss/env-core':
@@ -106,7 +106,7 @@ importers:
         specifier: 4.3.6
         version: 4.3.6
     devDependencies:
-      '@repo/typescript-config':
+      '@mt/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       tsup:
@@ -121,15 +121,15 @@ importers:
 
   packages/api:
     dependencies:
+      '@mt/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@prisma/adapter-pg':
         specifier: ^7.5
         version: 7.5.0
       '@prisma/client':
         specifier: ^7.5
         version: 7.5.0(prisma@7.5.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
-      '@repo/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@tanstack/react-query':
         specifier: ^5
         version: 5.91.2(react@19.2.4)
@@ -152,7 +152,7 @@ importers:
         specifier: ^3
         version: 3.25.76
     devDependencies:
-      '@repo/typescript-config':
+      '@mt/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/react':
@@ -183,7 +183,7 @@ importers:
         specifier: beta
         version: 5.0.0-beta.30(next@16.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
     devDependencies:
-      '@repo/typescript-config':
+      '@mt/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       next:
@@ -204,7 +204,7 @@ importers:
 
   packages/jobs:
     dependencies:
-      '@repo/api':
+      '@mt/api':
         specifier: workspace:*
         version: link:../api
       jsona:
@@ -217,7 +217,7 @@ importers:
         specifier: ^3
         version: 3.25.76
     devDependencies:
-      '@repo/typescript-config':
+      '@mt/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:

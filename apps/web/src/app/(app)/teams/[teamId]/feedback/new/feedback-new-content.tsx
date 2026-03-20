@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";

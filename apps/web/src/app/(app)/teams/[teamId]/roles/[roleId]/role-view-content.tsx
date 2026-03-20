@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import Link from "next/link";
 import { ArrowLeft, Target, BookOpen, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";

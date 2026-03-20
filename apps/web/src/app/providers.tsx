@@ -1,6 +1,6 @@
 "use client";
 
-import { TRPCReactProvider } from "@repo/api/client";
+import { TRPCReactProvider } from "@mt/api/client";
 import { ToastProvider } from "@/components/ui/toast";
 
 export function Providers({ children }: { children: React.ReactNode }) {

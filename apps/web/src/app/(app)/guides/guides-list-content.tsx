@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import { BookOpen, Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

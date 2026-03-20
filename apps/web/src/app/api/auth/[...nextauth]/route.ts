@@ -1,3 +1,3 @@
-import { handlers } from "@repo/auth";
+import { handlers } from "@mt/auth";
 
 export const { GET, POST } = handlers;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Target } from "lucide-react";

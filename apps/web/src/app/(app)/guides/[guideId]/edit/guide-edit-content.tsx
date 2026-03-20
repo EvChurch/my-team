@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Play, Wrench, FileText, Trash2 } from "lucide-react";

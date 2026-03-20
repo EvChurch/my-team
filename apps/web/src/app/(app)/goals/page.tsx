@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getQueryClient, trpc } from "@repo/api/server";
-import { createTRPCContext } from "@repo/api/init";
+import { getQueryClient, trpc } from "@mt/api/server";
+import { createTRPCContext } from "@mt/api/init";
 import { GoalsContent } from "./goals-content";
 
 export default async function GoalsPage() {

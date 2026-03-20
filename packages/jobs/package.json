@@ -1,5 +1,5 @@
 {
-  "name": "@repo/jobs",
+  "name": "@mt/jobs",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,13 +8,13 @@
     "./workers": "./src/workers.ts"
   },
   "dependencies": {
-    "@repo/api": "workspace:*",
+    "@mt/api": "workspace:*",
     "jsona": "^1.12.1",
     "pg-boss": "^10.4.2",
     "zod": "^3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mt/typescript-config": "workspace:*",
     "typescript": "^5"
   }
 }

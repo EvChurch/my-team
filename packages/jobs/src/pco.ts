@@ -1,7 +1,7 @@
 import Jsona from "jsona"
 import { z } from "zod"
 
-import type { Prisma } from "@repo/api/prisma"
+import type { Prisma } from "@mt/api/prisma"
 
 const PCO_API = "https://api.planningcenteronline.com"
 const jsonaFormatter = new Jsona()

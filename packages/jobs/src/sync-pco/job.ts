@@ -1,5 +1,5 @@
-import { Prisma } from "@repo/api/prisma"
-import { prisma } from "@repo/api/db"
+import { Prisma } from "@mt/api/prisma"
+import { prisma } from "@mt/api/db"
 
 import { fetchTeamsSnapshot } from "../pco.js"
 

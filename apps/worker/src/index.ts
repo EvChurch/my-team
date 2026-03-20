@@ -1,6 +1,6 @@
 import "./env" // Validate env vars at startup
-import { getBoss } from "@repo/jobs/boss"
-import { startWorkers } from "@repo/jobs/workers"
+import { getBoss } from "@mt/jobs/boss"
+import { startWorkers } from "@mt/jobs/workers"
 
 async function main() {
   console.log("[worker] Starting...")

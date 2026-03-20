@@ -3,7 +3,7 @@ import superjson from "superjson";
 import { z } from "zod";
 import { cache } from "react";
 import type { Session } from "next-auth";
-import { auth } from "@repo/auth";
+import { auth } from "@mt/auth";
 import { prisma } from "./db";
 
 /**

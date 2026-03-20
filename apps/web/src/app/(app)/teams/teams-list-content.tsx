@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import { Users } from "lucide-react";
 import { TeamCard } from "@/components/teams/team-card";
 import { EmptyState } from "@/components/ui/empty-state";

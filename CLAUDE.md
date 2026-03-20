@@ -55,12 +55,12 @@ pnpm lint                # Lint all packages
 pnpm type-check          # TypeScript check all packages
 
 # Database (from root)
-pnpm --filter @repo/api exec prisma generate    # Generate Prisma client
-pnpm --filter @repo/api exec prisma migrate dev # Run migrations
-pnpm --filter @repo/api exec prisma db push     # Push schema changes (dev)
+pnpm --filter @mt/api exec prisma generate    # Generate Prisma client
+pnpm --filter @mt/api exec prisma migrate dev # Run migrations
+pnpm --filter @mt/api exec prisma db push     # Push schema changes (dev)
 
 # Single package
-pnpm --filter @repo/web dev     # Start only web
+pnpm --filter @mt/web dev     # Start only web
 pnpm --filter worker dev        # Start only worker
 ```
 

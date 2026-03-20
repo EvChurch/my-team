@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 import Link from "next/link";
 import { Target, MessageSquare, Plus, MessageSquarePlus } from "lucide-react";
 import { SegmentControl } from "@/components/ui/segment-control";

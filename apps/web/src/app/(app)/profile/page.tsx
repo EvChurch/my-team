@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getQueryClient, trpc } from "@repo/api/server";
+import { getQueryClient, trpc } from "@mt/api/server";
 import { ProfileContent } from "./profile-content";
 
 export default async function ProfilePage() {

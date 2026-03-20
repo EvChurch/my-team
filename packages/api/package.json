@@ -1,5 +1,5 @@
 {
-  "name": "@repo/api",
+  "name": "@mt/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.5",
     "@prisma/client": "^7.5",
-    "@repo/auth": "workspace:*",
+    "@mt/auth": "workspace:*",
     "@tanstack/react-query": "^5",
     "@trpc/client": "^11",
     "@trpc/server": "^11",
@@ -27,7 +27,7 @@
     "zod": "^3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mt/typescript-config": "workspace:*",
     "@types/react": "^19",
     "next": "16.2.0",
     "next-auth": "beta",

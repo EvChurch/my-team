@@ -1,4 +1,4 @@
-import { auth } from "@repo/auth";
+import { auth } from "@mt/auth";
 
 export default auth;
 

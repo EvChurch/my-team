@@ -1,3 +1,3 @@
-import config from "@repo/eslint-config/nextjs";
+import config from "@mt/eslint-config/nextjs";
 
 export default config;
