@@ -5,8 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./types": "./src/types.ts"
+    "./env": "./src/env.ts"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13",

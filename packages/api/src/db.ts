@@ -1,9 +1,24 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client/client.js";
+import { env } from "@repo/shared/env";
+
+function extractMarkdown(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    "markdown" in value &&
+    typeof value.markdown === "string"
+  ) {
+    return value.markdown;
+  }
+  return null;
+}
 
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
+    connectionString: env.DATABASE_URL,
   });
 
   return new PrismaClient({ adapter }).$extends({
@@ -11,39 +26,13 @@ function createPrismaClient() {
       team: {
         descriptionMarkdown: {
           needs: { description: true },
-          compute(team) {
-            const value = team.description;
-            if (typeof value === "string") return value;
-            if (
-              value &&
-              typeof value === "object" &&
-              !Array.isArray(value) &&
-              "markdown" in value &&
-              typeof value.markdown === "string"
-            ) {
-              return value.markdown;
-            }
-            return null;
-          },
+          compute: (team) => extractMarkdown(team.description),
         },
       },
       position: {
         descriptionMarkdown: {
           needs: { description: true },
-          compute(position) {
-            const value = position.description;
-            if (typeof value === "string") return value;
-            if (
-              value &&
-              typeof value === "object" &&
-              !Array.isArray(value) &&
-              "markdown" in value &&
-              typeof value.markdown === "string"
-            ) {
-              return value.markdown;
-            }
-            return null;
-          },
+          compute: (position) => extractMarkdown(position.description),
         },
       },
     },
