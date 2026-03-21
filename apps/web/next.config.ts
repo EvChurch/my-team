@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["@mt/api", "@mt/auth"],
   serverExternalPackages: ["@node-rs/argon2"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avatars.planningcenteronline.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
