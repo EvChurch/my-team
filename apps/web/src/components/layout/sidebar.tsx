@@ -15,7 +15,7 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:flex-col md:w-[260px] md:shrink-0 bg-bg-card border-r border-border h-full">
+    <aside className="hidden md:flex md:flex-col md:w-[260px] md:shrink-0 bg-bg-card border-r border-border md:sticky md:top-0 md:h-screen">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-6 pt-8 pb-6">
         <Church className="w-[22px] h-[22px] text-accent" />
