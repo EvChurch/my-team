@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import Link from "next/link";
 import {
   Calendar,
   Check,
@@ -10,6 +11,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,6 +31,7 @@ type Schedule = {
   dates: string;
   startsAt: Date | string | null;
   endsAt: Date | string | null;
+  planRemoteId?: string;
   team?: { id: string; name: string };
   planTimes?: PlanTime[];
 };
@@ -279,6 +282,16 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
               </span>
             </div>
           ))}
+          {schedule.planRemoteId && (
+            <Link
+              href={`/plans/${schedule.planRemoteId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-dark transition-colors mt-1.5 pt-1.5 border-t border-border"
+            >
+              <FileText className="w-3 h-3" />
+              View full plan details
+            </Link>
+          )}
         </div>
       )}
 

@@ -8,6 +8,7 @@ type ScheduleItem = {
   dates: string;
   startsAt: Date | string | null;
   endsAt: Date | string | null;
+  planRemoteId?: string;
   planTimes?: {
     id: string;
     name: string | null;

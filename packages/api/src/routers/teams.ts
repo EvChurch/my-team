@@ -216,6 +216,7 @@ export const teamsRouter = createTRPCRouter({
             dates: true,
             startsAt: true,
             endsAt: true,
+            planRemoteId: true,
             planTimes: {
               orderBy: { startsAt: "asc" },
               select: {
