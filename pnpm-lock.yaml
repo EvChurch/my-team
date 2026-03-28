@@ -142,6 +142,9 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: ^11
         version: 11.13.4(@tanstack/react-query@5.91.2(react@19.2.4))(@trpc/client@11.13.4(@trpc/server@11.13.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.13.4(typescript@5.9.3))(react@19.2.4)(typescript@5.9.3)
+      jsona:
+        specifier: ^1.12.1
+        version: 1.14.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -207,9 +210,6 @@ importers:
       '@mt/api':
         specifier: workspace:*
         version: link:../api
-      jsona:
-        specifier: ^1.12.1
-        version: 1.14.0
       pg-boss:
         specifier: ^10.4.2
         version: 10.4.2
