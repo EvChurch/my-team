@@ -12,9 +12,11 @@
     "./init": "./src/init.ts",
     "./routers": "./src/routers/_app.ts",
     "./server": "./src/trpc/server.ts",
-    "./client": "./src/trpc/client.tsx"
+    "./client": "./src/trpc/client.tsx",
+    "./pco": "./src/lib/pco.ts"
   },
   "dependencies": {
+    "jsona": "^1.12.1",
     "@prisma/adapter-pg": "^7.5",
     "@prisma/client": "^7.5",
     "@mt/auth": "workspace:*",

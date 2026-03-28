@@ -182,6 +182,7 @@ model Schedule {
   @@index([teamId])
   @@index([personId, teamId])
   @@index([sortDate])
+  @@index([planRemoteId, personId])
 }
 
 model PlanTime {

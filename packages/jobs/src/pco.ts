@@ -1,10 +1,8 @@
-import Jsona from "jsona"
 import { z } from "zod"
 
 import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
+import { fetchPCO } from "@mt/api/pco"
 
-const PCO_API = "https://api.planningcenteronline.com"
-const jsonaFormatter = new Jsona()
 const PCO_TEAMS_PAGE_SIZE = 25
 
 const serviceTypeSchema = z
@@ -61,25 +59,6 @@ const teamSchema = z
   .passthrough()
 
 const teamsPayloadSchema = z.array(teamSchema)
-
-function pcoBasicAuth(): string {
-  return Buffer.from(
-    `${process.env.PCO_API_ID}:${process.env.PCO_API_SECRET}`,
-    "utf8"
-  ).toString("base64")
-}
-
-async function fetchPCO(path: string): Promise<unknown> {
-  const res = await fetch(`${PCO_API}${path}`, {
-    headers: { Authorization: `Basic ${pcoBasicAuth()}` },
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`PCO API ${res.status}: ${text}`)
-  }
-  const text = await res.text()
-  return jsonaFormatter.deserialize(text)
-}
 
 export type TeamsSnapshot = {
   serviceTypes: Prisma.ServiceTypeUpsertArgs[]
