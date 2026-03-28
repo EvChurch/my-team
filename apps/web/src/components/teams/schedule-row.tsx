@@ -11,7 +11,6 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -151,82 +150,107 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
     });
   };
 
-  return (
-    <div>
-      <div
-        className={`flex items-center justify-between gap-3 ${hasPlanTimes ? "cursor-pointer" : ""}`}
-        onClick={() => hasPlanTimes && setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0">
-            <Calendar className="w-4 h-4 text-text-secondary" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-text-primary">
-              {formatDate(schedule.sortDate)}
-              {schedule.startsAt && (
-                <span className="text-text-secondary font-normal">
-                  {" "}
-                  at {formatTime(schedule.startsAt)}
-                </span>
-              )}
-            </p>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              {showTeamName && schedule.team && (
-                <span className="text-xs text-text-secondary">
-                  {schedule.team.name}
-                </span>
-              )}
-              {schedule.positionName && (
-                <Badge variant="muted">{schedule.positionName}</Badge>
-              )}
-            </div>
-          </div>
+  const planHref = schedule.planRemoteId
+    ? `/plans/${schedule.planRemoteId}`
+    : null;
+
+  const rowContent = (
+    <>
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0">
+          <Calendar className="w-4 h-4 text-text-secondary" />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {isUnconfirmed && !declining && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAccept();
-                }}
-                disabled={isPending}
-                className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
-              >
-                {isPending ? "..." : "Accept"}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDecline();
-                }}
-                disabled={isPending}
-                className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
-              >
-                Decline
-              </button>
-            </div>
-          )}
-          {!isUnconfirmed && (
-            <div className="flex items-center gap-1">
-              <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
-              <span className={`text-xs ${config.className}`}>
-                {config.label}
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-text-primary">
+            {formatDate(schedule.sortDate)}
+            {schedule.startsAt && (
+              <span className="text-text-secondary font-normal">
+                {" "}
+                at {formatTime(schedule.startsAt)}
               </span>
-            </div>
-          )}
-          {hasPlanTimes && (
-            <div className="text-text-tertiary">
-              {expanded ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </div>
-          )}
+            )}
+          </p>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {showTeamName && schedule.team && (
+              <span className="text-xs text-text-secondary">
+                {schedule.team.name}
+              </span>
+            )}
+            {schedule.positionName && (
+              <Badge variant="muted">{schedule.positionName}</Badge>
+            )}
+          </div>
         </div>
       </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {isUnconfirmed && !declining && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleAccept();
+              }}
+              disabled={isPending}
+              className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
+            >
+              {isPending ? "..." : "Accept"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleDecline();
+              }}
+              disabled={isPending}
+              className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
+            >
+              Decline
+            </button>
+          </div>
+        )}
+        {!isUnconfirmed && (
+          <div className="flex items-center gap-1">
+            <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
+            <span className={`text-xs ${config.className}`}>
+              {config.label}
+            </span>
+          </div>
+        )}
+        {hasPlanTimes && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setExpanded(!expanded);
+            }}
+            className="text-text-tertiary hover:text-text-secondary transition-colors p-0.5 -m-0.5"
+          >
+            {expanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <div>
+      {planHref ? (
+        <Link
+          href={planHref}
+          className="flex items-center justify-between gap-3 rounded-lg hover:bg-bg-muted -mx-2 px-2 py-1 -my-1 transition-colors"
+        >
+          {rowContent}
+        </Link>
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          {rowContent}
+        </div>
+      )}
 
       {/* Decline reason input */}
       {declining && (
@@ -282,16 +306,6 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
               </span>
             </div>
           ))}
-          {schedule.planRemoteId && (
-            <Link
-              href={`/plans/${schedule.planRemoteId}`}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-dark transition-colors mt-1.5 pt-1.5 border-t border-border"
-            >
-              <FileText className="w-3 h-3" />
-              View full plan details
-            </Link>
-          )}
         </div>
       )}
 
