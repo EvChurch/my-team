@@ -28,19 +28,8 @@ export function MobileTabBar() {
     const containerRect = container.getBoundingClientRect();
     const tabRect = activeTab.getBoundingClientRect();
 
-    const isFirst = activeIndex === 0;
-    const isLast = activeIndex === navItems.length - 1;
-
-    // For end items, nudge the bubble toward the edge
-    const edgeInset = 6; // px from container inner edge
-    let left = tabRect.left - containerRect.left;
+    const left = tabRect.left - containerRect.left;
     const width = tabRect.width;
-
-    if (isFirst) {
-      left = edgeInset;
-    } else if (isLast) {
-      left = containerRect.width - width - edgeInset;
-    }
 
     setBubble({ left, width });
   }, [activeIndex]);
