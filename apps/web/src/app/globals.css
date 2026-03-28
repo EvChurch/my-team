@@ -49,6 +49,18 @@ body {
   font-family: var(--font-outfit), sans-serif;
 }
 
+/* Ensure all interactive elements show pointer cursor */
+button,
+[role="button"],
+a,
+summary,
+select,
+[type="checkbox"],
+[type="radio"],
+label[for] {
+  cursor: pointer;
+}
+
 /* Guide content rendered from Tiptap JSON */
 .guide-content h1 {
   font-size: 1.5rem;

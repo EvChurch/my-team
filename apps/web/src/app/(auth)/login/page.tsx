@@ -58,7 +58,7 @@ export default async function LoginPage() {
               type="submit"
               className="w-full bg-accent text-text-on-accent rounded-[10px] px-6 py-3 text-sm font-semibold hover:bg-accent-dark transition-colors"
             >
-              Sign in with Planning Centre
+              Sign in with Planning Center
             </button>
           </form>
         </div>
