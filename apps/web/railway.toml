@@ -13,7 +13,7 @@ watchPatterns = [
 
 [deploy]
 preDeployCommand = "pnpm --filter @mt/api exec prisma migrate deploy"
-startCommand = "node apps/web/.next/standalone/apps/web/server.js"
+startCommand = "cp -r apps/web/public apps/web/.next/standalone/apps/web/public && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static && node apps/web/.next/standalone/apps/web/server.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"
