@@ -3,7 +3,8 @@ title: "Porting pg-boss PCO sync to a Turborepo monorepo"
 category: integration-issues
 date: 2026-03-20
 tags: [pg-boss, pco, sync, monorepo, prisma, worker]
-components: [packages/jobs, apps/worker]
+components: [packages/jobs, apps/worker, packages/api]
+last_updated: 2026-03-28
 severity: low
 ---
 
@@ -43,3 +44,7 @@ process.on("SIGTERM", async () => {
 - When porting code between projects, grep for all enum/constant values and update to match the target schema
 - Always add graceful shutdown handlers for background workers in containerized deployments
 - Use tsup (not tsc) for standalone worker builds — it handles monorepo internal package bundling
+
+## Scope Note
+
+This doc covers the initial sync port: Person, ServiceType, Team, Position, Leader, and Assignment models. Schedule and PlanTime sync was added later as a separate feature — see [PCO Schedule Sync — Missing Migration and Incorrect Service Times](pco-schedule-sync-missing-migration-and-incorrect-service-times.md) for lessons learned from that extension.
