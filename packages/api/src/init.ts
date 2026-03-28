@@ -12,6 +12,7 @@ import { prisma } from "./db";
 export interface TRPCContext {
   session: Session | null;
   personId: string | null;
+  accessToken: string | null;
   headers: Headers;
 }
 
@@ -40,6 +41,7 @@ export const createTRPCContext = cache(
     return {
       session,
       personId,
+      accessToken: (session as { accessToken?: string } | null)?.accessToken ?? null,
       headers: opts?.headers ?? new Headers(),
     };
   },
@@ -76,6 +78,7 @@ export const protectedProcedure = t.procedure.use(
       ctx: {
         session: ctx.session,
         personId: ctx.personId,
+        accessToken: ctx.accessToken,
       },
     });
   },
