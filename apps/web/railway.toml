@@ -1,7 +1,20 @@
 [build]
-builder = "nixpacks"
+builder = "railpack"
+buildCommand = "pnpm turbo build --filter=@mt/web..."
+watchPatterns = [
+  "/apps/web/**",
+  "/packages/api/**",
+  "/packages/auth/**",
+  "/packages/jobs/**",
+  "/package.json",
+  "/pnpm-lock.yaml",
+  "/turbo.json",
+]
 
 [deploy]
-startCommand = "pnpm --filter @repo/web start"
+preDeployCommand = "pnpm --filter @mt/api exec prisma migrate deploy"
+startCommand = "node apps/web/.next/standalone/apps/web/server.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10

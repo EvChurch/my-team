@@ -1,7 +1,17 @@
 [build]
-builder = "nixpacks"
+builder = "railpack"
+buildCommand = "pnpm turbo build --filter=worker..."
+watchPatterns = [
+  "/apps/worker/**",
+  "/packages/api/**",
+  "/packages/jobs/**",
+  "/package.json",
+  "/pnpm-lock.yaml",
+  "/turbo.json",
+]
 
 [deploy]
 startCommand = "node apps/worker/dist/index.js"
+drainingSeconds = 35
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10

@@ -8,5 +8,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Bundle workspace packages but not node_modules externals
-  noExternal: [/@repo\/.*/],
+  noExternal: [/@mt\/.*/],
 })
