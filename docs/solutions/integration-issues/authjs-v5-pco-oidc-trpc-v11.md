@@ -42,7 +42,7 @@ Next.js 16 renamed the middleware file to `proxy.ts`. Auth.js docs may still ref
 
 ```typescript
 // apps/web/proxy.ts
-export { auth as default } from "@repo/auth";
+export { auth as default } from "@mt/auth";
 ```
 
 ### tRPC v11 context pattern

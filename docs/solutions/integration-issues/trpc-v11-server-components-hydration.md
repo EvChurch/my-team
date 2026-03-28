@@ -38,7 +38,7 @@ export const trpc = createTRPCOptionsProxy({
 ```typescript
 // page.tsx (Server Component)
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getQueryClient, trpc } from "@repo/api/server";
+import { getQueryClient, trpc } from "@mt/api/server";
 import { MyContent } from "./my-content";
 
 export default async function Page() {
@@ -57,7 +57,7 @@ export default async function Page() {
 ```typescript
 "use client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@repo/api/client";
+import { useTRPC } from "@mt/api/client";
 
 export function MyContent() {
   const trpc = useTRPC();
@@ -80,7 +80,7 @@ NOT `trpc.goals.list.invalidate()` — that's the v10 pattern.
 
 ## Key Gotchas
 
-1. `@tanstack/react-query` must be a **direct dependency** of the web app, not just transitive via `@repo/api`
+1. `@tanstack/react-query` must be a **direct dependency** of the web app, not just transitive via `@mt/api`
 2. `createTRPCOptionsProxy` replaces v10's `createHydrationHelpers`
 3. `createTRPCContext` from `@trpc/tanstack-react-query` replaces `createTRPCReact`
 4. Client hooks use native TanStack Query hooks (`useSuspenseQuery`, `useMutation`) with `trpc.route.queryOptions()` — NOT custom tRPC wrappers

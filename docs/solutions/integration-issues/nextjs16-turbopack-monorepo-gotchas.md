@@ -27,7 +27,7 @@ Auth.js v5 docs reference `middleware.ts`, but Next.js 16 renamed this to `proxy
 
 ```typescript
 // apps/web/proxy.ts
-export { auth as default } from "@repo/auth";
+export { auth as default } from "@mt/auth";
 ```
 
 ### 3. Turbopack needs `turbopack.root` in worktrees
@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
 
 ### 4. @tanstack/react-query must be a direct dependency
 
-Even though `@repo/api` depends on `@tanstack/react-query`, the web app must also list it as a direct dependency when using `HydrationBoundary`/`dehydrate` in Server Components. Turbopack won't resolve transitive deps from internal packages.
+Even though `@mt/api` depends on `@tanstack/react-query`, the web app must also list it as a direct dependency when using `HydrationBoundary`/`dehydrate` in Server Components. Turbopack won't resolve transitive deps from internal packages.
 
 ### 5. Tiptap 3 SSR requires immediatelyRender: false
 

@@ -25,7 +25,7 @@ The original codebase used `provider: "pco"` (lowercase). The new schema uses `P
 
 ### Worker needs tsup for production builds
 
-The worker can't use Turbopack (that's Next.js-only). Use `tsup` to bundle to a single CJS file for production, and `tsx watch` for development. The tsup config should bundle `@repo/*` packages since they export raw `.ts` source.
+The worker can't use Turbopack (that's Next.js-only). Use `tsup` to bundle to a single CJS file for production, and `tsx watch` for development. The tsup config should bundle `@mt/*` packages since they export raw `.ts` source. In `railway.toml`, set `drainingSeconds` to exceed the graceful shutdown timeout (e.g., `drainingSeconds = 35` for a 30s shutdown timeout).
 
 ### Graceful shutdown is essential for Railway
 
