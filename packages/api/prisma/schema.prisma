@@ -37,6 +37,12 @@ enum GuideStatus {
   PUBLISHED
 }
 
+enum ScheduleStatus {
+  CONFIRMED
+  UNCONFIRMED
+  DECLINED
+}
+
 // --- PCO-synced models (read-only from app perspective) ---
 
 model Person {
@@ -59,6 +65,7 @@ model Person {
   feedbackAuthored  Feedback[] @relation("FeedbackAuthor")
   feedbackReceived  Feedback[] @relation("FeedbackRecipient")
   guidesAuthored    Guide[]
+  schedules         Schedule[]
 
   @@unique([remoteId, provider])
 }
@@ -92,6 +99,7 @@ model Team {
   goals       Goal[]
   feedback    Feedback[]
   guides      Guide[]
+  schedules   Schedule[]
 
   @@unique([remoteId, provider])
 }
@@ -146,6 +154,33 @@ model Assignment {
   @@unique([personId, positionId])
   @@unique([remoteId, provider])
   @@index([positionId])
+}
+
+model Schedule {
+  id              String         @id @default(cuid())
+  remoteId        String
+  provider        Provider
+  personId        String
+  teamId          String
+  positionName    String?
+  serviceTypeName String
+  status          ScheduleStatus
+  sortDate        DateTime
+  dates           String
+  startsAt        DateTime?
+  endsAt          DateTime?
+  planRemoteId    String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([remoteId, provider])
+  @@index([personId])
+  @@index([teamId])
+  @@index([personId, teamId])
+  @@index([sortDate])
 }
 
 // --- App-native models (full CRUD) ---

@@ -71,6 +71,7 @@ export const teamsRouter = createTRPCRouter({
         userRole: string;
         isLeader: boolean;
         memberCount: number;
+        nextServingDate: string | null;
       }
     >();
 
@@ -81,6 +82,7 @@ export const teamsRouter = createTRPCRouter({
         userRole: a.position.name ?? "Member",
         isLeader: false,
         memberCount: team._count.positions + team._count.leaders,
+        nextServingDate: null,
       });
     }
     for (const l of ledTeams) {
@@ -89,7 +91,29 @@ export const teamsRouter = createTRPCRouter({
         userRole: "Team Lead",
         isLeader: true,
         memberCount: l.team._count.positions + l.team._count.leaders,
+        nextServingDate: null,
       });
+    }
+
+    // Fetch user's next serving date per team
+    const teamIds = Array.from(teamsMap.keys());
+    if (teamIds.length > 0) {
+      const nextSchedules = await prisma.schedule.findMany({
+        where: {
+          personId,
+          teamId: { in: teamIds },
+          sortDate: { gte: new Date() },
+        },
+        orderBy: { sortDate: "asc" },
+        select: { teamId: true, sortDate: true },
+        distinct: ["teamId"],
+      });
+      for (const s of nextSchedules) {
+        const team = teamsMap.get(s.teamId);
+        if (team) {
+          team.nextServingDate = s.sortDate.toISOString();
+        }
+      }
     }
 
     return Array.from(teamsMap.values());
@@ -101,7 +125,8 @@ export const teamsRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.object({ teamId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [team, isLeader, goals, feedback, guides] = await Promise.all([
+      const [team, isLeader, goals, feedback, guides, schedules] =
+        await Promise.all([
         prisma.team.findUniqueOrThrow({
           where: { id: input.teamId },
           include: {
@@ -177,6 +202,24 @@ export const teamsRouter = createTRPCRouter({
           orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
           take: 5,
         }),
+        prisma.schedule.findMany({
+          where: {
+            personId: ctx.personId,
+            teamId: input.teamId,
+            sortDate: { gte: new Date() },
+          },
+          select: {
+            id: true,
+            positionName: true,
+            status: true,
+            sortDate: true,
+            dates: true,
+            startsAt: true,
+            endsAt: true,
+          },
+          orderBy: { sortDate: "asc" },
+          take: 5,
+        }),
       ]);
 
       return {
@@ -185,6 +228,7 @@ export const teamsRouter = createTRPCRouter({
         goals,
         feedback,
         guides,
+        schedules,
       };
     }),
 

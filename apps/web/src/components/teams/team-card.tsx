@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Users, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,7 +10,24 @@ type TeamCardProps = {
   memberCount: number;
   userRole: string;
   isLeader: boolean;
+  nextServingDate?: string | null;
 };
+
+function formatNextServing(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (date.toDateString() === now.toDateString()) return "Today";
+  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function TeamCard({
   id,
@@ -19,6 +36,7 @@ export function TeamCard({
   memberCount,
   userRole,
   isLeader,
+  nextServingDate,
 }: TeamCardProps) {
   return (
     <Link href={`/teams/${id}`}>
@@ -36,11 +54,21 @@ export function TeamCard({
           </div>
           <Badge variant={isLeader ? "accent" : "muted"}>{userRole}</Badge>
         </div>
-        <div className="flex items-center gap-1.5 text-text-tertiary mt-3">
-          <Users className="w-3.5 h-3.5" />
-          <span className="text-xs">
-            {memberCount} {memberCount === 1 ? "member" : "members"}
-          </span>
+        <div className="flex items-center gap-3 text-text-tertiary mt-3">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5" />
+            <span className="text-xs">
+              {memberCount} {memberCount === 1 ? "member" : "members"}
+            </span>
+          </div>
+          {nextServingDate && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="text-xs">
+                {formatNextServing(nextServingDate)}
+              </span>
+            </div>
+          )}
         </div>
       </Card>
     </Link>
