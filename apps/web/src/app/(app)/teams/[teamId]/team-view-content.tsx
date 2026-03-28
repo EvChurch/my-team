@@ -18,6 +18,7 @@ import { ScrollFade } from "@/components/ui/scroll-fade";
 import { LeaderActions } from "@/components/teams/leader-actions";
 import { TeamMembersList } from "@/components/teams/team-members-list";
 import { TeamRolesList } from "@/components/teams/team-roles-list";
+import { UpcomingServing } from "@/components/teams/upcoming-serving";
 
 type TeamViewContentProps = {
   teamId: string;
@@ -99,17 +100,21 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         <LeaderActions teamId={teamId} pendingGoalsCount={pendingGoalsCount} />
       )}
 
-      {/* My Upcoming Serving - deferred */}
+      {/* My Upcoming Serving */}
       <Card className="p-4">
         <h2 className="text-[15px] font-semibold text-text-primary mb-3">
           My Upcoming Serving
         </h2>
-        <EmptyState
-          icon={Calendar}
-          title="No Schedule Yet"
-          description="Schedule sync coming soon."
-          className="py-6"
-        />
+        {team.schedules.length > 0 ? (
+          <UpcomingServing schedules={team.schedules} />
+        ) : (
+          <EmptyState
+            icon={Calendar}
+            title="No Upcoming Schedules"
+            description="You have no upcoming serving dates for this team."
+            className="py-6"
+          />
+        )}
       </Card>
 
       {/* About */}

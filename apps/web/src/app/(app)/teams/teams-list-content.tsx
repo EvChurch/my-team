@@ -31,6 +31,7 @@ export function TeamsListContent() {
           memberCount={team.memberCount}
           userRole={team.userRole}
           isLeader={team.isLeader}
+          nextServingDate={team.nextServingDate}
         />
       ))}
     </div>
