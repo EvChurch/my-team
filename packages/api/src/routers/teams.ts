@@ -216,6 +216,16 @@ export const teamsRouter = createTRPCRouter({
             dates: true,
             startsAt: true,
             endsAt: true,
+            planTimes: {
+              orderBy: { startsAt: "asc" },
+              select: {
+                id: true,
+                name: true,
+                timeType: true,
+                startsAt: true,
+                endsAt: true,
+              },
+            },
           },
           orderBy: { sortDate: "asc" },
           take: 5,
