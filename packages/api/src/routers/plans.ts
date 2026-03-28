@@ -396,6 +396,7 @@ export const plansRouter = createTRPCRouter({
           seriesTitle: plan.series_title ?? null,
           totalLength: plan.total_length ?? null,
           planningCenterUrl: plan.planning_center_url ?? null,
+          serviceTypeName: schedule.serviceTypeName,
         },
         serviceOrder,
         planTimes,
