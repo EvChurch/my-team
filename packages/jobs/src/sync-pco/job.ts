@@ -86,30 +86,72 @@ export async function SyncPcoJob(): Promise<void> {
   try {
     const { schedules } = await fetchSchedulesSnapshot(serviceTypeList)
     const syncedSchedules = schedules.map(
-      (s) => s.where.remoteId_provider!.remoteId
+      (s) => s.upsert.where.remoteId_provider!.remoteId
     )
 
     console.log(`Updating ${schedules.length} Schedules`)
 
-    for (const schedule of schedules) {
+    for (const { upsert, planTimes } of schedules) {
+      let scheduleRecord: { id: string }
       try {
-        await prisma.schedule.upsert(schedule)
+        scheduleRecord = await prisma.schedule.upsert(upsert)
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === "P2025"
         ) {
           console.error(
-            `Schedule ${schedule.where.remoteId_provider?.remoteId} is missing a person or team`
+            `Schedule ${upsert.where.remoteId_provider?.remoteId} is missing a person or team`
           )
           continue
         } else {
           throw error
         }
       }
+
+      // Sync plan times for this schedule
+      const syncedPlanTimeIds: string[] = []
+      for (const pt of planTimes) {
+        syncedPlanTimeIds.push(pt.remoteId)
+        await prisma.planTime.upsert({
+          where: {
+            remoteId_provider_scheduleId: {
+              remoteId: pt.remoteId,
+              provider: "PCO",
+              scheduleId: scheduleRecord.id,
+            },
+          },
+          create: {
+            remoteId: pt.remoteId,
+            provider: "PCO",
+            scheduleId: scheduleRecord.id,
+            name: pt.name,
+            timeType: pt.timeType,
+            startsAt: pt.startsAt,
+            endsAt: pt.endsAt,
+          },
+          update: {
+            name: pt.name,
+            timeType: pt.timeType,
+            startsAt: pt.startsAt,
+            endsAt: pt.endsAt,
+          },
+        })
+      }
+
+      // Prune stale plan times for this schedule
+      if (syncedPlanTimeIds.length > 0) {
+        await prisma.planTime.deleteMany({
+          where: {
+            scheduleId: scheduleRecord.id,
+            remoteId: { notIn: syncedPlanTimeIds },
+            provider: "PCO",
+          },
+        })
+      }
     }
 
-    // Prune stale schedules
+    // Prune stale schedules (cascade deletes plan times)
     const delStaleSchedules = await prisma.schedule.deleteMany({
       where: { remoteId: { notIn: syncedSchedules }, provider: "PCO" },
     })

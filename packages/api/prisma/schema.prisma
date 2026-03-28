@@ -173,14 +173,33 @@ model Schedule {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  person    Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  team      Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  planTimes PlanTime[]
 
   @@unique([remoteId, provider])
   @@index([personId])
   @@index([teamId])
   @@index([personId, teamId])
   @@index([sortDate])
+}
+
+model PlanTime {
+  id         String   @id @default(cuid())
+  remoteId   String
+  provider   Provider
+  scheduleId String
+  name       String?
+  timeType   String?
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([remoteId, provider, scheduleId])
+  @@index([scheduleId])
 }
 
 // --- App-native models (full CRUD) ---
