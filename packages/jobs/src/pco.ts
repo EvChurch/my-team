@@ -1,7 +1,7 @@
 import Jsona from "jsona"
 import { z } from "zod"
 
-import type { Prisma } from "@mt/api/prisma"
+import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
 
 const PCO_API = "https://api.planningcenteronline.com"
 const jsonaFormatter = new Jsona()
@@ -342,4 +342,171 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
     positions: [...positions.values()],
     assignments: [...assignments.values()],
   }
+}
+
+// --- Schedule fetching ---
+
+const planTimeSchema = z
+  .object({
+    id: z.string(),
+    starts_at: z.string().nullable().optional(),
+    ends_at: z.string().nullable().optional(),
+  })
+  .passthrough()
+
+const planSchema = z
+  .object({
+    id: z.string(),
+    sort_date: z.string().nullable().optional(),
+    dates: z.string().nullable().optional(),
+    plan_times: z.array(planTimeSchema).optional().default([]),
+  })
+  .passthrough()
+
+const plansPayloadSchema = z.array(planSchema)
+
+const teamMemberSchema = z
+  .object({
+    id: z.string(),
+    status: z.string(),
+    team_position_name: z.string().nullable().optional(),
+    person: z.object({ id: z.string() }).passthrough().nullable().optional(),
+    team: z.object({ id: z.string() }).passthrough().nullable().optional(),
+  })
+  .passthrough()
+
+const teamMembersPayloadSchema = z.array(teamMemberSchema)
+
+const PCO_STATUS_MAP: Record<string, ScheduleStatus> = {
+  C: "CONFIRMED",
+  Confirmed: "CONFIRMED",
+  U: "UNCONFIRMED",
+  Unconfirmed: "UNCONFIRMED",
+  D: "DECLINED",
+  Declined: "DECLINED",
+}
+
+export type SchedulesSnapshot = {
+  schedules: Prisma.ScheduleUpsertArgs[]
+}
+
+export async function fetchSchedulesSnapshot(
+  serviceTypes: { remoteId: string; name: string }[]
+): Promise<SchedulesSnapshot> {
+  const schedules = new Map<string, Prisma.ScheduleUpsertArgs>()
+
+  for (const { remoteId: serviceTypeRemoteId, name: serviceTypeName } of serviceTypes) {
+    let plans: z.infer<typeof planSchema>[]
+    try {
+      const rawPlans = await fetchPCO(
+        `/services/v2/service_types/${serviceTypeRemoteId}/plans?filter=future&include=plan_times&per_page=100&order=sort_date`
+      )
+      const parsed = plansPayloadSchema.safeParse(rawPlans)
+      if (!parsed.success) {
+        console.error(
+          `Invalid plans payload for service type ${serviceTypeRemoteId}: ${parsed.error.message}`
+        )
+        continue
+      }
+      plans = parsed.data
+    } catch (error) {
+      console.error(
+        `Failed to fetch plans for service type ${serviceTypeRemoteId}:`,
+        error
+      )
+      continue
+    }
+
+    if (plans.length === 0) continue
+
+    for (const plan of plans) {
+      if (!plan.sort_date) continue
+
+      // Pick earliest starts_at and latest ends_at from plan_times
+      let startsAt: string | null = null
+      let endsAt: string | null = null
+      for (const pt of plan.plan_times) {
+        if (pt.starts_at && (!startsAt || pt.starts_at < startsAt)) {
+          startsAt = pt.starts_at
+        }
+        if (pt.ends_at && (!endsAt || pt.ends_at > endsAt)) {
+          endsAt = pt.ends_at
+        }
+      }
+
+      let teamMembers: z.infer<typeof teamMemberSchema>[]
+      try {
+        const rawMembers = await fetchPCO(
+          `/services/v2/service_types/${serviceTypeRemoteId}/plans/${plan.id}/team_members?include=person,team&per_page=100`
+        )
+        const parsed = teamMembersPayloadSchema.safeParse(rawMembers)
+        if (!parsed.success) {
+          console.error(
+            `Invalid team members payload for plan ${plan.id}: ${parsed.error.message}`
+          )
+          continue
+        }
+        teamMembers = parsed.data
+      } catch (error) {
+        console.error(
+          `Failed to fetch team members for plan ${plan.id}:`,
+          error
+        )
+        continue
+      }
+
+      for (const member of teamMembers) {
+        if (!member.person || !member.team) continue
+
+        const status = PCO_STATUS_MAP[member.status] ?? "UNCONFIRMED"
+
+        schedules.set(member.id, {
+          where: {
+            remoteId_provider: {
+              remoteId: member.id,
+              provider: "PCO",
+            },
+          },
+          create: {
+            remoteId: member.id,
+            provider: "PCO",
+            person: {
+              connect: {
+                remoteId_provider: {
+                  remoteId: member.person.id,
+                  provider: "PCO",
+                },
+              },
+            },
+            team: {
+              connect: {
+                remoteId_provider: {
+                  remoteId: member.team.id,
+                  provider: "PCO",
+                },
+              },
+            },
+            positionName: member.team_position_name ?? null,
+            serviceTypeName,
+            status,
+            sortDate: new Date(plan.sort_date),
+            dates: plan.dates ?? "",
+            startsAt: startsAt ? new Date(startsAt) : null,
+            endsAt: endsAt ? new Date(endsAt) : null,
+            planRemoteId: plan.id,
+          },
+          update: {
+            positionName: member.team_position_name ?? null,
+            status,
+            sortDate: new Date(plan.sort_date),
+            dates: plan.dates ?? "",
+            startsAt: startsAt ? new Date(startsAt) : null,
+            endsAt: endsAt ? new Date(endsAt) : null,
+          },
+        })
+      }
+    }
+  }
+
+  return { schedules: [...schedules.values()] }
 }
