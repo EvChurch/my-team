@@ -1,7 +1,7 @@
 import { Prisma } from "@mt/api/prisma"
 import { prisma } from "@mt/api/db"
 
-import { fetchTeamsSnapshot } from "../pco.js"
+import { fetchTeamsSnapshot, fetchSchedulesSnapshot } from "../pco.js"
 
 export async function SyncPcoJob(): Promise<void> {
   console.log("Fetching PCO data...")
@@ -73,6 +73,57 @@ export async function SyncPcoJob(): Promise<void> {
 
   for (const assignment of assignments) {
     await prisma.assignment.upsert(assignment)
+  }
+
+  // --- Schedule sync phase (separate from team sync) ---
+  console.log("Fetching PCO schedules...")
+
+  const serviceTypeList = serviceTypes.map((s) => ({
+    remoteId: s.where.remoteId_provider!.remoteId,
+    name: (s.create as { name: string }).name,
+  }))
+
+  try {
+    const { schedules } = await fetchSchedulesSnapshot(serviceTypeList)
+    const syncedSchedules = schedules.map(
+      (s) => s.where.remoteId_provider!.remoteId
+    )
+
+    console.log(`Updating ${schedules.length} Schedules`)
+
+    for (const schedule of schedules) {
+      try {
+        await prisma.schedule.upsert(schedule)
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2025"
+        ) {
+          console.error(
+            `Schedule ${schedule.where.remoteId_provider?.remoteId} is missing a person or team`
+          )
+          continue
+        } else {
+          throw error
+        }
+      }
+    }
+
+    // Prune stale schedules
+    const delStaleSchedules = await prisma.schedule.deleteMany({
+      where: { remoteId: { notIn: syncedSchedules }, provider: "PCO" },
+    })
+    if (delStaleSchedules.count)
+      console.log(`Deleted ${delStaleSchedules.count} stale schedules`)
+
+    // Prune past schedules
+    const delPastSchedules = await prisma.schedule.deleteMany({
+      where: { sortDate: { lt: new Date() }, provider: "PCO" },
+    })
+    if (delPastSchedules.count)
+      console.log(`Deleted ${delPastSchedules.count} past schedules`)
+  } catch (error) {
+    console.error("Schedule sync failed (team sync data preserved):", error)
   }
 
   console.log("Pruning PCO records no longer in upstream")
