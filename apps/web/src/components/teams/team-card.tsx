@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Users, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTimezone } from "@/lib/timezone";
+import { formatDate } from "@/lib/format-date";
 
 type TeamCardProps = {
   id: string;
@@ -13,22 +17,6 @@ type TeamCardProps = {
   nextServingDate?: string | null;
 };
 
-function formatNextServing(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === now.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export function TeamCard({
   id,
   name,
@@ -38,6 +26,7 @@ export function TeamCard({
   isLeader,
   nextServingDate,
 }: TeamCardProps) {
+  const tz = useTimezone();
   return (
     <Link href={`/teams/${id}`}>
       <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
@@ -65,7 +54,7 @@ export function TeamCard({
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span className="text-xs">
-                {formatNextServing(nextServingDate)}
+                {formatDate(nextServingDate, tz)}
               </span>
             </div>
           )}

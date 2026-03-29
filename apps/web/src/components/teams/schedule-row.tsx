@@ -13,6 +13,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTimezone } from "@/lib/timezone";
+import { formatDate, formatTime, formatTimeRange } from "@/lib/format-date";
 
 type PlanTime = {
   id: string;
@@ -40,38 +42,6 @@ type ScheduleRowProps = {
   showTeamName?: boolean;
 };
 
-function formatDate(dateStr: Date | string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === now.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(dateStr: Date | string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatTimeRange(
-  startsAt: Date | string | null,
-  endsAt: Date | string | null,
-): string {
-  if (!startsAt) return "";
-  const start = formatTime(startsAt);
-  if (!endsAt) return start;
-  return `${start} – ${formatTime(endsAt)}`;
-}
 
 const statusConfig = {
   CONFIRMED: {
@@ -98,6 +68,7 @@ const typeLabels: Record<string, string> = {
 };
 
 export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
+  const tz = useTimezone();
   const [expanded, setExpanded] = useState(false);
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
@@ -161,12 +132,12 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
           <Calendar className="w-4 h-4 text-text-secondary" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
-            {formatDate(schedule.sortDate)}
+          <p className="text-sm font-medium text-text-primary">
+            {formatDate(schedule.sortDate, tz)}
             {schedule.startsAt && (
-              <span className="text-text-secondary font-normal" suppressHydrationWarning>
+              <span className="text-text-secondary font-normal">
                 {" "}
-                at {formatTime(schedule.startsAt)}
+                at {formatTime(schedule.startsAt, tz)}
               </span>
             )}
           </p>
@@ -299,10 +270,10 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
                   {pt.name ?? ""}
                 </span>
               </div>
-              <span className="text-xs text-text-secondary" suppressHydrationWarning>
-                {pt.startsAt && formatDate(pt.startsAt)}
+              <span className="text-xs text-text-secondary">
+                {pt.startsAt && formatDate(pt.startsAt, tz)}
                 {pt.startsAt && " "}
-                {formatTimeRange(pt.startsAt, pt.endsAt)}
+                {formatTimeRange(pt.startsAt, pt.endsAt, tz)}
               </span>
             </div>
           ))}

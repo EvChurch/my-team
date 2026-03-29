@@ -6,29 +6,8 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useTRPC } from "@mt/api/client";
 import { Calendar, Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-
-function formatDate(dateStr: Date | string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === now.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(dateStr: Date | string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { useTimezone } from "@/lib/timezone";
+import { formatDate, formatTime } from "@/lib/format-date";
 
 function ScheduleCard({
   schedule,
@@ -62,6 +41,7 @@ function ScheduleCard({
     }),
   );
 
+  const tz = useTimezone();
   const isConfirmed = schedule.status === "CONFIRMED";
   const isUnconfirmed = schedule.status === "UNCONFIRMED";
   const isPending = respondMutation.isPending;
@@ -123,18 +103,12 @@ function ScheduleCard({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p
-                className="text-sm font-medium text-text-primary"
-                suppressHydrationWarning
-              >
-                {formatDate(schedule.sortDate)}
+              <p className="text-sm font-medium text-text-primary">
+                {formatDate(schedule.sortDate, tz)}
                 {schedule.startsAt && (
-                  <span
-                    className="text-text-secondary font-normal"
-                    suppressHydrationWarning
-                  >
+                  <span className="text-text-secondary font-normal">
                     {" "}
-                    at {formatTime(schedule.startsAt)}
+                    at {formatTime(schedule.startsAt, tz)}
                   </span>
                 )}
               </p>
@@ -199,8 +173,8 @@ function ScheduleCard({
                 <h3 className="text-base font-semibold text-text-primary">
                   Decline Schedule?
                 </h3>
-                <p className="text-xs text-text-secondary" suppressHydrationWarning>
-                  {formatDate(schedule.sortDate)}
+                <p className="text-xs text-text-secondary">
+                  {formatDate(schedule.sortDate, tz)}
                   {schedule.team ? ` · ${schedule.team.name}` : ""}
                 </p>
               </div>

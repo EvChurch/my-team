@@ -1,7 +1,9 @@
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
+import { TimezoneProvider } from "@/lib/timezone";
 import { Providers } from "../providers";
 
 export default async function AppLayout({
@@ -15,18 +17,23 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  const cookieStore = await cookies();
+  const serverTimezone = cookieStore.get("tz")?.value ?? "UTC";
+
   return (
     <Providers>
-      <div className="flex h-full min-h-screen">
-        <Sidebar
-          userName={session.user.name}
-          userImage={session.user.image}
-        />
-        <main className="flex-1 overflow-y-auto pb-24 md:pb-0 md:px-12 md:py-10 px-4 py-6">
-          {children}
-        </main>
-        <MobileTabBar />
-      </div>
+      <TimezoneProvider serverTimezone={serverTimezone}>
+        <div className="flex h-full min-h-screen">
+          <Sidebar
+            userName={session.user.name}
+            userImage={session.user.image}
+          />
+          <main className="flex-1 overflow-y-auto pb-24 md:pb-0 md:px-12 md:py-10 px-4 py-6">
+            {children}
+          </main>
+          <MobileTabBar />
+        </div>
+      </TimezoneProvider>
     </Providers>
   );
 }

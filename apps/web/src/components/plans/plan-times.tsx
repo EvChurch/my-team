@@ -1,4 +1,8 @@
+"use client";
+
 import { Clock } from "lucide-react";
+import { useTimezone } from "@/lib/timezone";
+import { formatDateTime, formatTimeRange } from "@/lib/format-date";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -19,32 +23,6 @@ const typeLabels: Record<string, string> = {
   rehearsal: "Rehearsal",
 };
 
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatTimeRange(
-  startsAt: string | null,
-  endsAt: string | null,
-): string {
-  if (!startsAt) return "";
-  const start = formatTime(startsAt);
-  if (!endsAt) return start;
-  return `${start} \u2013 ${formatTime(endsAt)}`;
-}
-
 function getDisplayName(pt: PlanTime): string {
   // If there's a name like "Setup", "Sound Check", "Pre-Service", use it
   if (pt.name) return pt.name;
@@ -56,14 +34,15 @@ function getDisplayName(pt: PlanTime): string {
 }
 
 export function PlanTimes({ planTimes }: PlanTimesProps) {
+  const tz = useTimezone();
   if (planTimes.length === 0) return null;
 
   return (
     <Card className="divide-y divide-border overflow-hidden">
       {planTimes.map((pt) => {
         const displayName = getDisplayName(pt);
-        const timeRange = formatTimeRange(pt.startsAt, pt.endsAt);
-        const dateLabel = pt.startsAt ? formatDateTime(pt.startsAt) : "";
+        const timeRange = formatTimeRange(pt.startsAt, pt.endsAt, tz);
+        const dateLabel = pt.startsAt ? formatDateTime(pt.startsAt, tz) : "";
         // Show badge only for service/rehearsal types when the name is different from the type
         const showBadge =
           pt.timeType &&
@@ -78,7 +57,7 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
+                <p className="text-sm font-medium text-text-primary">
                   {timeRange || dateLabel}
                 </p>
                 {showBadge && (
@@ -91,7 +70,7 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
                 )}
               </div>
               {displayName && (
-                <p className="text-xs text-text-secondary mt-0.5" suppressHydrationWarning>
+                <p className="text-xs text-text-secondary mt-0.5">
                   {dateLabel && timeRange ? `${dateLabel} \u00b7 ` : ""}
                   {displayName}
                 </p>

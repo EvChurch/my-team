@@ -22,28 +22,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { UpcomingServing } from "@/components/teams/upcoming-serving";
 import { LeaderBar } from "@/components/teams/leader-bar";
 import { Avatar } from "@/components/ui/avatar";
+import { useTimezone } from "@/lib/timezone";
+import { formatDate, formatTime } from "@/lib/format-date";
 
 type TeamViewContentProps = {
   teamId: string;
 };
 
 type Tab = "serving" | "members" | "goals" | "guides" | "feedback" | "about";
-
-function formatServingDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (date.toDateString() === now.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
-
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function formatLastServed(dateStr: string): string {
   const date = new Date(dateStr);
@@ -85,6 +71,7 @@ function MemberRow({
 
 export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const trpc = useTRPC();
+  const tz = useTimezone();
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
   );
@@ -273,22 +260,15 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                         <div className="p-4 pb-3">
                           <h3
                             className="text-sm font-semibold text-text-primary"
-                            suppressHydrationWarning
-                          >
-                            {formatServingDate(plan.sortDate)}
+                                                     >
+                            {formatDate(plan.sortDate, tz)}
                             {plan.startsAt && (
                               <span
                                 className="text-text-secondary font-normal"
-                                suppressHydrationWarning
-                              >
+                                                             >
                                 {" "}
                                 at{" "}
-                                {new Date(
-                                  plan.startsAt,
-                                ).toLocaleTimeString("en-US", {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                })}
+                                {formatTime(plan.startsAt, tz)}
                               </span>
                             )}
                           </h3>
