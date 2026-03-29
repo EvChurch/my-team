@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-type BadgeVariant = "accent" | "muted";
+type BadgeVariant = "accent" | "muted" | "warning";
 
 type BadgeProps = ComponentProps<"span"> & {
   variant?: BadgeVariant;
@@ -9,6 +9,7 @@ type BadgeProps = ComponentProps<"span"> & {
 const variantStyles: Record<BadgeVariant, string> = {
   accent: "bg-accent-light text-accent",
   muted: "bg-bg-muted text-text-tertiary",
+  warning: "bg-warning/15 text-warning",
 };
 
 export function Badge({

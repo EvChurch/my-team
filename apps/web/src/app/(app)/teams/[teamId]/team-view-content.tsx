@@ -7,6 +7,8 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
+  Check,
+  Clock,
   Users,
   BookOpen,
   Target,
@@ -244,74 +246,118 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           {team.isCurrentUserLeader &&
             (team.teamSchedules?.length ?? 0) > 0 && (
               <>
-                {(team.teamSchedules ?? []).map((plan) => (
-                  <Link
-                    key={plan.planRemoteId}
-                    href={`/plans/${plan.planRemoteId}`}
-                  >
-                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-semibold text-text-primary" suppressHydrationWarning>
-                          {formatServingDate(plan.sortDate)}
-                          {plan.startsAt && (
-                            <span className="text-text-secondary font-normal" suppressHydrationWarning>
-                              {" "}
-                              at{" "}
-                              {new Date(plan.startsAt).toLocaleTimeString(
-                                "en-US",
-                                { hour: "numeric", minute: "2-digit" },
-                              )}
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-xs text-text-tertiary">
-                          {plan.people.length}{" "}
-                          {plan.people.length === 1 ? "person" : "people"}{" "}
-                          rostered
-                        </p>
-                      </div>
-                    <div className="space-y-2">
-                      {plan.people.map((person) => {
-                        const statusLabel =
-                          person.status === "CONFIRMED"
-                            ? "Confirmed"
-                            : person.status === "DECLINED"
-                              ? "Declined"
-                              : "Pending";
-                        const statusClass =
-                          person.status === "CONFIRMED"
-                            ? "text-accent"
-                            : person.status === "DECLINED"
-                              ? "text-error"
-                              : "text-text-tertiary";
+                {(team.teamSchedules ?? []).map((plan) => {
+                  // Group people by position/role
+                  const roleGroups = new Map<string, typeof plan.people>();
+                  for (const person of plan.people) {
+                    const role = person.positionName ?? "Unassigned";
+                    if (!roleGroups.has(role))
+                      roleGroups.set(role, []);
+                    roleGroups.get(role)!.push(person);
+                  }
 
-                        return (
-                          <div
-                            key={person.personId}
-                            className="flex items-center justify-between gap-2"
+                  const confirmedCount = plan.people.filter(
+                    (p) => p.status === "CONFIRMED",
+                  ).length;
+                  const pendingCount = plan.people.filter(
+                    (p) => p.status === "UNCONFIRMED",
+                  ).length;
+
+                  return (
+                    <Link
+                      key={plan.planRemoteId}
+                      href={`/plans/${plan.planRemoteId}`}
+                    >
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                        {/* Plan header */}
+                        <div className="p-4 pb-3">
+                          <h3
+                            className="text-sm font-semibold text-text-primary"
+                            suppressHydrationWarning
                           >
-                            <div className="min-w-0">
-                              <p className="text-sm text-text-primary truncate">
-                                {person.personName}
-                              </p>
-                              {person.positionName && (
-                                <p className="text-xs text-text-tertiary">
-                                  {person.positionName}
-                                </p>
-                              )}
-                            </div>
-                            <span
-                              className={`text-xs shrink-0 ${statusClass}`}
-                            >
-                              {statusLabel}
+                            {formatServingDate(plan.sortDate)}
+                            {plan.startsAt && (
+                              <span
+                                className="text-text-secondary font-normal"
+                                suppressHydrationWarning
+                              >
+                                {" "}
+                                at{" "}
+                                {new Date(
+                                  plan.startsAt,
+                                ).toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            )}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-text-tertiary">
+                              {plan.people.length}{" "}
+                              {plan.people.length === 1
+                                ? "person"
+                                : "people"}
                             </span>
+                            {confirmedCount > 0 && (
+                              <span className="text-xs text-accent">
+                                {confirmedCount} confirmed
+                              </span>
+                            )}
+                            {pendingCount > 0 && (
+                              <span className="text-xs text-warning">
+                                {pendingCount} pending
+                              </span>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                    </Card>
-                  </Link>
-                ))}
+                        </div>
+
+                        {/* Role-grouped roster */}
+                        <div className="divide-y divide-border">
+                          {Array.from(roleGroups.entries()).map(
+                            ([roleName, people]) => (
+                              <div key={roleName} className="px-4 py-3">
+                                <p className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide mb-2">
+                                  {roleName}
+                                </p>
+                                <div className="space-y-1.5">
+                                  {people.map((person) => {
+                                    const isConfirmed =
+                                      person.status === "CONFIRMED";
+                                    const isDeclined =
+                                      person.status === "DECLINED";
+
+                                    return (
+                                      <div
+                                        key={person.personId}
+                                        className="flex items-center justify-between gap-2"
+                                      >
+                                        <p
+                                          className={`text-sm truncate ${isDeclined ? "text-text-tertiary line-through" : "text-text-primary"}`}
+                                        >
+                                          {person.personName}
+                                        </p>
+                                        {isConfirmed ? (
+                                          <Check className="w-3.5 h-3.5 text-accent shrink-0" />
+                                        ) : isDeclined ? (
+                                          <span className="text-[10px] text-error shrink-0">
+                                            Declined
+                                          </span>
+                                        ) : (
+                                          <Clock className="w-3.5 h-3.5 text-warning shrink-0" />
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </>
             )}
         </div>

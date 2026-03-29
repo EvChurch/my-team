@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Check, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,10 +38,13 @@ export function UpcomingServingOverview() {
   );
   const [showAll, setShowAll] = useState(false);
 
-  if (schedules.length === 0) return null;
+  // Filter out declined schedules
+  const activeSchedules = schedules.filter((s) => s.status !== "DECLINED");
 
-  const visible = showAll ? schedules : schedules.slice(0, 3);
-  const hasMore = schedules.length > 3;
+  if (activeSchedules.length === 0) return null;
+
+  const visible = showAll ? activeSchedules : activeSchedules.slice(0, 3);
+  const hasMore = activeSchedules.length > 3;
 
   return (
     <section className="mb-6">
@@ -53,18 +56,33 @@ export function UpcomingServingOverview() {
           const href = schedule.planRemoteId
             ? `/plans/${schedule.planRemoteId}`
             : undefined;
+          const isConfirmed = schedule.status === "CONFIRMED";
 
           const content = (
             <Card className="p-4 hover:shadow-md transition-shadow h-full">
               <div className="flex items-start gap-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent/10 shrink-0">
-                  <Calendar className="w-4 h-4 text-accent" />
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
+                    isConfirmed ? "bg-accent/10" : "bg-warning/10"
+                  }`}
+                >
+                  {isConfirmed ? (
+                    <Check className="w-4 h-4 text-accent" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-warning" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
+                  <p
+                    className="text-sm font-medium text-text-primary"
+                    suppressHydrationWarning
+                  >
                     {formatDate(schedule.sortDate)}
                     {schedule.startsAt && (
-                      <span className="text-text-secondary font-normal" suppressHydrationWarning>
+                      <span
+                        className="text-text-secondary font-normal"
+                        suppressHydrationWarning
+                      >
                         {" "}
                         at {formatTime(schedule.startsAt)}
                       </span>
@@ -75,11 +93,14 @@ export function UpcomingServingOverview() {
                       {schedule.team.name}
                     </p>
                   )}
-                  {schedule.positionName && (
-                    <Badge variant="muted" className="mt-1.5">
-                      {schedule.positionName}
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    {schedule.positionName && (
+                      <Badge variant="muted">{schedule.positionName}</Badge>
+                    )}
+                    <Badge variant={isConfirmed ? "accent" : "warning"}>
+                      {isConfirmed ? "Confirmed" : "Pending"}
                     </Badge>
-                  )}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -105,7 +126,7 @@ export function UpcomingServingOverview() {
             </>
           ) : (
             <>
-              See all ({schedules.length}){" "}
+              See all ({activeSchedules.length}){" "}
               <ChevronDown className="w-3.5 h-3.5" />
             </>
           )}
