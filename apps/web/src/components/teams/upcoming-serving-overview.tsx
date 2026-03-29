@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { Calendar, Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTimezone } from "@/lib/timezone";
 import { formatDate, formatTime } from "@/lib/format-date";
@@ -284,9 +284,6 @@ export function UpcomingServingOverview() {
 
   if (activeSchedules.length === 0) return null;
 
-  const visibleConfirmed = showAll
-    ? confirmedSchedules
-    : confirmedSchedules.slice(0, 3);
   const canToggle = confirmedSchedules.length > 3;
 
   return (

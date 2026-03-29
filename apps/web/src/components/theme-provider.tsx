@@ -46,18 +46,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Fetch server preference on mount and reconcile
   const { data: serverTheme } = useQuery(trpc.preferences.getTheme.queryOptions());
 
-  useEffect(() => {
-    if (serverTheme) {
-      const mapped = serverTheme.toLowerCase() as Theme;
-      const localTheme = localStorage.getItem("theme") as Theme | null;
-      // Server wins if local has no value (new device)
-      if (!localTheme) {
-        setThemeState(mapped);
+  // Reconcile server theme preference with local — only when server data arrives
+  // and local has no stored preference (new device)
+  if (serverTheme) {
+    const mapped = serverTheme.toLowerCase() as Theme;
+    const localTheme =
+      typeof window !== "undefined"
+        ? localStorage.getItem("theme")
+        : null;
+    if (!localTheme && theme !== mapped) {
+      setThemeState(mapped);
+      if (typeof window !== "undefined") {
         localStorage.setItem("theme", mapped);
         applyTheme(mapped);
       }
     }
-  }, [serverTheme]);
+  }
 
   const { mutate: saveTheme } = useMutation(
     trpc.preferences.setTheme.mutationOptions()
