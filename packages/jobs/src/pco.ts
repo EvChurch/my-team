@@ -1,8 +1,10 @@
+import Jsona from "jsona"
 import { z } from "zod"
 
 import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
-import { fetchPCO } from "@mt/api/pco"
 
+const PCO_API = "https://api.planningcenteronline.com"
+const jsonaFormatter = new Jsona()
 const PCO_TEAMS_PAGE_SIZE = 25
 
 const serviceTypeSchema = z
@@ -59,6 +61,25 @@ const teamSchema = z
   .passthrough()
 
 const teamsPayloadSchema = z.array(teamSchema)
+
+function pcoBasicAuth(): string {
+  return Buffer.from(
+    `${process.env.PCO_API_ID}:${process.env.PCO_API_SECRET}`,
+    "utf8"
+  ).toString("base64")
+}
+
+async function fetchPCO(path: string): Promise<unknown> {
+  const res = await fetch(`${PCO_API}${path}`, {
+    headers: { Authorization: `Basic ${pcoBasicAuth()}` },
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`PCO API ${res.status}: ${text}`)
+  }
+  const text = await res.text()
+  return jsonaFormatter.deserialize(text)
+}
 
 export type TeamsSnapshot = {
   serviceTypes: Prisma.ServiceTypeUpsertArgs[]
@@ -328,8 +349,6 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
 const planTimeSchema = z
   .object({
     id: z.string(),
-    name: z.string().nullable().optional(),
-    time_type: z.string().nullable().optional(),
     starts_at: z.string().nullable().optional(),
     ends_at: z.string().nullable().optional(),
   })
@@ -367,64 +386,14 @@ const PCO_STATUS_MAP: Record<string, ScheduleStatus> = {
   Declined: "DECLINED",
 }
 
-type PlanTimeData = {
-  remoteId: string
-  name: string | null
-  timeType: string | null
-  startsAt: Date | null
-  endsAt: Date | null
-}
-
-export type ScheduleData = {
-  upsert: Prisma.ScheduleUpsertArgs
-  planTimes: PlanTimeData[]
-}
-
 export type SchedulesSnapshot = {
-  schedules: ScheduleData[]
-}
-
-function findServiceTime(
-  planTimes: z.infer<typeof planTimeSchema>[],
-  sortDate: string
-): { startsAt: string | null; endsAt: string | null } {
-  // Prefer plan_time with time_type "service" (case-insensitive)
-  const serviceTime = planTimes.find(
-    (pt) => pt.time_type?.toLowerCase() === "service"
-  )
-  if (serviceTime?.starts_at) {
-    return { startsAt: serviceTime.starts_at, endsAt: serviceTime.ends_at ?? null }
-  }
-
-  // Fallback: pick the plan_time closest to sortDate (same day or latest)
-  const sortDay = new Date(sortDate).toISOString().slice(0, 10)
-  const sameDayTimes = planTimes.filter(
-    (pt) => pt.starts_at && new Date(pt.starts_at).toISOString().slice(0, 10) === sortDay
-  )
-  if (sameDayTimes.length > 0) {
-    // Pick the latest start on the sort date day (likely the actual service)
-    const latest = sameDayTimes.sort(
-      (a, b) => new Date(b.starts_at!).getTime() - new Date(a.starts_at!).getTime()
-    )[0]!
-    return { startsAt: latest.starts_at!, endsAt: latest.ends_at ?? null }
-  }
-
-  // Last resort: latest plan_time overall
-  const withStarts = planTimes.filter((pt) => pt.starts_at)
-  if (withStarts.length > 0) {
-    const latest = withStarts.sort(
-      (a, b) => new Date(b.starts_at!).getTime() - new Date(a.starts_at!).getTime()
-    )[0]!
-    return { startsAt: latest.starts_at!, endsAt: latest.ends_at ?? null }
-  }
-
-  return { startsAt: null, endsAt: null }
+  schedules: Prisma.ScheduleUpsertArgs[]
 }
 
 export async function fetchSchedulesSnapshot(
   serviceTypes: { remoteId: string; name: string }[]
 ): Promise<SchedulesSnapshot> {
-  const schedules = new Map<string, ScheduleData>()
+  const schedules = new Map<string, Prisma.ScheduleUpsertArgs>()
 
   for (const { remoteId: serviceTypeRemoteId, name: serviceTypeName } of serviceTypes) {
     let plans: z.infer<typeof planSchema>[]
@@ -453,15 +422,17 @@ export async function fetchSchedulesSnapshot(
     for (const plan of plans) {
       if (!plan.sort_date) continue
 
-      const { startsAt, endsAt } = findServiceTime(plan.plan_times, plan.sort_date)
-
-      const planTimesData: PlanTimeData[] = plan.plan_times.map((pt) => ({
-        remoteId: pt.id,
-        name: pt.name ?? null,
-        timeType: pt.time_type ?? null,
-        startsAt: pt.starts_at ? new Date(pt.starts_at) : null,
-        endsAt: pt.ends_at ? new Date(pt.ends_at) : null,
-      }))
+      // Pick earliest starts_at and latest ends_at from plan_times
+      let startsAt: string | null = null
+      let endsAt: string | null = null
+      for (const pt of plan.plan_times) {
+        if (pt.starts_at && (!startsAt || pt.starts_at < startsAt)) {
+          startsAt = pt.starts_at
+        }
+        if (pt.ends_at && (!endsAt || pt.ends_at > endsAt)) {
+          endsAt = pt.ends_at
+        }
+      }
 
       let teamMembers: z.infer<typeof teamMemberSchema>[]
       try {
@@ -490,51 +461,48 @@ export async function fetchSchedulesSnapshot(
         const status = PCO_STATUS_MAP[member.status] ?? "UNCONFIRMED"
 
         schedules.set(member.id, {
-          upsert: {
-            where: {
-              remoteId_provider: {
-                remoteId: member.id,
-                provider: "PCO",
-              },
-            },
-            create: {
+          where: {
+            remoteId_provider: {
               remoteId: member.id,
               provider: "PCO",
-              person: {
-                connect: {
-                  remoteId_provider: {
-                    remoteId: member.person.id,
-                    provider: "PCO",
-                  },
-                },
-              },
-              team: {
-                connect: {
-                  remoteId_provider: {
-                    remoteId: member.team.id,
-                    provider: "PCO",
-                  },
-                },
-              },
-              positionName: member.team_position_name ?? null,
-              serviceTypeName,
-              status,
-              sortDate: new Date(plan.sort_date),
-              dates: plan.dates ?? "",
-              startsAt: startsAt ? new Date(startsAt) : null,
-              endsAt: endsAt ? new Date(endsAt) : null,
-              planRemoteId: plan.id,
-            },
-            update: {
-              positionName: member.team_position_name ?? null,
-              status,
-              sortDate: new Date(plan.sort_date),
-              dates: plan.dates ?? "",
-              startsAt: startsAt ? new Date(startsAt) : null,
-              endsAt: endsAt ? new Date(endsAt) : null,
             },
           },
-          planTimes: planTimesData,
+          create: {
+            remoteId: member.id,
+            provider: "PCO",
+            person: {
+              connect: {
+                remoteId_provider: {
+                  remoteId: member.person.id,
+                  provider: "PCO",
+                },
+              },
+            },
+            team: {
+              connect: {
+                remoteId_provider: {
+                  remoteId: member.team.id,
+                  provider: "PCO",
+                },
+              },
+            },
+            positionName: member.team_position_name ?? null,
+            serviceTypeName,
+            status,
+            sortDate: new Date(plan.sort_date),
+            dates: plan.dates ?? "",
+            startsAt: startsAt ? new Date(startsAt) : null,
+            endsAt: endsAt ? new Date(endsAt) : null,
+            planRemoteId: plan.id,
+          },
+          update: {
+            positionName: member.team_position_name ?? null,
+            status,
+            sortDate: new Date(plan.sort_date),
+            dates: plan.dates ?? "",
+            startsAt: startsAt ? new Date(startsAt) : null,
+            endsAt: endsAt ? new Date(endsAt) : null,
+          },
         })
       }
     }
