@@ -74,35 +74,32 @@ export const schedulesRouter = createTRPCRouter({
         });
       }
 
-      // Look up the schedule and verify ownership
-      const schedule = await prisma.schedule.findUnique({
-        where: { id: input.scheduleId },
-        include: {
-          team: {
-            select: {
-              serviceTypeId: true,
-              serviceType: { select: { remoteId: true } },
-            },
-          },
-        },
-      });
+      // Look up the schedule, verify ownership, and get person's PCO remote ID
+      const [schedule, person] = await Promise.all([
+        prisma.schedule.findUnique({
+          where: { id: input.scheduleId },
+        }),
+        prisma.person.findUnique({
+          where: { id: ctx.personId },
+          select: { remoteId: true },
+        }),
+      ]);
 
       if (!schedule || schedule.personId !== ctx.personId) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      if (!schedule.team.serviceType?.remoteId) {
+      if (!person?.remoteId) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Schedule is missing service type information.",
+          message: "Person record is missing PCO remote ID.",
         });
       }
 
-      // Build the PCO API path
-      const serviceTypeId = schedule.team.serviceType.remoteId;
-      const planId = schedule.planRemoteId;
-      const teamMemberId = schedule.remoteId;
-      const pcoPath = `/services/v2/service_types/${serviceTypeId}/plans/${planId}/team_members/${teamMemberId}`;
+      // Build the PCO API path using the people/schedules endpoint
+      const personRemoteId = person.remoteId;
+      const scheduleRemoteId = schedule.remoteId;
+      const pcoPath = `/services/v2/people/${personRemoteId}/schedules/${scheduleRemoteId}`;
 
       // Call PCO API
       try {
