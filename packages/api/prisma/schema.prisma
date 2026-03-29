@@ -37,6 +37,12 @@ enum GuideStatus {
   PUBLISHED
 }
 
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
 enum ScheduleStatus {
   CONFIRMED
   UNCONFIRMED
@@ -66,6 +72,7 @@ model Person {
   feedbackReceived  Feedback[] @relation("FeedbackRecipient")
   guidesAuthored    Guide[]
   schedules         Schedule[]
+  preferences       UserPreference?
 
   @@unique([remoteId, provider])
 }
@@ -272,4 +279,14 @@ model Guide {
   @@index([teamId, roleId])
   @@index([roleId])
   @@index([authorId])
+}
+
+model UserPreference {
+  id        String          @id @default(cuid())
+  personId  String          @unique
+  theme     ThemePreference @default(SYSTEM)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 }

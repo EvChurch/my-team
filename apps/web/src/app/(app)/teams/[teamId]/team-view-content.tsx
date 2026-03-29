@@ -185,7 +185,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           {/* Animated background pill */}
           {pill && (
             <div
-              className="absolute top-1 bottom-1 rounded-[10px] bg-bg-card shadow-[0_1px_3px_rgba(26,25,24,0.06)] transition-all duration-300 ease-in-out"
+              className="absolute top-1 bottom-1 rounded-[10px] bg-bg-card shadow-[var(--shadow-card-strong)] transition-all duration-300 ease-in-out"
               style={{ left: pill.left, width: pill.width }}
             />
           )}

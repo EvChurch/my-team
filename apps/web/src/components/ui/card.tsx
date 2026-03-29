@@ -5,7 +5,7 @@ type CardProps = ComponentProps<"div">;
 export function Card({ className = "", children, ...props }: CardProps) {
   return (
     <div
-      className={`bg-bg-card rounded-2xl shadow-[0_2px_12px_rgba(26,25,24,0.03)] ${className}`}
+      className={`bg-bg-card rounded-2xl shadow-[var(--shadow-card)] ${className}`}
       {...props}
     >
       {children}
