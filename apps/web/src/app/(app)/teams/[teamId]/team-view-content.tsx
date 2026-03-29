@@ -245,30 +245,31 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             (team.teamSchedules?.length ?? 0) > 0 && (
               <>
                 {(team.teamSchedules ?? []).map((plan) => (
-                  <Card key={plan.planRemoteId} className="p-4">
-                    <Link
-                      href={`/plans/${plan.planRemoteId}`}
-                      className="block mb-3"
-                    >
-                      <h3 className="text-sm font-semibold text-text-primary hover:text-accent transition-colors">
-                        {formatServingDate(plan.sortDate)}
-                        {plan.startsAt && (
-                          <span className="text-text-secondary font-normal">
-                            {" "}
-                            at{" "}
-                            {new Date(plan.startsAt).toLocaleTimeString(
-                              "en-US",
-                              { hour: "numeric", minute: "2-digit" },
-                            )}
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-xs text-text-tertiary">
-                        {plan.people.length}{" "}
-                        {plan.people.length === 1 ? "person" : "people"}{" "}
-                        rostered
-                      </p>
-                    </Link>
+                  <Link
+                    key={plan.planRemoteId}
+                    href={`/plans/${plan.planRemoteId}`}
+                  >
+                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="mb-3">
+                        <h3 className="text-sm font-semibold text-text-primary">
+                          {formatServingDate(plan.sortDate)}
+                          {plan.startsAt && (
+                            <span className="text-text-secondary font-normal">
+                              {" "}
+                              at{" "}
+                              {new Date(plan.startsAt).toLocaleTimeString(
+                                "en-US",
+                                { hour: "numeric", minute: "2-digit" },
+                              )}
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-xs text-text-tertiary">
+                          {plan.people.length}{" "}
+                          {plan.people.length === 1 ? "person" : "people"}{" "}
+                          rostered
+                        </p>
+                      </div>
                     <div className="space-y-2">
                       {plan.people.map((person) => {
                         const statusLabel =
@@ -308,7 +309,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                         );
                       })}
                     </div>
-                  </Card>
+                    </Card>
+                  </Link>
                 ))}
               </>
             )}
