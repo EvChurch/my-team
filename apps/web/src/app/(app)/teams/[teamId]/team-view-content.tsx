@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { UpcomingServing } from "@/components/teams/upcoming-serving";
+import { LeaderBar } from "@/components/teams/leader-bar";
 import { Avatar } from "@/components/ui/avatar";
 
 type TeamViewContentProps = {
@@ -215,21 +215,15 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       )}
 
       {activeTab === "goals" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
+          {team.isCurrentUserLeader && (
+            <LeaderBar
+              href={`/teams/${teamId}/goals/review`}
+              icon={Target}
+              label={`Review Goals${pendingGoalsCount > 0 ? ` (${pendingGoalsCount})` : ""}`}
+            />
+          )}
           <Card className="p-4">
-            {team.isCurrentUserLeader && (
-              <div className="flex justify-end mb-4">
-                <Link href={`/teams/${teamId}/goals/review`}>
-                  <Button variant="secondary">
-                    <Target className="w-4 h-4" />
-                    Review Goals
-                    {pendingGoalsCount > 0
-                      ? ` (${pendingGoalsCount})`
-                      : ""}
-                  </Button>
-                </Link>
-              </div>
-            )}
             {team.goals.length > 0 ? (
               <div className="space-y-3">
                 {team.goals.map((goal) => (
@@ -265,14 +259,11 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       {activeTab === "guides" && (
         <div className="space-y-3">
           {team.isCurrentUserLeader && (
-            <div className="flex justify-end">
-              <Link href={`/teams/${teamId}/guides/new`}>
-                <Button variant="secondary">
-                  <BookPlus className="w-4 h-4" />
-                  New Guide
-                </Button>
-              </Link>
-            </div>
+            <LeaderBar
+              href={`/teams/${teamId}/guides/new`}
+              icon={BookPlus}
+              label="New Guide"
+            />
           )}
           {team.guides.map((guide) => (
             <Link key={guide.id} href={`/guides/${guide.id}`}>
@@ -299,14 +290,11 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       {activeTab === "feedback" && (
         <div className="space-y-3">
           {team.isCurrentUserLeader && (
-            <div className="flex justify-end">
-              <Link href={`/teams/${teamId}/feedback/new`}>
-                <Button variant="secondary">
-                  <MessageSquarePlus className="w-4 h-4" />
-                  Write Feedback
-                </Button>
-              </Link>
-            </div>
+            <LeaderBar
+              href={`/teams/${teamId}/feedback/new`}
+              icon={MessageSquarePlus}
+              label="Write Feedback"
+            />
           )}
           {team.feedback.map((fb) => (
             <Card
