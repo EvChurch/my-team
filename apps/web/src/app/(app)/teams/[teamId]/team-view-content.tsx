@@ -10,12 +10,14 @@ import {
   Users,
   BookOpen,
   Target,
+  MessageSquarePlus,
+  BookPlus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LeaderActions } from "@/components/teams/leader-actions";
 import { UpcomingServing } from "@/components/teams/upcoming-serving";
 import { Avatar } from "@/components/ui/avatar";
 
@@ -58,10 +60,10 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
     { value: "serving", label: "Serving" },
     { value: "members", label: "Members" },
     { value: "goals", label: "Goals" },
-    ...(team.guides.length > 0
+    ...(team.guides.length > 0 || team.isCurrentUserLeader
       ? [{ value: "guides" as Tab, label: "Guides" }]
       : []),
-    ...(team.feedback.length > 0
+    ...(team.feedback.length > 0 || team.isCurrentUserLeader
       ? [{ value: "feedback" as Tab, label: "Feedback" }]
       : []),
     ...(team.description
@@ -107,11 +109,6 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           )}
         </div>
       </div>
-
-      {/* Leader Actions */}
-      {team.isCurrentUserLeader && (
-        <LeaderActions teamId={teamId} pendingGoalsCount={pendingGoalsCount} />
-      )}
 
       {/* Scrolling tab bar */}
       <div
@@ -218,38 +215,59 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       )}
 
       {activeTab === "goals" && (
-        <Card className="p-4">
-          {team.goals.length > 0 ? (
-            <div className="space-y-3">
-              {team.goals.map((goal) => (
-                <div key={goal.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium text-text-primary">
-                      {goal.title}
-                    </p>
-                    <Badge
-                      variant={goal.status === "APPROVED" ? "accent" : "muted"}
-                    >
-                      {goal.status.toLowerCase()}
-                    </Badge>
-                  </div>
-                  <ProgressBar value={goal.progress} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={Target}
-              title="No Goals Yet"
-              description="No goals have been created for this team."
-              className="py-6"
-            />
+        <div className="space-y-3">
+          {team.isCurrentUserLeader && (
+            <Link href={`/teams/${teamId}/goals/review`}>
+              <Button variant="secondary">
+                <Target className="w-4 h-4" />
+                Review Goals
+                {pendingGoalsCount > 0 ? ` (${pendingGoalsCount})` : ""}
+              </Button>
+            </Link>
           )}
-        </Card>
+          <Card className="p-4">
+            {team.goals.length > 0 ? (
+              <div className="space-y-3">
+                {team.goals.map((goal) => (
+                  <div key={goal.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-text-primary">
+                        {goal.title}
+                      </p>
+                      <Badge
+                        variant={
+                          goal.status === "APPROVED" ? "accent" : "muted"
+                        }
+                      >
+                        {goal.status.toLowerCase()}
+                      </Badge>
+                    </div>
+                    <ProgressBar value={goal.progress} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Target}
+                title="No Goals Yet"
+                description="No goals have been created for this team."
+                className="py-6"
+              />
+            )}
+          </Card>
+        </div>
       )}
 
       {activeTab === "guides" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {team.isCurrentUserLeader && (
+            <Link href={`/teams/${teamId}/guides/new`}>
+              <Button variant="secondary">
+                <BookPlus className="w-4 h-4" />
+                New Guide
+              </Button>
+            </Link>
+          )}
           {team.guides.map((guide) => (
             <Link key={guide.id} href={`/guides/${guide.id}`}>
               <Card className="p-3 hover:shadow-md transition-shadow">
@@ -273,7 +291,15 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       )}
 
       {activeTab === "feedback" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {team.isCurrentUserLeader && (
+            <Link href={`/teams/${teamId}/feedback/new`}>
+              <Button variant="secondary">
+                <MessageSquarePlus className="w-4 h-4" />
+                Write Feedback
+              </Button>
+            </Link>
+          )}
           {team.feedback.map((fb) => (
             <Card
               key={fb.id}
