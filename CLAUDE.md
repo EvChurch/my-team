@@ -102,6 +102,31 @@ pnpm --filter worker dev        # Start only worker
 (app)/profile          — Profile
 ```
 
+## Internationalization (i18n)
+
+The app is fully localized using **next-intl 4.x** with cookie-based locale detection. **All UI strings MUST be translated** — never hardcode English strings in components.
+
+### i18n Rules (MANDATORY)
+- **Every new or modified UI string** must use translation keys from `apps/web/messages/en.json`
+- Server components: `const t = await getTranslations("Namespace")` from `next-intl/server`
+- Client components: `const t = useTranslations("Namespace")` from `next-intl`
+- Add new keys to `apps/web/messages/en.json` under the appropriate namespace, then add translations to all 9 other locale files (`zh-CN`, `zh-TW`, `mi`, `sm`, `hi`, `ko`, `to`, `tl`, `ja`)
+- Use ICU MessageFormat for plurals: `{count, plural, one {# member} other {# members}}`
+- Toast messages, error messages, form labels, placeholders, empty states — ALL must use `t()` calls
+- Navigation labels use translation keys resolved at render time (see `nav-items.ts`)
+- Error boundaries may hardcode English as a last-resort fallback
+
+### i18n Architecture
+- Locale config: `apps/web/src/i18n/config.ts` (supported locales list)
+- Request handler: `apps/web/src/i18n/request.ts` (reads locale from cookie)
+- Middleware: `apps/web/src/middleware.ts` (Accept-Language detection on first visit)
+- Translation files: `apps/web/messages/{locale}.json` (one per locale, namespaced)
+- Locale preference: `UserPreference.locale` field, `preferences.getLocale`/`setLocale` tRPC procedures
+- Language picker: Profile page with native script labels
+
+### Supported Locales
+`en`, `zh-CN`, `zh-TW`, `mi` (Te Reo Māori), `sm` (Samoan), `hi` (Hindi), `ko` (Korean), `to` (Tongan), `tl` (Tagalog), `ja` (Japanese)
+
 ## Environment Variables
 
 See `.env.example`. Key vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET`, `PCO_API_ID`, `PCO_API_SECRET`.
