@@ -61,10 +61,10 @@ export function UpcomingServingOverview() {
                   <Calendar className="w-4 h-4 text-accent" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-text-primary">
+                  <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
                     {formatDate(schedule.sortDate)}
                     {schedule.startsAt && (
-                      <span className="text-text-secondary font-normal">
+                      <span className="text-text-secondary font-normal" suppressHydrationWarning>
                         {" "}
                         at {formatTime(schedule.startsAt)}
                       </span>
