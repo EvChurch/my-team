@@ -164,27 +164,29 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       </div>
 
-      {/* Scrolling tab bar */}
-      <div
-        className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0"
-        role="tablist"
-      >
-        {allTabs.map((tab) => (
-          <button
-            key={tab.value}
-            ref={activeTab === tab.value ? activeTabRef : null}
-            role="tab"
-            aria-selected={activeTab === tab.value}
-            className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeTab === tab.value
-                ? "bg-accent text-text-on-accent"
-                : "bg-bg-muted text-text-secondary hover:text-text-primary"
-            }`}
-            onClick={() => setActiveTab(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Scrolling segment control tab bar */}
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0">
+        <div
+          className="inline-flex rounded-xl bg-bg-muted p-1"
+          role="tablist"
+        >
+          {allTabs.map((tab) => (
+            <button
+              key={tab.value}
+              ref={activeTab === tab.value ? activeTabRef : null}
+              role="tab"
+              aria-selected={activeTab === tab.value}
+              className={`shrink-0 px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
+                activeTab === tab.value
+                  ? "bg-bg-card text-text-primary shadow-[0_1px_3px_rgba(26,25,24,0.06)]"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              onClick={() => setActiveTab(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab content */}
