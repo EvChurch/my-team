@@ -51,4 +51,4 @@ next-env.d.ts
 # prisma generated
 generated/
 
-.claude/worktrees
+.claude/worktrees.worktrees

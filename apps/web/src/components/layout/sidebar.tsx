@@ -26,7 +26,7 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 px-3 flex-1">
-        {navItems.map((item) => {
+        {navItems.filter((item) => item.href !== "/profile").map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
@@ -46,17 +46,21 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
         })}
       </nav>
 
-      {/* Profile button */}
+      {/* Profile / Settings button */}
       <div className="px-3 pb-6">
         <Link
           href="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent-light/40 hover:bg-accent-light/60 transition-colors"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+            pathname === "/profile" || pathname.startsWith("/profile/")
+              ? "bg-accent text-text-on-accent"
+              : "bg-accent-light/40 hover:bg-accent-light/60"
+          }`}
         >
           <Avatar name={userName ?? "User"} src={userImage} size="sm" />
-          <span className="flex-1 text-sm font-medium text-text-primary truncate">
+          <span className="flex-1 text-sm font-medium truncate">
             {userName ?? "User"}
           </span>
-          <ChevronRight className="w-4 h-4 text-text-tertiary" />
+          <ChevronRight className="w-4 h-4 opacity-60" />
         </Link>
       </div>
     </aside>
