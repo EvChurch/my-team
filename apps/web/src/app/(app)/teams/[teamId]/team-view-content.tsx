@@ -208,9 +208,9 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
 
           {/* Leader view: team roster per upcoming plan */}
           {team.isCurrentUserLeader &&
-            team.teamSchedules.length > 0 && (
+            (team.teamSchedules?.length ?? 0) > 0 && (
               <>
-                {team.teamSchedules.map((plan) => (
+                {(team.teamSchedules ?? []).map((plan) => (
                   <Card key={plan.planRemoteId} className="p-4">
                     <Link
                       href={`/plans/${plan.planRemoteId}`}
@@ -294,7 +294,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                   <MemberRow
                     key={leader.id}
                     member={leader}
-                    lastServed={team.lastServedByPerson[leader.id]}
+                    lastServed={team.lastServedByPerson?.[leader.id]}
                     showLastServed={team.isCurrentUserLeader}
                   />
                 ))}
@@ -314,7 +314,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                     <MemberRow
                       key={member.id}
                       member={member}
-                      lastServed={team.lastServedByPerson[member.id]}
+                      lastServed={team.lastServedByPerson?.[member.id]}
                       showLastServed={team.isCurrentUserLeader}
                     />
                   ))}
