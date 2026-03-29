@@ -233,6 +233,88 @@ export const teamsRouter = createTRPCRouter({
         }),
       ]);
 
+      // For leaders: fetch all upcoming schedules for this team (who's rostered)
+      let teamSchedules: Array<{
+        planRemoteId: string;
+        sortDate: string;
+        dates: string;
+        startsAt: string | null;
+        people: Array<{
+          personId: string;
+          personName: string;
+          positionName: string | null;
+          status: string;
+        }>;
+      }> = [];
+      if (isLeader) {
+        const allTeamSchedules = await prisma.schedule.findMany({
+          where: {
+            teamId: input.teamId,
+            sortDate: { gte: new Date() },
+          },
+          select: {
+            planRemoteId: true,
+            sortDate: true,
+            dates: true,
+            startsAt: true,
+            positionName: true,
+            status: true,
+            person: {
+              select: { id: true, fullName: true },
+            },
+          },
+          orderBy: { sortDate: "asc" },
+        });
+
+        // Group by planRemoteId
+        const planGroups = new Map<string, typeof teamSchedules[number]>();
+        for (const s of allTeamSchedules) {
+          if (!planGroups.has(s.planRemoteId)) {
+            planGroups.set(s.planRemoteId, {
+              planRemoteId: s.planRemoteId,
+              sortDate: s.sortDate.toISOString(),
+              dates: s.dates,
+              startsAt: s.startsAt?.toISOString() ?? null,
+              people: [],
+            });
+          }
+          planGroups.get(s.planRemoteId)!.people.push({
+            personId: s.person.id,
+            personName: s.person.fullName,
+            positionName: s.positionName,
+            status: s.status,
+          });
+        }
+        teamSchedules = Array.from(planGroups.values());
+      }
+
+      // For leaders: fetch last served date per person on this team
+      let lastServedByPerson: Record<string, string> = {};
+      if (isLeader) {
+        const allPersonIds = [
+          ...team.leaders.map((l) => l.person.id),
+          ...team.positions.flatMap((p) => p.assignments.map((a) => a.person.id)),
+        ];
+        const uniquePersonIds = [...new Set(allPersonIds)];
+
+        if (uniquePersonIds.length > 0) {
+          const lastSchedules = await prisma.schedule.findMany({
+            where: {
+              teamId: input.teamId,
+              personId: { in: uniquePersonIds },
+              sortDate: { lt: new Date() },
+            },
+            orderBy: { sortDate: "desc" },
+            distinct: ["personId"],
+            select: { personId: true, sortDate: true },
+          });
+
+          lastServedByPerson = Object.fromEntries(
+            lastSchedules.map((s) => [s.personId, s.sortDate.toISOString()]),
+          );
+        }
+      }
+
       return {
         ...team,
         isCurrentUserLeader: !!isLeader,
@@ -240,6 +322,8 @@ export const teamsRouter = createTRPCRouter({
         feedback,
         guides,
         schedules,
+        teamSchedules,
+        lastServedByPerson,
       };
     }),
 

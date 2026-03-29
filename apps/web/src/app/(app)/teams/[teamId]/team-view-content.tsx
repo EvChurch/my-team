@@ -27,6 +27,60 @@ type TeamViewContentProps = {
 
 type Tab = "serving" | "members" | "goals" | "guides" | "feedback" | "about";
 
+function formatServingDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (date.toDateString() === now.toDateString()) return "Today";
+  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatLastServed(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+  return `${Math.floor(diffDays / 365)}y ago`;
+}
+
+function MemberRow({
+  member,
+  lastServed,
+  showLastServed,
+}: {
+  member: { id: string; fullName: string; image?: string | null };
+  lastServed?: string;
+  showLastServed: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar name={member.fullName} src={member.image} size="sm" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-text-primary truncate">{member.fullName}</p>
+      </div>
+      {showLastServed && (
+        <span className="text-xs text-text-tertiary shrink-0">
+          {lastServed ? formatLastServed(lastServed) : "Never"}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const trpc = useTRPC();
   const { data: team } = useSuspenseQuery(
@@ -135,18 +189,96 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
 
       {/* Tab content */}
       {activeTab === "serving" && (
-        <Card className="p-4">
-          {team.schedules.length > 0 ? (
-            <UpcomingServing schedules={team.schedules} />
-          ) : (
-            <EmptyState
-              icon={Calendar}
-              title="No Upcoming Schedules"
-              description="You have no upcoming serving dates for this team."
-              className="py-6"
-            />
-          )}
-        </Card>
+        <div className="space-y-4">
+          <Card className="p-4">
+            <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-3">
+              My Schedule
+            </h3>
+            {team.schedules.length > 0 ? (
+              <UpcomingServing schedules={team.schedules} />
+            ) : (
+              <EmptyState
+                icon={Calendar}
+                title="No Upcoming Schedules"
+                description="You have no upcoming serving dates for this team."
+                className="py-6"
+              />
+            )}
+          </Card>
+
+          {/* Leader view: team roster per upcoming plan */}
+          {team.isCurrentUserLeader &&
+            team.teamSchedules.length > 0 && (
+              <>
+                {team.teamSchedules.map((plan) => (
+                  <Card key={plan.planRemoteId} className="p-4">
+                    <Link
+                      href={`/plans/${plan.planRemoteId}`}
+                      className="block mb-3"
+                    >
+                      <h3 className="text-sm font-semibold text-text-primary hover:text-accent transition-colors">
+                        {formatServingDate(plan.sortDate)}
+                        {plan.startsAt && (
+                          <span className="text-text-secondary font-normal">
+                            {" "}
+                            at{" "}
+                            {new Date(plan.startsAt).toLocaleTimeString(
+                              "en-US",
+                              { hour: "numeric", minute: "2-digit" },
+                            )}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-text-tertiary">
+                        {plan.people.length}{" "}
+                        {plan.people.length === 1 ? "person" : "people"}{" "}
+                        rostered
+                      </p>
+                    </Link>
+                    <div className="space-y-2">
+                      {plan.people.map((person) => {
+                        const statusLabel =
+                          person.status === "CONFIRMED"
+                            ? "Confirmed"
+                            : person.status === "DECLINED"
+                              ? "Declined"
+                              : "Pending";
+                        const statusClass =
+                          person.status === "CONFIRMED"
+                            ? "text-accent"
+                            : person.status === "DECLINED"
+                              ? "text-error"
+                              : "text-text-tertiary";
+
+                        return (
+                          <div
+                            key={person.personId}
+                            className="flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm text-text-primary truncate">
+                                {person.personName}
+                              </p>
+                              {person.positionName && (
+                                <p className="text-xs text-text-tertiary">
+                                  {person.positionName}
+                                </p>
+                              )}
+                            </div>
+                            <span
+                              className={`text-xs shrink-0 ${statusClass}`}
+                            >
+                              {statusLabel}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                ))}
+              </>
+            )}
+        </div>
       )}
 
       {activeTab === "members" && (
@@ -159,16 +291,12 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               </h3>
               <div className="space-y-2.5">
                 {leaders.map((leader) => (
-                  <div key={leader.id} className="flex items-center gap-3">
-                    <Avatar
-                      name={leader.fullName}
-                      src={leader.image}
-                      size="sm"
-                    />
-                    <p className="text-sm text-text-primary">
-                      {leader.fullName}
-                    </p>
-                  </div>
+                  <MemberRow
+                    key={leader.id}
+                    member={leader}
+                    lastServed={team.lastServedByPerson[leader.id]}
+                    showLastServed={team.isCurrentUserLeader}
+                  />
                 ))}
               </div>
             </Card>
@@ -183,16 +311,12 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               {role.members.length > 0 ? (
                 <div className="space-y-2.5">
                   {role.members.map((member) => (
-                    <div key={member.id} className="flex items-center gap-3">
-                      <Avatar
-                        name={member.fullName}
-                        src={member.image}
-                        size="sm"
-                      />
-                      <p className="text-sm text-text-primary">
-                        {member.fullName}
-                      </p>
-                    </div>
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      lastServed={team.lastServedByPerson[member.id]}
+                      showLastServed={team.isCurrentUserLeader}
+                    />
                   ))}
                 </div>
               ) : (
