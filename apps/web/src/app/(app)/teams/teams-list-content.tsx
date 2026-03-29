@@ -21,8 +21,10 @@ export function TeamsListContent() {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {teams.map((team) => (
+    <div>
+      <h2 className="text-[15px] font-semibold text-text-primary mb-3">Teams</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {teams.map((team) => (
         <TeamCard
           key={team.id}
           id={team.id}
@@ -34,6 +36,7 @@ export function TeamsListContent() {
           nextServingDate={team.nextServingDate}
         />
       ))}
+      </div>
     </div>
   );
 }

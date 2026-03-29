@@ -50,7 +50,7 @@ export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-8">
       <PlanHeader
         title={data.plan.title}
         dates={data.plan.dates}

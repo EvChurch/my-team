@@ -58,8 +58,10 @@ export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
                 return (
                   <div
                     key={member.id}
-                    className={`flex items-center justify-between gap-3 rounded-lg py-1.5 px-2 -mx-2 ${
-                      isCurrentUser ? "bg-accent/5 ring-1 ring-accent/20" : ""
+                    className={`flex items-center justify-between gap-3 rounded-lg py-2 px-3 ${
+                      isCurrentUser
+                        ? "bg-accent/5 ring-1 ring-accent/20"
+                        : ""
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
