@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { Calendar, Check, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Check, Clock, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -121,32 +121,34 @@ function ScheduleCard({
               )}
               {isConfirmed && <Badge variant="accent">Confirmed</Badge>}
             </div>
-
-            {/* Accept / Decline buttons for unconfirmed */}
-            {isUnconfirmed && (
-              <div className="flex items-center gap-2 mt-2.5">
-                <button
-                  onClick={handleAccept}
-                  disabled={isPending}
-                  className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
-                >
-                  {isPending ? "..." : "Accept"}
-                </button>
-                <button
-                  onClick={handleDecline}
-                  disabled={isPending}
-                  className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
-                >
-                  Decline
-                </button>
-              </div>
-            )}
             {respondMutation.isError && (
               <p className="text-xs text-error mt-1.5">
                 Failed — please sign out and back in.
               </p>
             )}
           </div>
+
+          {/* Accept / Decline icon buttons on the right */}
+          {isUnconfirmed && (
+            <div className="flex items-center gap-1.5 shrink-0 self-center">
+              <button
+                onClick={handleAccept}
+                disabled={isPending}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
+                title="Accept"
+              >
+                <Check className="w-4 h-4 text-accent" />
+              </button>
+              <button
+                onClick={handleDecline}
+                disabled={isPending}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
+                title="Decline"
+              >
+                <X className="w-4 h-4 text-error" />
+              </button>
+            </div>
+          )}
         </div>
       </Card>
     </Link>
