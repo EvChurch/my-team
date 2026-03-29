@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
@@ -237,53 +237,17 @@ function ConfirmedSection({
   showAll: boolean;
   onToggle: () => void;
 }) {
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [collapsedHeight, setCollapsedHeight] = useState<number>(0);
-  const [fullHeight, setFullHeight] = useState<number>(0);
-
-  useEffect(() => {
-    const grid = gridRef.current;
-    if (!grid) return;
-
-    // Measure full height
-    setFullHeight(grid.scrollHeight);
-
-    // Measure collapsed height: find the bottom of the 3rd child
-    const children = Array.from(grid.children) as HTMLElement[];
-    if (children.length <= 3) {
-      setCollapsedHeight(grid.scrollHeight);
-      return;
-    }
-    // Find the bottom of the 3rd card relative to the grid top
-    const gridTop = grid.getBoundingClientRect().top;
-    let maxBottom = 0;
-    for (let i = 0; i < Math.min(3, children.length); i++) {
-      const rect = children[i]!.getBoundingClientRect();
-      maxBottom = Math.max(maxBottom, rect.bottom - gridTop);
-    }
-    setCollapsedHeight(maxBottom);
-  }, [schedules]);
+  const visible = showAll ? schedules : schedules.slice(0, 3);
 
   return (
     <section>
       <h2 className="text-[15px] font-semibold text-text-primary mb-3">
         Upcoming Serving
       </h2>
-      <div
-        className="overflow-hidden transition-[max-height] duration-500 ease-in-out"
-        style={{
-          maxHeight: showAll
-            ? `${fullHeight}px`
-            : collapsedHeight > 0
-              ? `${collapsedHeight}px`
-              : undefined,
-        }}
-      >
-        <div ref={gridRef} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {schedules.map((schedule) => (
-            <ScheduleCard key={schedule.id} schedule={schedule} />
-          ))}
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {visible.map((schedule) => (
+          <ScheduleCard key={schedule.id} schedule={schedule} />
+        ))}
       </div>
       {canToggle && (
         <button
