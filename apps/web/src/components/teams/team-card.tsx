@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Users, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +27,11 @@ export function TeamCard({
   isLeader,
   nextServingDate,
 }: TeamCardProps) {
+  const t = useTranslations("Teams");
   const tz = useTimezone();
   return (
     <Link href={`/teams/${id}`}>
-      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <h3 className="text-[15px] font-semibold text-text-primary truncate">
@@ -47,7 +49,7 @@ export function TeamCard({
           <div className="flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5" />
             <span className="text-xs">
-              {memberCount} {memberCount === 1 ? "member" : "members"}
+              {t("members", { count: memberCount })}
             </span>
           </div>
           {nextServingDate && (

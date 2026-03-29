@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Play, FileText, Wrench, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { RoleBadge } from "./role-badge";
 
@@ -24,12 +25,13 @@ const categoryColors = {
 } as const;
 
 export function GuideCard({ id, title, category, roleName, status }: GuideCardProps) {
+  const t = useTranslations("Guides");
   const Icon = categoryIcons[category];
   const iconColor = categoryColors[category];
 
   return (
     <Link href={`/guides/${id}`}>
-      <Card className="p-3.5 hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="p-3.5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-light shrink-0">
             <Icon className={`w-4 h-4 ${iconColor}`} />
@@ -41,7 +43,7 @@ export function GuideCard({ id, title, category, roleName, status }: GuideCardPr
               </p>
               {status === "DRAFT" && (
                 <span className="text-xs text-text-tertiary bg-bg-muted px-1.5 py-0.5 rounded shrink-0">
-                  Draft
+                  {t("draft")}
                 </span>
               )}
             </div>

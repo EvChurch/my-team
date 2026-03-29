@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { BookOpen, Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ type GuidesListContentProps = {
 
 export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Guides");
+  const tCommon = useTranslations("Common");
   const { data: guides } = useSuspenseQuery(
     trpc.guides.listAll.queryOptions(),
   );
@@ -34,12 +37,12 @@ export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentPr
     return (
       <EmptyState
         icon={BookOpen}
-        title="No Guides Yet"
-        description="Guides help your team learn processes and best practices."
+        title={t("noGuides")}
+        description={t("noGuidesDesc")}
         action={
           isLeader && firstTeamId ? (
             <Link href={`/teams/${firstTeamId}/guides/new`}>
-              <Button>Create Guide</Button>
+              <Button>{t("createGuide")}</Button>
             </Link>
           ) : undefined
         }
@@ -59,7 +62,7 @@ export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentPr
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
         <input
           type="text"
-          placeholder="Search guides..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-bg-muted text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-accent/30"
@@ -68,22 +71,22 @@ export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentPr
 
       {/* Quick Start section */}
       {quickStartGuides.length > 0 && (
-        <GuideSection title="QUICK START" guides={quickStartGuides} />
+        <GuideSection title={t("quickStartSection")} guides={quickStartGuides} />
       )}
 
       {/* SOP section */}
       {sopGuides.length > 0 && (
-        <GuideSection title="STANDARD OPERATING PROCEDURES" guides={sopGuides} />
+        <GuideSection title={t("sopSection")} guides={sopGuides} />
       )}
 
       {/* Troubleshooting section */}
       {troubleshootingGuides.length > 0 && (
-        <GuideSection title="TROUBLESHOOTING" guides={troubleshootingGuides} />
+        <GuideSection title={t("troubleshootingSection")} guides={troubleshootingGuides} />
       )}
 
       {filtered.length === 0 && search && (
         <p className="text-center text-sm text-text-secondary py-8">
-          No guides match &ldquo;{search}&rdquo;
+          {tCommon("noMatchSearch", { search })}
         </p>
       )}
     </div>

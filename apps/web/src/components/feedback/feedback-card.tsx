@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 
 type FeedbackCardProps = {
@@ -14,12 +15,6 @@ const typeColors: Record<string, string> = {
   GENERAL: "var(--border)",
 };
 
-const typeLabels: Record<string, string> = {
-  ENCOURAGEMENT: "Encouragement",
-  GROWTH_AREA: "Growth Area",
-  GENERAL: "General",
-};
-
 export function FeedbackCard({
   content,
   type,
@@ -27,7 +22,13 @@ export function FeedbackCard({
   recipientName,
   createdAt,
 }: FeedbackCardProps) {
+  const t = useTranslations("Feedback");
   const borderColor = typeColors[type] ?? "var(--border)";
+  const typeLabels: Record<string, string> = {
+    ENCOURAGEMENT: t("encouragement"),
+    GROWTH_AREA: t("growthArea"),
+    GENERAL: t("general"),
+  };
   const label = typeLabels[type] ?? type;
   const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
     month: "short",
@@ -52,7 +53,7 @@ export function FeedbackCard({
           )}
           {recipientName && (
             <span className="text-xs text-text-tertiary">
-              to {recipientName}
+              {t("to")} {recipientName}
             </span>
           )}
         </div>

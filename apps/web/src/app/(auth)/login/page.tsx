@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth, signIn } from "@/lib/auth";
 import {
   Church,
@@ -14,13 +15,16 @@ export default async function LoginPage() {
     redirect("/teams");
   }
 
+  const t = await getTranslations("Common");
+  const tAuth = await getTranslations("Auth");
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Desktop left panel — gradient */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-accent to-accent-dark items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-text-on-accent">
           <Church className="w-16 h-16 opacity-30" />
-          <span className="text-2xl font-semibold opacity-30">My Team</span>
+          <span className="text-2xl font-semibold opacity-30">{t("appName")}</span>
         </div>
       </div>
 
@@ -42,10 +46,10 @@ export default async function LoginPage() {
         <div className="w-full max-w-sm bg-bg-card rounded-2xl shadow-[var(--shadow-card)] p-8 flex flex-col items-center">
           <Church className="w-8 h-8 text-accent mb-3" />
           <h1 className="text-2xl font-semibold text-text-primary mb-1">
-            My Team
+            {t("appName")}
           </h1>
           <p className="text-sm text-text-secondary mb-8">
-            Serving together, growing together
+            {t("appTagline")}
           </p>
 
           <form
@@ -58,7 +62,7 @@ export default async function LoginPage() {
               type="submit"
               className="w-full bg-accent text-text-on-accent rounded-[10px] px-6 py-3 text-sm font-semibold hover:bg-accent-dark transition-colors"
             >
-              Sign in with Planning Center
+              {tAuth("signIn")}
             </button>
           </form>
         </div>

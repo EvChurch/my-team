@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { TimezoneProvider } from "@/lib/timezone";
 import { Providers } from "../providers";
+import { LocaleSync } from "@/components/locale-sync";
 import { getQueryClient, trpc } from "@mt/api/server";
 
 export default async function AppLayout({
@@ -24,8 +25,13 @@ export default async function AppLayout({
   const cookieStore = await cookies();
   const serverTimezone = cookieStore.get("tz")?.value ?? "UTC";
 
+  // Fetch DB locale preference and pass to client for cookie sync
+  const dbLocale = await queryClient.fetchQuery(trpc.preferences.getLocale.queryOptions()).catch(() => "en");
+  const cookieLocale = cookieStore.get("locale")?.value;
+
   return (
     <Providers>
+      <LocaleSync dbLocale={dbLocale} cookieLocale={cookieLocale} />
       <TimezoneProvider serverTimezone={serverTimezone}>
         <div className="flex h-full min-h-screen">
           <Sidebar

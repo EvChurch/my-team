@@ -1,11 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { navItems } from "./nav-items";
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
 
   const activeIndex = navItems.findIndex(
     (item) =>
@@ -16,7 +18,7 @@ export function MobileTabBar() {
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
-      <div className="relative flex items-center justify-around bg-bg-card border border-border rounded-[36px] h-[62px] px-1 shadow-[var(--shadow-card-strong)]">
+      <div className="relative flex items-center justify-around border border-border rounded-[36px] h-[62px] px-1 shadow-[var(--shadow-card-strong)]" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-card) 35%, transparent)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
         {/* Sliding bubble — positioned via CSS calc based on active index */}
         {activeIndex >= 0 && (
           <div
@@ -45,7 +47,7 @@ export function MobileTabBar() {
                 className="text-[10px] font-semibold uppercase"
                 style={{ letterSpacing: "0.5px" }}
               >
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </Link>
           );
