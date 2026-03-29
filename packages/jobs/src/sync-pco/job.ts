@@ -72,7 +72,19 @@ export async function SyncPcoJob(): Promise<void> {
   console.log("Updating Person Team Position Assignments")
 
   for (const assignment of assignments) {
-    await prisma.assignment.upsert(assignment)
+    try {
+      await prisma.assignment.upsert(assignment)
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2002" || error.code === "P2025")
+      ) {
+        // Duplicate (personId, positionId) or missing person/position — skip
+        continue
+      } else {
+        throw error
+      }
+    }
   }
 
   // --- Schedule sync phase (separate from team sync) ---
