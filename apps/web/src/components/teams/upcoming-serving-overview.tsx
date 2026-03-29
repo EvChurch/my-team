@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { Calendar, Check, Clock, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -66,6 +66,18 @@ function ScheduleCard({
   const isConfirmed = schedule.status === "CONFIRMED";
   const isUnconfirmed = schedule.status === "UNCONFIRMED";
   const isPending = respondMutation.isPending;
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showDeclineModal) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [showDeclineModal]);
 
   const handleAccept = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -73,85 +85,167 @@ function ScheduleCard({
     respondMutation.mutate({ scheduleId: schedule.id, action: "accept" });
   };
 
-  const handleDecline = (e: React.MouseEvent) => {
+  const openDeclineModal = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    respondMutation.mutate({ scheduleId: schedule.id, action: "decline" });
+    setShowDeclineModal(true);
+  };
+
+  const confirmDecline = () => {
+    respondMutation.mutate(
+      {
+        scheduleId: schedule.id,
+        action: "decline",
+        reason: declineReason || undefined,
+      },
+      {
+        onSuccess: () => {
+          setShowDeclineModal(false);
+          setDeclineReason("");
+        },
+      },
+    );
   };
 
   return (
-    <Link href={`/plans/${schedule.planRemoteId}`}>
-      <Card className="p-4 hover:shadow-md transition-shadow h-full">
-        <div className="flex items-start gap-3">
-          <div
-            className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
-              isConfirmed ? "bg-accent/10" : "bg-warning/10"
-            }`}
-          >
-            {isConfirmed ? (
-              <Check className="w-4 h-4 text-accent" />
-            ) : (
-              <Clock className="w-4 h-4 text-warning" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-sm font-medium text-text-primary"
-              suppressHydrationWarning
+    <>
+      <Link href={`/plans/${schedule.planRemoteId}`}>
+        <Card className="p-4 hover:shadow-md transition-shadow h-full">
+          <div className="flex items-start gap-3">
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
+                isConfirmed ? "bg-accent/10" : "bg-warning/10"
+              }`}
             >
-              {formatDate(schedule.sortDate)}
-              {schedule.startsAt && (
-                <span
-                  className="text-text-secondary font-normal"
-                  suppressHydrationWarning
-                >
-                  {" "}
-                  at {formatTime(schedule.startsAt)}
-                </span>
+              {isConfirmed ? (
+                <Check className="w-4 h-4 text-accent" />
+              ) : (
+                <Clock className="w-4 h-4 text-warning" />
               )}
-            </p>
-            {schedule.team && (
-              <p className="text-xs text-text-secondary mt-0.5">
-                {schedule.team.name}
-              </p>
-            )}
-            <div className="flex items-center gap-1.5 mt-1.5">
-              {schedule.positionName && (
-                <Badge variant="muted">{schedule.positionName}</Badge>
-              )}
-              {isConfirmed && <Badge variant="accent">Confirmed</Badge>}
             </div>
-            {respondMutation.isError && (
-              <p className="text-xs text-error mt-1.5">
-                Failed — please sign out and back in.
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-sm font-medium text-text-primary"
+                suppressHydrationWarning
+              >
+                {formatDate(schedule.sortDate)}
+                {schedule.startsAt && (
+                  <span
+                    className="text-text-secondary font-normal"
+                    suppressHydrationWarning
+                  >
+                    {" "}
+                    at {formatTime(schedule.startsAt)}
+                  </span>
+                )}
               </p>
+              {schedule.team && (
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {schedule.team.name}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5 mt-1.5">
+                {schedule.positionName && (
+                  <Badge variant="muted">{schedule.positionName}</Badge>
+                )}
+                {isConfirmed && <Badge variant="accent">Confirmed</Badge>}
+              </div>
+              {respondMutation.isError && (
+                <p className="text-xs text-error mt-1.5">
+                  Failed — please sign out and back in.
+                </p>
+              )}
+            </div>
+
+            {/* Accept / Decline icon buttons on the right */}
+            {isUnconfirmed && (
+              <div className="flex items-center gap-1.5 shrink-0 self-center">
+                <button
+                  onClick={handleAccept}
+                  disabled={isPending}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
+                  title="Accept"
+                >
+                  <Check className="w-4 h-4 text-accent" />
+                </button>
+                <button
+                  onClick={openDeclineModal}
+                  disabled={isPending}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
+                  title="Decline"
+                >
+                  <X className="w-4 h-4 text-error" />
+                </button>
+              </div>
             )}
           </div>
+        </Card>
+      </Link>
 
-          {/* Accept / Decline icon buttons on the right */}
-          {isUnconfirmed && (
-            <div className="flex items-center gap-1.5 shrink-0 self-center">
+      {/* Decline confirmation modal */}
+      {showDeclineModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowDeclineModal(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+          {/* Modal */}
+          <div
+            className="relative bg-bg-card rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-error/10">
+                <AlertTriangle className="w-5 h-5 text-error" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-text-primary">
+                  Decline Schedule?
+                </h3>
+                <p className="text-xs text-text-secondary" suppressHydrationWarning>
+                  {formatDate(schedule.sortDate)}
+                  {schedule.team ? ` · ${schedule.team.name}` : ""}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-text-secondary mb-4">
+              Are you sure you want to decline this serving schedule? Your team
+              leader will be notified.
+            </p>
+
+            <input
+              type="text"
+              placeholder="Reason (optional)"
+              value={declineReason}
+              onChange={(e) => setDeclineReason(e.target.value)}
+              className="w-full text-sm px-3 py-2.5 rounded-xl border border-border bg-bg-page text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent mb-4"
+            />
+
+            <div className="flex gap-2">
               <button
-                onClick={handleAccept}
-                disabled={isPending}
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
-                title="Accept"
+                onClick={() => {
+                  setShowDeclineModal(false);
+                  setDeclineReason("");
+                }}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors"
               >
-                <Check className="w-4 h-4 text-accent" />
+                Cancel
               </button>
               <button
-                onClick={handleDecline}
+                onClick={confirmDecline}
                 disabled={isPending}
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
-                title="Decline"
+                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-[10px] bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <X className="w-4 h-4 text-error" />
+                {isPending ? "Declining..." : "Decline"}
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </Card>
-    </Link>
+      )}
+    </>
   );
 }
 
@@ -162,13 +256,19 @@ export function UpcomingServingOverview() {
   );
   const [showAll, setShowAll] = useState(false);
 
-  // Filter out declined schedules
+  // Filter out declined schedules, show pending first
   const activeSchedules = schedules.filter((s) => s.status !== "DECLINED");
+  const pendingSchedules = activeSchedules.filter((s) => s.status === "UNCONFIRMED");
+  const confirmedSchedules = activeSchedules.filter((s) => s.status !== "UNCONFIRMED");
 
   if (activeSchedules.length === 0) return null;
 
-  const visible = showAll ? activeSchedules : activeSchedules.slice(0, 3);
-  const hasMore = activeSchedules.length > 3;
+  // Always show all pending, then fill remaining slots with confirmed
+  const remainingSlots = Math.max(0, 3 - pendingSchedules.length);
+  const visible = showAll
+    ? [...pendingSchedules, ...confirmedSchedules]
+    : [...pendingSchedules, ...confirmedSchedules.slice(0, remainingSlots)];
+  const hasMore = activeSchedules.length > visible.length;
 
   return (
     <section className="mb-6">
