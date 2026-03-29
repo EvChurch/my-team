@@ -119,9 +119,24 @@ export const schedulesRouter = createTRPCRouter({
           });
         }
       } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error(
+          `PCO respond failed: action=${input.action} path=${pcoPath} error=${message}`,
+        );
+
+        // Surface PCO auth errors as UNAUTHORIZED so the client can prompt re-login
+        if (message.includes("401") || message.includes("403")) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message:
+              "PCO access token expired. Please sign out and sign back in.",
+          });
+        }
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to ${input.action} schedule: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Failed to ${input.action} schedule: ${message}`,
         });
       }
 
