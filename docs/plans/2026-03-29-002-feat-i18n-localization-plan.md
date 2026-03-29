@@ -1,7 +1,7 @@
 ---
 title: "feat: Add internationalization with 10 locales"
 type: feat
-status: active
+status: completed
 date: 2026-03-29
 origin: docs/brainstorms/2026-03-29-i18n-localization-requirements.md
 ---
