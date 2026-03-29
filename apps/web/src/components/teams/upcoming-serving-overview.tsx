@@ -263,40 +263,57 @@ export function UpcomingServingOverview() {
 
   if (activeSchedules.length === 0) return null;
 
-  // Always show all pending, then fill remaining slots with confirmed
-  const remainingSlots = Math.max(0, 3 - pendingSchedules.length);
-  const visible = showAll
-    ? [...pendingSchedules, ...confirmedSchedules]
-    : [...pendingSchedules, ...confirmedSchedules.slice(0, remainingSlots)];
-  const hasMore = activeSchedules.length > visible.length;
+  const visibleConfirmed = showAll
+    ? confirmedSchedules
+    : confirmedSchedules.slice(0, 3);
+  const hasMore = confirmedSchedules.length > visibleConfirmed.length;
 
   return (
-    <section className="mb-6">
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Upcoming Serving
-      </h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((schedule) => (
-          <ScheduleCard key={schedule.id} schedule={schedule} />
-        ))}
-      </div>
-      {hasMore && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
-        >
-          {showAll ? (
-            <>
-              Show less <ChevronUp className="w-3.5 h-3.5" />
-            </>
-          ) : (
-            <>
-              See all ({activeSchedules.length}){" "}
-              <ChevronDown className="w-3.5 h-3.5" />
-            </>
-          )}
-        </button>
+    <div className="space-y-6 mb-6">
+      {/* Serving Requests */}
+      {pendingSchedules.length > 0 && (
+        <section>
+          <h2 className="text-[15px] font-semibold text-text-primary mb-3">
+            Serving Requests
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {pendingSchedules.map((schedule) => (
+              <ScheduleCard key={schedule.id} schedule={schedule} />
+            ))}
+          </div>
+        </section>
       )}
-    </section>
+
+      {/* Upcoming Serving */}
+      {confirmedSchedules.length > 0 && (
+        <section>
+          <h2 className="text-[15px] font-semibold text-text-primary mb-3">
+            Upcoming Serving
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleConfirmed.map((schedule) => (
+              <ScheduleCard key={schedule.id} schedule={schedule} />
+            ))}
+          </div>
+          {hasMore && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
+            >
+              {showAll ? (
+                <>
+                  Show less <ChevronUp className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  See all ({confirmedSchedules.length}){" "}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          )}
+        </section>
+      )}
+    </div>
   );
 }
