@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import Link from "next/link";
@@ -126,15 +126,37 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
   ];
 
   const [activeTab, setActiveTab] = useState<Tab>("serving");
-  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefsMap = useRef<Map<Tab, HTMLButtonElement>>(new Map());
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+
+  const updatePill = useCallback(() => {
+    const bar = tabBarRef.current;
+    const activeBtn = tabRefsMap.current.get(activeTab);
+    if (!bar || !activeBtn) return;
+    const barRect = bar.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    setPill({
+      left: btnRect.left - barRect.left,
+      width: btnRect.width,
+    });
+  }, [activeTab]);
 
   useEffect(() => {
-    activeTabRef.current?.scrollIntoView({
+    updatePill();
+    // Also scroll active tab into view
+    const activeBtn = tabRefsMap.current.get(activeTab);
+    activeBtn?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
       inline: "center",
     });
-  }, [activeTab]);
+  }, [activeTab, updatePill]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updatePill);
+    return () => window.removeEventListener("resize", updatePill);
+  }, [updatePill]);
 
   return (
     <div className="space-y-5 pb-8">
@@ -164,21 +186,31 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       </div>
 
-      {/* Scrolling segment control tab bar */}
+      {/* Scrolling segment control tab bar with animated pill */}
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0">
         <div
-          className="inline-flex rounded-xl bg-bg-muted p-1"
+          ref={tabBarRef}
+          className="relative inline-flex rounded-xl bg-bg-muted p-1"
           role="tablist"
         >
+          {/* Animated background pill */}
+          {pill && (
+            <div
+              className="absolute top-1 bottom-1 rounded-[10px] bg-bg-card shadow-[0_1px_3px_rgba(26,25,24,0.06)] transition-all duration-300 ease-in-out"
+              style={{ left: pill.left, width: pill.width }}
+            />
+          )}
           {allTabs.map((tab) => (
             <button
               key={tab.value}
-              ref={activeTab === tab.value ? activeTabRef : null}
+              ref={(el) => {
+                if (el) tabRefsMap.current.set(tab.value, el);
+              }}
               role="tab"
               aria-selected={activeTab === tab.value}
-              className={`shrink-0 px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
+              className={`relative z-10 shrink-0 px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
                 activeTab === tab.value
-                  ? "bg-bg-card text-text-primary shadow-[0_1px_3px_rgba(26,25,24,0.06)]"
+                  ? "text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
               }`}
               onClick={() => setActiveTab(tab.value)}
