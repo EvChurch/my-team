@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
@@ -244,6 +244,78 @@ function ScheduleCard({
   );
 }
 
+function ConfirmedSection({
+  schedules,
+  canToggle,
+  showAll,
+  onToggle,
+}: {
+  schedules: Array<{
+    id: string;
+    status: string;
+    sortDate: Date | string;
+    startsAt: Date | string | null;
+    positionName: string | null;
+    planRemoteId: string;
+    team: { id: string; name: string } | null;
+  }>;
+  canToggle: boolean;
+  showAll: boolean;
+  onToggle: () => void;
+}) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState<number | undefined>();
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [schedules, showAll]);
+
+  // Collapsed: show 3 cards. Estimate height based on card size (~100px + 12px gap)
+  // We measure the real content and use a grid-rows trick instead
+  const collapsedCount = 3;
+
+  return (
+    <section>
+      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
+        Upcoming Serving
+      </h2>
+      <div
+        className="overflow-hidden transition-[max-height] duration-500 ease-in-out"
+        style={{
+          maxHeight: showAll
+            ? `${contentHeight ?? 9999}px`
+            : `${collapsedCount * 112}px`,
+        }}
+      >
+        <div ref={contentRef} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {schedules.map((schedule) => (
+            <ScheduleCard key={schedule.id} schedule={schedule} />
+          ))}
+        </div>
+      </div>
+      {canToggle && (
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
+        >
+          {showAll ? (
+            <>
+              Show less <ChevronUp className="w-3.5 h-3.5" />
+            </>
+          ) : (
+            <>
+              See all ({schedules.length}){" "}
+              <ChevronDown className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function UpcomingServingOverview() {
   const trpc = useTRPC();
   const { data: schedules } = useSuspenseQuery(
@@ -281,33 +353,12 @@ export function UpcomingServingOverview() {
 
       {/* Upcoming Serving */}
       {confirmedSchedules.length > 0 && (
-        <section>
-          <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-            Upcoming Serving
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleConfirmed.map((schedule) => (
-              <ScheduleCard key={schedule.id} schedule={schedule} />
-            ))}
-          </div>
-          {canToggle && (
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
-            >
-              {showAll ? (
-                <>
-                  Show less <ChevronUp className="w-3.5 h-3.5" />
-                </>
-              ) : (
-                <>
-                  See all ({confirmedSchedules.length}){" "}
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
-          )}
-        </section>
+        <ConfirmedSection
+          schedules={confirmedSchedules}
+          canToggle={canToggle}
+          showAll={showAll}
+          onToggle={() => setShowAll(!showAll)}
+        />
       )}
     </div>
   );
