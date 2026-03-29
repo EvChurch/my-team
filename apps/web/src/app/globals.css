@@ -71,6 +71,15 @@ label[for] {
   cursor: pointer;
 }
 
+/* Hide scrollbar for horizontal tab scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Guide content rendered from Tiptap JSON */
 .guide-content h1 {
   font-size: 1.5rem;

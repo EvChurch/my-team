@@ -40,11 +40,7 @@ export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
   if (roster.length === 0) return null;
 
   return (
-    <section>
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Team Roster
-      </h2>
-      <div className="space-y-3">
+    <div className="space-y-3">
         {roster.map((group) => (
           <Card key={group.teamId} className="p-4">
             <h3 className="text-sm font-semibold text-text-primary mb-3">
@@ -105,7 +101,6 @@ export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
             </div>
           </Card>
         ))}
-      </div>
-    </section>
+    </div>
   );
 }

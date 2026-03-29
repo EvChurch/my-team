@@ -86,12 +86,18 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-function SongItem({ item, attachments }: { item: ServiceOrderItem; attachments: Attachment[] }) {
+function SongItem({
+  item,
+  attachments,
+}: {
+  item: ServiceOrderItem;
+  attachments: Attachment[];
+}) {
   const [showChordChart, setShowChordChart] = useState(false);
   const hasChordChart = item.arrangement?.chordChart;
 
   return (
-    <div className="py-3">
+    <div className="px-4 py-3">
       <div className="flex items-start gap-3">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent/10 shrink-0 mt-0.5">
           <Music className="w-4 h-4 text-accent" />
@@ -115,8 +121,12 @@ function SongItem({ item, attachments }: { item: ServiceOrderItem; attachments: 
           {item.arrangement?.name && (
             <p className="text-xs text-text-secondary mt-0.5">
               Arrangement: {item.arrangement.name}
-              {item.arrangement.bpm ? ` \u00b7 ${item.arrangement.bpm} BPM` : ""}
-              {item.arrangement.meter ? ` \u00b7 ${item.arrangement.meter}` : ""}
+              {item.arrangement.bpm
+                ? ` \u00b7 ${item.arrangement.bpm} BPM`
+                : ""}
+              {item.arrangement.meter
+                ? ` \u00b7 ${item.arrangement.meter}`
+                : ""}
             </p>
           )}
           {item.song?.author && (
@@ -125,14 +135,17 @@ function SongItem({ item, attachments }: { item: ServiceOrderItem; attachments: 
             </p>
           )}
           {item.description && (
-            <p className="text-xs text-text-secondary mt-1.5">
+            <p className="text-xs text-text-secondary mt-1.5 whitespace-pre-line break-all">
               {item.description}
             </p>
           )}
           {item.itemNotes.length > 0 && (
             <div className="mt-1.5 space-y-1">
               {item.itemNotes.map((note) => (
-                <div key={note.id} className="text-xs text-text-secondary">
+                <div
+                  key={note.id}
+                  className="text-xs text-text-secondary whitespace-pre-line break-all"
+                >
                   {note.categoryName && (
                     <span className="font-medium">{note.categoryName}: </span>
                   )}
@@ -184,7 +197,7 @@ function SongItem({ item, attachments }: { item: ServiceOrderItem; attachments: 
               Key: {item.arrangement.chordChartKey}
             </p>
           )}
-          <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap leading-relaxed">
+          <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap break-all leading-relaxed">
             {item.arrangement.chordChart}
           </pre>
         </div>
@@ -195,7 +208,7 @@ function SongItem({ item, attachments }: { item: ServiceOrderItem; attachments: 
 
 function HeaderItem({ item }: { item: ServiceOrderItem }) {
   return (
-    <div className="pt-4 pb-1 first:pt-0">
+    <div className="px-4 py-2.5 bg-bg-muted/50">
       <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wide">
         {item.title}
       </p>
@@ -205,11 +218,11 @@ function HeaderItem({ item }: { item: ServiceOrderItem }) {
 
 function MediaItem({ item }: { item: ServiceOrderItem }) {
   return (
-    <div className="py-3 flex items-start gap-3">
+    <div className="px-4 py-3 flex items-start gap-3">
       <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0 mt-0.5">
         <Video className="w-4 h-4 text-text-secondary" />
       </div>
-      <div>
+      <div className="min-w-0">
         <span className="text-sm text-text-primary">{item.title}</span>
         {item.length != null && item.length > 0 && (
           <span className="text-xs text-text-tertiary ml-2">
@@ -217,7 +230,7 @@ function MediaItem({ item }: { item: ServiceOrderItem }) {
           </span>
         )}
         {item.description && (
-          <p className="text-xs text-text-secondary mt-0.5">
+          <p className="text-xs text-text-secondary mt-0.5 whitespace-pre-line break-all">
             {item.description}
           </p>
         )}
@@ -228,11 +241,11 @@ function MediaItem({ item }: { item: ServiceOrderItem }) {
 
 function RegularItem({ item }: { item: ServiceOrderItem }) {
   return (
-    <div className="py-3 flex items-start gap-3">
+    <div className="px-4 py-3 flex items-start gap-3">
       <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0 mt-0.5">
         <AlignLeft className="w-4 h-4 text-text-secondary" />
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm text-text-primary">{item.title}</span>
           {item.length != null && item.length > 0 && (
@@ -242,14 +255,17 @@ function RegularItem({ item }: { item: ServiceOrderItem }) {
           )}
         </div>
         {item.description && (
-          <p className="text-xs text-text-secondary mt-0.5">
+          <p className="text-xs text-text-secondary mt-0.5 whitespace-pre-line break-all">
             {item.description}
           </p>
         )}
         {item.itemNotes.length > 0 && (
           <div className="mt-1 space-y-1">
             {item.itemNotes.map((note) => (
-              <div key={note.id} className="text-xs text-text-secondary">
+              <div
+                key={note.id}
+                className="text-xs text-text-secondary whitespace-pre-line break-all"
+              >
                 {note.categoryName && (
                   <span className="font-medium">{note.categoryName}: </span>
                 )}
@@ -266,33 +282,20 @@ function RegularItem({ item }: { item: ServiceOrderItem }) {
 export function ServiceOrder({ items, attachments }: ServiceOrderProps) {
   if (items.length === 0) return null;
 
-  // Group attachments by looking for song-related ones
-  // (In practice, all_attachments includes attachable relationship data,
-  // but for now we show non-plan attachments inline with songs)
-
   return (
-    <section>
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Service Order
-      </h2>
-      <Card className="px-4 divide-y divide-border">
-        {items.map((item) => {
-          switch (item.itemType) {
-            case "header":
-              return <HeaderItem key={item.id} item={item} />;
-            case "song":
-              return (
-                <SongItem key={item.id} item={item} attachments={attachments.filter(
-                  (a) => a.contentType?.includes("pdf") || a.contentType?.includes("image")
-                ).slice(0, 0)} />
-              );
-            case "media":
-              return <MediaItem key={item.id} item={item} />;
-            default:
-              return <RegularItem key={item.id} item={item} />;
-          }
-        })}
-      </Card>
-    </section>
+    <Card className="divide-y divide-border overflow-hidden">
+      {items.map((item) => {
+        switch (item.itemType) {
+          case "header":
+            return <HeaderItem key={item.id} item={item} />;
+          case "song":
+            return <SongItem key={item.id} item={item} attachments={[]} />;
+          case "media":
+            return <MediaItem key={item.id} item={item} />;
+          default:
+            return <RegularItem key={item.id} item={item} />;
+        }
+      })}
+    </Card>
   );
 }

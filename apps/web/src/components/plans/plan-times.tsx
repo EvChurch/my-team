@@ -50,13 +50,9 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
   if (planTimes.length === 0) return null;
 
   return (
-    <section>
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Times
-      </h2>
-      <Card className="p-4">
-        <div className="space-y-2.5">
-          {planTimes.map((pt) => (
+    <Card className="p-4">
+      <div className="space-y-2.5">
+        {planTimes.map((pt) => (
             <div key={pt.id} className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-bg-muted shrink-0">
@@ -83,7 +79,6 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
             </div>
           ))}
         </div>
-      </Card>
-    </section>
+    </Card>
   );
 }

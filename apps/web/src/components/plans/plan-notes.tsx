@@ -15,11 +15,7 @@ export function PlanNotes({ notes }: PlanNotesProps) {
   if (notes.length === 0) return null;
 
   return (
-    <section>
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Notes
-      </h2>
-      <Card className="p-4">
+    <Card className="p-4">
         <div className="space-y-3">
           {notes.map((note) => (
             <div key={note.id} className="flex items-start gap-3">
@@ -39,7 +35,6 @@ export function PlanNotes({ notes }: PlanNotesProps) {
             </div>
           ))}
         </div>
-      </Card>
-    </section>
+    </Card>
   );
 }

@@ -25,11 +25,7 @@ export function PlanAttachments({ attachments }: PlanAttachmentsProps) {
   if (attachments.length === 0) return null;
 
   return (
-    <section>
-      <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Attachments
-      </h2>
-      <Card className="p-4">
+    <Card className="p-4">
         <div className="space-y-2">
           {attachments.map((att) => {
             const href = att.url ?? att.remoteLink ?? "#";
@@ -64,7 +60,6 @@ export function PlanAttachments({ attachments }: PlanAttachmentsProps) {
             );
           })}
         </div>
-      </Card>
-    </section>
+    </Card>
   );
 }
