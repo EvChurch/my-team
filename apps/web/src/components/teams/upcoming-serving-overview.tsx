@@ -124,30 +124,27 @@ function ScheduleCard({
 
             {/* Accept / Decline buttons for unconfirmed */}
             {isUnconfirmed && (
-              <div className="mt-2.5">
-                {respondMutation.isError ? (
-                  <p className="text-xs text-error">
-                    Failed — please sign out and back in to refresh your session.
-                  </p>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleAccept}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
-                    >
-                      {isPending ? "..." : "Accept"}
-                    </button>
-                    <button
-                      onClick={handleDecline}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                )}
+              <div className="flex items-center gap-2 mt-2.5">
+                <button
+                  onClick={handleAccept}
+                  disabled={isPending}
+                  className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
+                >
+                  {isPending ? "..." : "Accept"}
+                </button>
+                <button
+                  onClick={handleDecline}
+                  disabled={isPending}
+                  className="px-3 py-1.5 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
+                >
+                  Decline
+                </button>
               </div>
+            )}
+            {respondMutation.isError && (
+              <p className="text-xs text-error mt-1.5">
+                Failed — please sign out and back in.
+              </p>
             )}
           </div>
         </div>
