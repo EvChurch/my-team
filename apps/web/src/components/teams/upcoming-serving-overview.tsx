@@ -261,7 +261,7 @@ export function UpcomingServingOverview() {
   const visibleConfirmed = showAll
     ? confirmedSchedules
     : confirmedSchedules.slice(0, 3);
-  const hasMore = confirmedSchedules.length > visibleConfirmed.length;
+  const canToggle = confirmedSchedules.length > 3;
 
   return (
     <div className="space-y-6 mb-6">
@@ -290,7 +290,7 @@ export function UpcomingServingOverview() {
               <ScheduleCard key={schedule.id} schedule={schedule} />
             ))}
           </div>
-          {hasMore && (
+          {canToggle && (
             <button
               onClick={() => setShowAll(!showAll)}
               className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
