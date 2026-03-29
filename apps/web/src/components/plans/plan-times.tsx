@@ -78,7 +78,7 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-text-primary">
+                <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
                   {timeRange || dateLabel}
                 </p>
                 {showBadge && (
@@ -91,7 +91,7 @@ export function PlanTimes({ planTimes }: PlanTimesProps) {
                 )}
               </div>
               {displayName && (
-                <p className="text-xs text-text-secondary mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5" suppressHydrationWarning>
                   {dateLabel && timeRange ? `${dateLabel} \u00b7 ` : ""}
                   {displayName}
                 </p>

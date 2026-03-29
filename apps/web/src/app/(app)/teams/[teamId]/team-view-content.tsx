@@ -251,10 +251,10 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                   >
                     <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                       <div className="mb-3">
-                        <h3 className="text-sm font-semibold text-text-primary">
+                        <h3 className="text-sm font-semibold text-text-primary" suppressHydrationWarning>
                           {formatServingDate(plan.sortDate)}
                           {plan.startsAt && (
-                            <span className="text-text-secondary font-normal">
+                            <span className="text-text-secondary font-normal" suppressHydrationWarning>
                               {" "}
                               at{" "}
                               {new Date(plan.startsAt).toLocaleTimeString(

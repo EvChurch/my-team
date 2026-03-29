@@ -161,10 +161,10 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
           <Calendar className="w-4 h-4 text-text-secondary" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-text-primary">
+          <p className="text-sm font-medium text-text-primary" suppressHydrationWarning>
             {formatDate(schedule.sortDate)}
             {schedule.startsAt && (
-              <span className="text-text-secondary font-normal">
+              <span className="text-text-secondary font-normal" suppressHydrationWarning>
                 {" "}
                 at {formatTime(schedule.startsAt)}
               </span>
@@ -299,7 +299,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
                   {pt.name ?? ""}
                 </span>
               </div>
-              <span className="text-xs text-text-secondary">
+              <span className="text-xs text-text-secondary" suppressHydrationWarning>
                 {pt.startsAt && formatDate(pt.startsAt)}
                 {pt.startsAt && " "}
                 {formatTimeRange(pt.startsAt, pt.endsAt)}
