@@ -6,7 +6,6 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useTRPC } from "@mt/api/client";
 import { Calendar, Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 function formatDate(dateStr: Date | string): string {
   const date = new Date(dateStr);
@@ -139,17 +138,13 @@ function ScheduleCard({
                   </span>
                 )}
               </p>
-              {schedule.team && (
+              {(schedule.positionName || schedule.team) && (
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {schedule.team.name}
+                  {[schedule.positionName, schedule.team?.name]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               )}
-              <div className="flex items-center gap-1.5 mt-1.5">
-                {schedule.positionName && (
-                  <Badge variant="muted">{schedule.positionName}</Badge>
-                )}
-                {isConfirmed && <Badge variant="accent">Confirmed</Badge>}
-              </div>
               {respondMutation.isError && (
                 <p className="text-xs text-error mt-1.5">
                   Failed — please sign out and back in.
