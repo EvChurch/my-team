@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -13,6 +14,9 @@ type NewGoalFormProps = {
 
 export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
   const trpc = useTRPC();
+  const tf = useTranslations("GoalForm");
+  const tGoals = useTranslations("Goals");
+  const tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
@@ -28,11 +32,11 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
     setError(null);
 
     if (!title.trim()) {
-      setError("Title is required.");
+      setError(tf("titleRequired"));
       return;
     }
     if (!teamId) {
-      setError("Please select a team.");
+      setError(tf("teamRequired"));
       return;
     }
 
@@ -46,12 +50,12 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
-          toast("Goal created");
+          toast(tGoals("goalCreated"));
           onClose();
         },
         onError: (err) => {
           setError(err.message);
-          toast("Failed to create goal", "error");
+          toast(tGoals("goalCreateFailed"), "error");
         },
       },
     );
@@ -64,14 +68,14 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
           htmlFor="goal-title"
           className="block text-sm font-medium text-text-primary mb-1"
         >
-          Title <span className="text-error">*</span>
+          {tf("titleLabel")} <span className="text-error">*</span>
         </label>
         <input
           id="goal-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Improve stage setup time"
+          placeholder={tf("titlePlaceholder")}
           className="w-full rounded-[10px] border border-border bg-bg-card px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
           maxLength={255}
         />
@@ -82,13 +86,13 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
           htmlFor="goal-description"
           className="block text-sm font-medium text-text-primary mb-1"
         >
-          Description
+          {tf("descriptionLabel")}
         </label>
         <textarea
           id="goal-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional description..."
+          placeholder={tf("descriptionPlaceholder")}
           rows={3}
           className="w-full rounded-[10px] border border-border bg-bg-card px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent resize-none"
         />
@@ -99,7 +103,7 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
           htmlFor="goal-due-date"
           className="block text-sm font-medium text-text-primary mb-1"
         >
-          Due Date
+          {tf("dueDateLabel")}
         </label>
         <input
           id="goal-due-date"
@@ -116,7 +120,7 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
             htmlFor="goal-team"
             className="block text-sm font-medium text-text-primary mb-1"
           >
-            Team
+            {tf("teamLabel")}
           </label>
           <select
             id="goal-team"
@@ -139,10 +143,10 @@ export function NewGoalForm({ teams, onClose }: NewGoalFormProps) {
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" disabled={createGoal.isPending}>
-          {createGoal.isPending ? "Creating..." : "Create Goal"}
+          {createGoal.isPending ? tf("creating") : tf("createGoal")}
         </Button>
       </div>
     </form>

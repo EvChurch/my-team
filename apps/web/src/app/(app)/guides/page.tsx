@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient, trpc } from "@mt/api/server";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GuidesListContent } from "./guides-list-content";
 
 export default async function GuidesPage() {
+  const t = await getTranslations("Guides");
   const queryClient = getQueryClient();
 
   const [, teams] = await Promise.all([
@@ -22,16 +24,16 @@ export default async function GuidesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Guides</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{t("title")}</h1>
           <p className="text-sm text-text-secondary mt-0.5">
-            Resources and how-tos for your team
+            {t("subtitle")}
           </p>
         </div>
         {isLeader && leaderTeam && (
           <>
             {/* Desktop button */}
             <Link href={`/teams/${leaderTeam.id}/guides/new`} className="hidden md:block">
-              <Button>New Guide</Button>
+              <Button>{t("newGuide")}</Button>
             </Link>
             {/* Mobile FAB-style button */}
             <Link href={`/teams/${leaderTeam.id}/guides/new`} className="md:hidden">

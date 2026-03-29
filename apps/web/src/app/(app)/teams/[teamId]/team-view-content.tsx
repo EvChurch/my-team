@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -31,20 +32,6 @@ type TeamViewContentProps = {
 
 type Tab = "serving" | "members" | "goals" | "guides" | "feedback" | "about";
 
-function formatLastServed(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
-  return `${Math.floor(diffDays / 365)}y ago`;
-}
-
 function MemberRow({
   member,
   lastServed,
@@ -54,6 +41,22 @@ function MemberRow({
   lastServed?: string;
   showLastServed: boolean;
 }) {
+  const t = useTranslations("Teams");
+
+  function formatLastServedDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t("today");
+    if (diffDays === 1) return t("yesterday");
+    if (diffDays < 7) return t("daysAgo", { count: diffDays });
+    if (diffDays < 30) return t("weeksAgo", { count: Math.floor(diffDays / 7) });
+    if (diffDays < 365) return t("monthsAgo", { count: Math.floor(diffDays / 30) });
+    return t("yearsAgo", { count: Math.floor(diffDays / 365) });
+  }
+
   return (
     <div className="flex items-center gap-3">
       <Avatar name={member.fullName} src={member.image} size="sm" />
@@ -62,7 +65,7 @@ function MemberRow({
       </div>
       {showLastServed && (
         <span className="text-xs text-text-tertiary shrink-0">
-          {lastServed ? formatLastServed(lastServed) : "Never"}
+          {lastServed ? formatLastServedDate(lastServed) : t("never")}
         </span>
       )}
     </div>
@@ -71,6 +74,7 @@ function MemberRow({
 
 export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Teams");
   const tz = useTimezone();
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
@@ -100,17 +104,17 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
 
   // Build tabs — only show tabs that have content (except serving which always shows)
   const allTabs: { value: Tab; label: string }[] = [
-    { value: "serving", label: "Serving" },
-    { value: "members", label: "Members" },
-    { value: "goals", label: "Goals" },
+    { value: "serving", label: t("serving") },
+    { value: "members", label: t("membersTab") },
+    { value: "goals", label: t("goalsTab") },
     ...(team.guides.length > 0 || team.isCurrentUserLeader
-      ? [{ value: "guides" as Tab, label: "Guides" }]
+      ? [{ value: "guides" as Tab, label: t("guidesTab") }]
       : []),
     ...(team.feedback.length > 0 || team.isCurrentUserLeader
-      ? [{ value: "feedback" as Tab, label: "Feedback" }]
+      ? [{ value: "feedback" as Tab, label: t("feedbackTab") }]
       : []),
     ...(team.description
-      ? [{ value: "about" as Tab, label: "About" }]
+      ? [{ value: "about" as Tab, label: t("aboutTab") }]
       : []),
   ];
 
@@ -156,7 +160,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
-          My Teams
+          {t("myTeams")}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -170,7 +174,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             )}
           </div>
           {team.isCurrentUserLeader && (
-            <Badge variant="accent">Team Lead</Badge>
+            <Badge variant="accent">{t("teamLead")}</Badge>
           )}
         </div>
       </div>
@@ -215,15 +219,15 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         <div className="space-y-4">
           <Card className="p-4">
             <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-3">
-              My Schedule
+              {t("mySchedule")}
             </h3>
             {team.schedules.length > 0 ? (
               <UpcomingServing schedules={team.schedules} />
             ) : (
               <EmptyState
                 icon={Calendar}
-                title="No Upcoming Schedules"
-                description="You have no upcoming serving dates for this team."
+                title={t("noUpcomingSchedules")}
+                description={t("noUpcomingSchedulesDesc")}
                 className="py-6"
               />
             )}
@@ -274,19 +278,16 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-text-tertiary">
-                              {plan.people.length}{" "}
-                              {plan.people.length === 1
-                                ? "person"
-                                : "people"}
+                              {t("person", { count: plan.people.length })}
                             </span>
                             {confirmedCount > 0 && (
                               <span className="text-xs text-accent">
-                                {confirmedCount} confirmed
+                                {confirmedCount} {t("confirmed")}
                               </span>
                             )}
                             {pendingCount > 0 && (
                               <span className="text-xs text-warning">
-                                {pendingCount} pending
+                                {pendingCount} {t("pending")}
                               </span>
                             )}
                           </div>
@@ -321,7 +322,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                                           <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                                         ) : isDeclined ? (
                                           <span className="text-[10px] text-error shrink-0">
-                                            Declined
+                                            {t("declined")}
                                           </span>
                                         ) : (
                                           <Clock className="w-3.5 h-3.5 text-warning shrink-0" />
@@ -348,7 +349,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           {leaders.length > 0 && (
             <Card className="p-4">
               <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-3">
-                Team Leads
+                {t("teamLeads")}
               </h3>
               <div className="space-y-2.5">
                 {leaders.map((leader) => (
@@ -382,7 +383,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                 </div>
               ) : (
                 <p className="text-xs text-text-tertiary">
-                  No members in this role
+                  {t("noMembersInRole")}
                 </p>
               )}
             </Card>
@@ -391,8 +392,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           {leaders.length === 0 && roleGroups.length === 0 && (
             <EmptyState
               icon={Users}
-              title="No Members"
-              description="No members are assigned to this team."
+              title={t("noMembers")}
+              description={t("noMembersDesc")}
               className="py-6"
             />
           )}
@@ -405,7 +406,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             <LeaderBar
               href={`/teams/${teamId}/goals/review`}
               icon={Target}
-              label={`Review Goals${pendingGoalsCount > 0 ? ` (${pendingGoalsCount})` : ""}`}
+              label={`${t("reviewGoals")}${pendingGoalsCount > 0 ? ` (${pendingGoalsCount})` : ""}`}
             />
           )}
           <Card className="p-4">
@@ -432,8 +433,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             ) : (
               <EmptyState
                 icon={Target}
-                title="No Goals Yet"
-                description="No goals have been created for this team."
+                title={t("noGoals")}
+                description={t("noGoalsDesc")}
                 className="py-6"
               />
             )}
@@ -447,7 +448,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             <LeaderBar
               href={`/teams/${teamId}/guides/new`}
               icon={BookPlus}
-              label="New Guide"
+              label={t("newGuide")}
             />
           )}
           {team.guides.map((guide) => (
@@ -478,7 +479,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             <LeaderBar
               href={`/teams/${teamId}/feedback/new`}
               icon={MessageSquarePlus}
-              label="Write Feedback"
+              label={t("writeFeedback")}
             />
           )}
           {team.feedback.map((fb) => (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Play, FileText, Wrench, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { RoleBadge } from "./role-badge";
 
@@ -24,6 +25,7 @@ const categoryColors = {
 } as const;
 
 export function GuideCard({ id, title, category, roleName, status }: GuideCardProps) {
+  const t = useTranslations("Guides");
   const Icon = categoryIcons[category];
   const iconColor = categoryColors[category];
 
@@ -41,7 +43,7 @@ export function GuideCard({ id, title, category, roleName, status }: GuideCardPr
               </p>
               {status === "DRAFT" && (
                 <span className="text-xs text-text-tertiary bg-bg-muted px-1.5 py-0.5 rounded shrink-0">
-                  Draft
+                  {t("draft")}
                 </span>
               )}
             </div>

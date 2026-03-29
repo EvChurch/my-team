@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Users, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ export function TeamCard({
   isLeader,
   nextServingDate,
 }: TeamCardProps) {
+  const t = useTranslations("Teams");
   const tz = useTimezone();
   return (
     <Link href={`/teams/${id}`}>
@@ -47,7 +49,7 @@ export function TeamCard({
           <div className="flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5" />
             <span className="text-xs">
-              {memberCount} {memberCount === 1 ? "member" : "members"}
+              {t("members", { count: memberCount })}
             </span>
           </div>
           {nextServingDate && (

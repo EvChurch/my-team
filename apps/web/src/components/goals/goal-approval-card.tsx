@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { Calendar, Check, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -37,6 +38,8 @@ export function GoalApprovalCard({
   person,
   showActions = false,
 }: GoalApprovalCardProps) {
+  const t = useTranslations("Goals");
+  const tCommon = useTranslations("Common");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -49,10 +52,10 @@ export function GoalApprovalCard({
       {
         onSuccess: () => {
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
-          toast(newStatus === "APPROVED" ? "Goal approved" : "Goal declined");
+          toast(newStatus === "APPROVED" ? t("goalApproved") : t("goalDeclined"));
         },
         onError: () => {
-          toast("Something went wrong. Please try again.", "error");
+          toast(t("goalApproveFailed"), "error");
         },
       },
     );
@@ -96,7 +99,7 @@ export function GoalApprovalCard({
         <div className="flex items-center gap-1.5 mb-3">
           <Calendar className="w-3.5 h-3.5 text-text-tertiary" />
           <span className="text-xs text-text-tertiary">
-            Due {formattedDate}
+            {t("due", { date: formattedDate })}
           </span>
         </div>
       )}
@@ -111,7 +114,7 @@ export function GoalApprovalCard({
             disabled={updateStatus.isPending}
           >
             <Check className="w-4 h-4" />
-            Approve
+            {tCommon("approve")}
           </Button>
           <button
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-xs font-semibold border-[1.5px] transition-colors disabled:opacity-50 disabled:pointer-events-none"
@@ -123,7 +126,7 @@ export function GoalApprovalCard({
             disabled={updateStatus.isPending}
           >
             <X className="w-4 h-4" />
-            Decline
+            {tCommon("decline")}
           </button>
         </div>
       )}

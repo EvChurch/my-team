@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Church, ChevronRight } from "lucide-react";
 import { Avatar } from "../ui/avatar";
@@ -13,6 +14,8 @@ type SidebarProps = {
 
 export function Sidebar({ userName, userImage }: SidebarProps) {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
+  const tCommon = useTranslations("Common");
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-[260px] md:shrink-0 bg-bg-card border-r border-border md:sticky md:top-0 md:h-screen">
@@ -20,7 +23,7 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
       <div className="flex items-center gap-2.5 px-6 pt-8 pb-6">
         <Church className="w-[22px] h-[22px] text-accent" />
         <span className="text-xl font-semibold text-text-primary">
-          My Team
+          {tCommon("appName")}
         </span>
       </div>
 
@@ -40,7 +43,7 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
               }`}
             >
               <item.icon className="w-5 h-5" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -56,9 +59,9 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
               : "bg-accent-light/40 hover:bg-accent-light/60"
           }`}
         >
-          <Avatar name={userName ?? "User"} src={userImage} size="sm" />
+          <Avatar name={userName ?? tCommon("user")} src={userImage} size="sm" />
           <span className="flex-1 text-sm font-medium truncate">
-            {userName ?? "User"}
+            {userName ?? tCommon("user")}
           </span>
           <ChevronRight className="w-4 h-4 opacity-60" />
         </Link>

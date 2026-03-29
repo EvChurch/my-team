@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTimezone } from "@/lib/timezone";
@@ -22,6 +23,8 @@ function ScheduleCard({
     team: { id: string; name: string } | null;
   };
 }) {
+  const t = useTranslations("Schedules");
+  const tCommon = useTranslations("Common");
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -121,7 +124,7 @@ function ScheduleCard({
               )}
               {respondMutation.isError && (
                 <p className="text-xs text-error mt-1.5">
-                  Failed — please sign out and back in.
+                  {t("failedResponse")}
                 </p>
               )}
             </div>
@@ -133,7 +136,7 @@ function ScheduleCard({
                   onClick={handleAccept}
                   disabled={isPending}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
-                  title="Accept"
+                  title={t("accept")}
                 >
                   <Check className="w-4 h-4 text-accent" />
                 </button>
@@ -141,7 +144,7 @@ function ScheduleCard({
                   onClick={openDeclineModal}
                   disabled={isPending}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
-                  title="Decline"
+                  title={tCommon("decline")}
                 >
                   <X className="w-4 h-4 text-error" />
                 </button>
@@ -171,7 +174,7 @@ function ScheduleCard({
               </div>
               <div>
                 <h3 className="text-base font-semibold text-text-primary">
-                  Decline Schedule?
+                  {t("declineSchedule")}
                 </h3>
                 <p className="text-xs text-text-secondary">
                   {formatDate(schedule.sortDate, tz)}
@@ -181,13 +184,12 @@ function ScheduleCard({
             </div>
 
             <p className="text-sm text-text-secondary mb-4">
-              Are you sure you want to decline this serving schedule? Your team
-              leader will be notified.
+              {t("declineConfirm")}
             </p>
 
             <input
               type="text"
-              placeholder="Reason (optional)"
+              placeholder={t("reasonPlaceholder")}
               value={declineReason}
               onChange={(e) => setDeclineReason(e.target.value)}
               className="w-full text-sm px-3 py-2.5 rounded-xl border border-border bg-bg-page text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent mb-4"
@@ -201,14 +203,14 @@ function ScheduleCard({
                 }}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={confirmDecline}
                 disabled={isPending}
                 className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-[10px] bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {isPending ? "Declining..." : "Decline"}
+                {isPending ? t("declining") : tCommon("decline")}
               </button>
             </div>
           </div>
@@ -237,12 +239,13 @@ function ConfirmedSection({
   showAll: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations("Schedules");
   const visible = showAll ? schedules : schedules.slice(0, 3);
 
   return (
     <section>
       <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-        Upcoming Serving
+        {t("upcomingServing")}
       </h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((schedule) => (
@@ -256,11 +259,11 @@ function ConfirmedSection({
         >
           {showAll ? (
             <>
-              Show less <ChevronUp className="w-3.5 h-3.5" />
+              {t("showLess")} <ChevronUp className="w-3.5 h-3.5" />
             </>
           ) : (
             <>
-              See all ({schedules.length}){" "}
+              {t("seeAll", { count: schedules.length })}{" "}
               <ChevronDown className="w-3.5 h-3.5" />
             </>
           )}
@@ -271,6 +274,7 @@ function ConfirmedSection({
 }
 
 export function UpcomingServingOverview() {
+  const t = useTranslations("Schedules");
   const trpc = useTRPC();
   const { data: schedules } = useSuspenseQuery(
     trpc.schedules.upcoming.queryOptions(),
@@ -292,7 +296,7 @@ export function UpcomingServingOverview() {
       {pendingSchedules.length > 0 && (
         <section>
           <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-            Serving Requests
+            {t("servingRequests")}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {pendingSchedules.map((schedule) => (

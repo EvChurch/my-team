@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Target, MessageSquare, Plus, MessageSquarePlus } from "lucide-react";
 import { SegmentControl } from "@/components/ui/segment-control";
@@ -21,6 +22,7 @@ type GoalsContentProps = {
 
 export function GoalsContent({ personId }: GoalsContentProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Goals");
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = searchParams.get("tab") === "feedback" ? "feedback" : "goals";
@@ -61,15 +63,15 @@ export function GoalsContent({ personId }: GoalsContentProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text-primary">
-          Goals & Feedback
+          {t("title")}
         </h1>
       </div>
 
       {/* Segment Control */}
       <SegmentControl
         segments={[
-          { value: "goals", label: "Goals" },
-          { value: "feedback", label: "Feedback" },
+          { value: "goals", label: t("goalsTab") },
+          { value: "feedback", label: t("feedbackTab") },
         ]}
         activeSegment={tab}
         onSegmentChange={handleTabChange}
@@ -137,6 +139,7 @@ function GoalsTab({
   onToggleNewGoalForm,
   personId,
 }: GoalsTabProps) {
+  const t = useTranslations("Goals");
   return (
     <div className="space-y-6">
       {/* Leader CTAs */}
@@ -147,13 +150,13 @@ function GoalsTab({
               <Link href={`/teams/${team.id}/feedback/new`}>
                 <Button variant="primary" className="text-xs">
                   <MessageSquarePlus className="w-4 h-4" />
-                  Write Feedback
+                  {t("writeFeedback")}
                 </Button>
               </Link>
               <Link href={`/teams/${team.id}/goals/review`}>
                 <Button variant="secondary" className="text-xs">
                   <Target className="w-4 h-4" />
-                  Review
+                  {t("review")}
                   {pendingGoalsCount > 0 ? ` (${pendingGoalsCount})` : ""}
                 </Button>
               </Link>
@@ -165,7 +168,7 @@ function GoalsTab({
       {/* New Goal Button + Form */}
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-          Active Goals
+          {t("activeGoals")}
         </h2>
         <Button
           variant="primary"
@@ -173,7 +176,7 @@ function GoalsTab({
           onClick={onToggleNewGoalForm}
         >
           <Plus className="w-4 h-4" />
-          New Goal
+          {t("newGoal")}
         </Button>
       </div>
 
@@ -205,8 +208,8 @@ function GoalsTab({
       ) : (
         <EmptyState
           icon={Target}
-          title="No Active Goals"
-          description="Create a new goal to get started tracking your progress."
+          title={t("noActiveGoals")}
+          description={t("noActiveGoalsDesc")}
           iconVariant="accent"
         />
       )}
@@ -215,7 +218,7 @@ function GoalsTab({
       {completedGoals.length > 0 && (
         <>
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Completed
+            {t("completedGoals")}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 opacity-70">
             {completedGoals.map((goal) => (
@@ -245,6 +248,7 @@ type FeedbackTabProps = {
 
 function FeedbackTab({ teamIds }: FeedbackTabProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Goals");
 
   // Fetch feedback for the first team (most common scenario)
   // In a multi-team setup, we show the first team's feedback
@@ -258,8 +262,8 @@ function FeedbackTab({ teamIds }: FeedbackTabProps) {
     return (
       <EmptyState
         icon={MessageSquare}
-        title="No Feedback Yet"
-        description="Feedback from team leaders will appear here."
+        title={t("noFeedback")}
+        description={t("noFeedbackDesc")}
         iconVariant="accent"
       />
     );
@@ -268,7 +272,7 @@ function FeedbackTab({ teamIds }: FeedbackTabProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-        Recent Feedback
+        {t("recentFeedback")}
       </h2>
       <div className="grid gap-3 md:grid-cols-2">
         {feedback.map((fb) => (

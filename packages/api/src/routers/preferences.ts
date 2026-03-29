@@ -21,4 +21,23 @@ export const preferencesRouter = createTRPCRouter({
       });
       return { success: true };
     }),
+
+  getLocale: protectedProcedure.query(async ({ ctx }) => {
+    const pref = await prisma.userPreference.findUnique({
+      where: { personId: ctx.personId },
+      select: { locale: true },
+    });
+    return pref?.locale ?? "en";
+  }),
+
+  setLocale: protectedProcedure
+    .input(z.object({ locale: z.enum(["en", "zh-CN", "zh-TW", "mi", "sm", "hi", "ko", "to", "tl", "ja"]) }))
+    .mutation(async ({ ctx, input }) => {
+      await prisma.userPreference.upsert({
+        where: { personId: ctx.personId },
+        create: { personId: ctx.personId, locale: input.locale },
+        update: { locale: input.locale },
+      });
+      return { success: true };
+    }),
 });

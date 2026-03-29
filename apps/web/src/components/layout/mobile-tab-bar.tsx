@@ -1,11 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { navItems } from "./nav-items";
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
 
   const activeIndex = navItems.findIndex(
     (item) =>
@@ -45,7 +47,7 @@ export function MobileTabBar() {
                 className="text-[10px] font-semibold uppercase"
                 style={{ letterSpacing: "0.5px" }}
               >
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </Link>
           );

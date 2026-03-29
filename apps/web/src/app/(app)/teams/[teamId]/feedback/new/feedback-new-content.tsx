@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,7 @@ type FeedbackNewContentProps = {
 };
 
 export function FeedbackNewContent({ teamId }: FeedbackNewContentProps) {
+  const t = useTranslations("Teams");
   const trpc = useTRPC();
   const router = useRouter();
   const { data: team } = useSuspenseQuery(
@@ -64,7 +66,7 @@ export function FeedbackNewContent({ teamId }: FeedbackNewContentProps) {
         {team.name}
       </Link>
       <h1 className="text-2xl font-bold text-text-primary mb-6">
-        Write Feedback
+        {t("writeFeedback")}
       </h1>
       <Card className="p-6">
         <FeedbackForm teamId={teamId} members={uniqueMembers} />

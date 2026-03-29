@@ -5,6 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Target } from "lucide-react";
 import { SegmentControl } from "@/components/ui/segment-control";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ type ReviewContentProps = {
 type ReviewTab = "PENDING" | "APPROVED" | "DECLINED";
 
 export function ReviewContent({ teamId }: ReviewContentProps) {
+  const t = useTranslations("Review");
   const trpc = useTRPC();
   const router = useRouter();
   const [tab, setTab] = useState<ReviewTab>("PENDING");
@@ -46,16 +48,16 @@ export function ReviewContent({ teamId }: ReviewContentProps) {
 
   const emptyMessages: Record<ReviewTab, { title: string; desc: string }> = {
     PENDING: {
-      title: "No Pending Goals",
-      desc: "All goals have been reviewed.",
+      title: t("noPending"),
+      desc: t("noPendingDesc"),
     },
     APPROVED: {
-      title: "No Approved Goals",
-      desc: "No goals have been approved yet.",
+      title: t("noApproved"),
+      desc: t("noApprovedDesc"),
     },
     DECLINED: {
-      title: "No Declined Goals",
-      desc: "No goals have been declined.",
+      title: t("noDeclined"),
+      desc: t("noDeclinedDesc"),
     },
   };
 
@@ -71,7 +73,7 @@ export function ReviewContent({ teamId }: ReviewContentProps) {
         </Link>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-text-primary">
-            Review Goals
+            {t("title")}
           </h1>
           {pendingCount > 0 && (
             <Badge variant="accent">{pendingCount} pending</Badge>
@@ -81,9 +83,9 @@ export function ReviewContent({ teamId }: ReviewContentProps) {
 
       <SegmentControl
         segments={[
-          { value: "PENDING" as ReviewTab, label: "Pending" },
-          { value: "APPROVED" as ReviewTab, label: "Approved" },
-          { value: "DECLINED" as ReviewTab, label: "Declined" },
+          { value: "PENDING" as ReviewTab, label: t("pendingTab") },
+          { value: "APPROVED" as ReviewTab, label: t("approvedTab") },
+          { value: "DECLINED" as ReviewTab, label: t("declinedTab") },
         ]}
         activeSegment={tab}
         onSegmentChange={setTab}

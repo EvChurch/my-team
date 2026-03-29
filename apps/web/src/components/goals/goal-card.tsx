@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { Calendar, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +20,6 @@ type GoalCardProps = {
   isOwner?: boolean;
 };
 
-const statusLabels: Record<string, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  DECLINED: "Declined",
-  COMPLETED: "Completed",
-};
-
 export function GoalCard({
   id,
   title,
@@ -36,8 +30,17 @@ export function GoalCard({
   isOwner = false,
 }: GoalCardProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Goals");
+  const tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const statusLabels: Record<string, string> = {
+    PENDING: t("statusPending"),
+    APPROVED: t("statusApproved"),
+    DECLINED: t("statusDeclined"),
+    COMPLETED: t("statusCompleted"),
+  };
   const [editing, setEditing] = useState(false);
   const [progressValue, setProgressValue] = useState(progress);
 
@@ -52,10 +55,10 @@ export function GoalCard({
         onSuccess: () => {
           setEditing(false);
           void queryClient.invalidateQueries({ queryKey: [["goals"]] });
-          toast("Progress updated");
+          toast(t("progressUpdated"));
         },
         onError: () => {
-          toast("Failed to update progress", "error");
+          toast(t("progressUpdateFailed"), "error");
         },
       },
     );
@@ -102,7 +105,7 @@ export function GoalCard({
             disabled={updateProgress.isPending}
             className="text-xs font-semibold text-accent hover:text-accent-dark disabled:opacity-50"
           >
-            Save
+            {tCommon("save")}
           </button>
           <button
             onClick={() => {
@@ -111,7 +114,7 @@ export function GoalCard({
             }}
             className="text-xs text-text-secondary hover:text-text-primary"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
         </div>
       ) : (
@@ -135,7 +138,7 @@ export function GoalCard({
         <div className="flex items-center gap-1.5 mt-2">
           <Calendar className="w-3.5 h-3.5 text-text-tertiary" />
           <span className="text-xs text-text-tertiary">
-            Due {formattedDate}
+            {t("due", { date: formattedDate })}
           </span>
         </div>
       )}

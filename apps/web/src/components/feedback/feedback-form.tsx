@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,18 @@ type FeedbackFormProps = {
   members: Member[];
 };
 
-const feedbackTypes = [
-  { value: "ENCOURAGEMENT" as const, label: "Encouragement", color: "var(--accent)" },
-  { value: "GROWTH_AREA" as const, label: "Growth Area", color: "var(--coral)" },
-  { value: "GENERAL" as const, label: "General", color: "var(--text-secondary)" },
-];
-
 export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Feedback");
+  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { toast } = useToast();
+
+  const feedbackTypes = [
+    { value: "ENCOURAGEMENT" as const, label: t("encouragement"), color: "var(--accent)" },
+    { value: "GROWTH_AREA" as const, label: t("growthArea"), color: "var(--coral)" },
+    { value: "GENERAL" as const, label: t("general"), color: "var(--text-secondary)" },
+  ];
 
   const [recipientId, setRecipientId] = useState("");
   const [type, setType] = useState<"ENCOURAGEMENT" | "GROWTH_AREA" | "GENERAL">("ENCOURAGEMENT");
@@ -45,11 +48,11 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
     setError(null);
 
     if (!recipientId) {
-      setError("Please select a team member.");
+      setError(t("selectMember"));
       return;
     }
     if (!content.trim()) {
-      setError("Please write some feedback.");
+      setError(t("writeSomeFeedback"));
       return;
     }
 
@@ -63,12 +66,12 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       },
       {
         onSuccess: () => {
-          toast("Feedback submitted");
+          toast(t("submitted"));
           router.push("/goals?tab=feedback");
         },
         onError: (err) => {
           setError(err.message);
-          toast("Failed to submit feedback", "error");
+          toast(t("submitFailed"), "error");
         },
       },
     );
@@ -79,7 +82,7 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       {/* Member Selector */}
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Team Member <span className="text-error">*</span>
+          {t("teamMemberLabel")} <span className="text-error">*</span>
         </label>
         <div className="grid gap-2 sm:grid-cols-2">
           {members.map((member) => (
@@ -108,7 +111,7 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       {/* Feedback Type */}
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Type
+          {t("typeLabel")}
         </label>
         <div className="flex gap-2">
           {feedbackTypes.map((ft) => (
@@ -139,13 +142,13 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
           htmlFor="feedback-content"
           className="block text-sm font-medium text-text-primary mb-1"
         >
-          Feedback <span className="text-error">*</span>
+          {t("feedbackLabel")} <span className="text-error">*</span>
         </label>
         <textarea
           id="feedback-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your feedback..."
+          placeholder={t("placeholder")}
           rows={5}
           className="w-full rounded-[10px] border border-border bg-bg-card px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent resize-none"
         />
@@ -155,7 +158,7 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       <Toggle
         checked={isShared}
         onChange={setIsShared}
-        label="Share with team member"
+        label={t("shareWithMember")}
       />
 
       {error && <p className="text-sm text-error">{error}</p>}
@@ -166,10 +169,10 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
           variant="secondary"
           onClick={() => router.back()}
         >
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" disabled={createFeedback.isPending}>
-          {createFeedback.isPending ? "Sending..." : "Send Feedback"}
+          {createFeedback.isPending ? t("sending") : t("sendFeedback")}
         </Button>
       </div>
     </form>

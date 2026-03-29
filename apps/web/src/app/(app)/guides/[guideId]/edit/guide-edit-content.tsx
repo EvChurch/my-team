@@ -5,6 +5,7 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Play, Wrench, FileText, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,17 +18,19 @@ type GuideEditContentProps = {
   guideId: string;
 };
 
-const CATEGORIES = [
-  { value: "QUICK_START" as const, label: "Quick Start", icon: Play },
-  { value: "TROUBLESHOOTING" as const, label: "Troubleshooting", icon: Wrench },
-  { value: "SOP" as const, label: "SOP", icon: FileText },
-];
-
 export function GuideEditContent({ guideId }: GuideEditContentProps) {
+  const t = useTranslations("Guides");
+  const tCommon = useTranslations("Common");
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const categories = [
+    { value: "QUICK_START" as const, label: t("quickStart"), icon: Play },
+    { value: "TROUBLESHOOTING" as const, label: t("troubleshooting"), icon: Wrench },
+    { value: "SOP" as const, label: t("sop"), icon: FileText },
+  ];
 
   const { data: guide } = useSuspenseQuery(
     trpc.guides.get.queryOptions({ guideId }),
@@ -48,10 +51,10 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast("Guide saved");
+        toast(t("guideSaved"));
       },
       onError: () => {
-        toast("Failed to save guide", "error");
+        toast(t("guideSaveFailed"), "error");
       },
     }),
   );
@@ -61,11 +64,11 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast("Guide published");
+        toast(t("guidePublished"));
         router.push(`/guides/${guideId}`);
       },
       onError: () => {
-        toast("Failed to publish guide", "error");
+        toast(t("guidePublishFailed"), "error");
       },
     }),
   );
@@ -74,11 +77,11 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast("Guide deleted");
+        toast(t("deleted"));
         router.push("/guides");
       },
       onError: () => {
-        toast("Failed to delete guide", "error");
+        toast(t("deleteFailed"), "error");
       },
     }),
   );
@@ -135,15 +138,15 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Guide
+          {t("backToGuide")}
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Edit Guide</h1>
+            <h1 className="text-2xl font-bold text-text-primary">{t("editGuide")}</h1>
             <p className="text-sm text-text-secondary mt-0.5">{team.name}</p>
           </div>
           <Badge variant={guide.status === "PUBLISHED" ? "accent" : "muted"}>
-            {guide.status === "PUBLISHED" ? "Published" : "Draft"}
+            {guide.status === "PUBLISHED" ? t("published") : t("draft")}
           </Badge>
         </div>
       </div>
@@ -153,7 +156,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         <div className="flex-1 space-y-4">
           {/* Category chips */}
           <div className="flex gap-2">
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const Icon = cat.icon;
               const isActive = category === cat.value;
               return (
@@ -177,7 +180,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
           {/* Title */}
           <input
             type="text"
-            placeholder="Guide title..."
+            placeholder={t("guideTitlePlaceholder")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full text-xl font-semibold text-text-primary placeholder:text-text-tertiary bg-transparent outline-none"
@@ -191,19 +194,19 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         <div className="hidden md:block w-72 space-y-4 shrink-0">
           <Card className="p-4 space-y-4">
             <h3 className="text-sm font-semibold text-text-primary">
-              Guide Details
+              {t("guideDetails")}
             </h3>
 
             <div>
-              <p className="text-xs text-text-secondary">Status</p>
+              <p className="text-xs text-text-secondary">{tCommon("status")}</p>
               <p className="text-sm text-text-primary mt-0.5">
-                {guide.status === "PUBLISHED" ? "Published" : "Draft"}
+                {guide.status === "PUBLISHED" ? t("published") : t("draft")}
               </p>
             </div>
 
             {guide.author && (
               <div>
-                <p className="text-xs text-text-secondary">Author</p>
+                <p className="text-xs text-text-secondary">{tCommon("author")}</p>
                 <p className="text-sm text-text-primary mt-0.5">
                   {guide.author.fullName}
                 </p>
@@ -211,21 +214,21 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
             )}
 
             <div>
-              <p className="text-xs text-text-secondary">Team</p>
+              <p className="text-xs text-text-secondary">{tCommon("team")}</p>
               <p className="text-sm text-text-primary mt-0.5">{team.name}</p>
             </div>
 
             {/* Role selector */}
             <div>
               <label className="text-xs font-medium text-text-secondary block mb-1">
-                Role
+                {tCommon("role")}
               </label>
               <select
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg-card text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
               >
-                <option value="">All Roles</option>
+                <option value="">{tCommon("allRoles")}</option>
                 {positions.map((pos) => (
                   <option key={pos.id} value={pos.id}>
                     {pos.name}
@@ -237,12 +240,12 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
           <Card className="p-4 space-y-4">
             <h3 className="text-sm font-semibold text-text-primary">
-              Visibility
+              {t("visibility")}
             </h3>
             <Toggle
               checked={isVisibleToTeam}
               onChange={setIsVisibleToTeam}
-              label="Visible to team"
+              label={tCommon("visibleToTeam")}
             />
           </Card>
 
@@ -253,7 +256,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Delete Guide
+              {t("deleteGuide")}
             </Button>
           </Card>
         </div>
@@ -282,7 +285,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
           <Toggle
             checked={isVisibleToTeam}
             onChange={setIsVisibleToTeam}
-            label="Visible to team"
+            label={tCommon("visibleToTeam")}
           />
         </Card>
         <Button
@@ -302,13 +305,13 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
           onClick={handleSave}
           disabled={isSaving || !title.trim()}
         >
-          {updateMutation.isPending ? "Saving..." : "Save Draft"}
+          {updateMutation.isPending ? t("saving") : t("saveDraft")}
         </Button>
         <Button
           onClick={handlePublish}
           disabled={isSaving || !title.trim()}
         >
-          {publishMutation.isPending ? "Publishing..." : "Publish"}
+          {publishMutation.isPending ? t("publishing") : t("publish")}
         </Button>
       </div>
 
@@ -317,18 +320,17 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <Card className="p-6 max-w-sm mx-4">
             <h2 className="text-lg font-semibold text-text-primary mb-2">
-              Delete Guide
+              {t("deleteGuide")}
             </h2>
             <p className="text-sm text-text-secondary mb-4">
-              Are you sure you want to delete &ldquo;{guide.title}&rdquo;? This
-              action cannot be undone.
+              {t("deleteConfirm", { title: guide.title })}
             </p>
             <div className="flex justify-end gap-2">
               <Button
                 variant="secondary"
                 onClick={() => setShowDeleteConfirm(false)}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -337,7 +339,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
                   deleteMutation.mutate({ teamId: guide.teamId, guideId })
                 }
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                {deleteMutation.isPending ? t("deleting") : tCommon("delete")}
               </Button>
             </div>
           </Card>
