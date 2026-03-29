@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { PlanHeader } from "@/components/plans/plan-header";
@@ -29,17 +29,38 @@ export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
     trpc.plans.get.queryOptions({ planRemoteId }),
   );
   const [activeTab, setActiveTab] = useState<Tab>("order");
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefsMap = useRef<Map<Tab, HTMLButtonElement>>(new Map());
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(
+    null,
+  );
 
-  // Scroll active tab into view on change
+  const updatePill = useCallback(() => {
+    const bar = tabBarRef.current;
+    const activeBtn = tabRefsMap.current.get(activeTab);
+    if (!bar || !activeBtn) return;
+    const barRect = bar.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    setPill({
+      left: btnRect.left - barRect.left,
+      width: btnRect.width,
+    });
+  }, [activeTab]);
+
   useEffect(() => {
-    activeTabRef.current?.scrollIntoView({
+    updatePill();
+    const activeBtn = tabRefsMap.current.get(activeTab);
+    activeBtn?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
       inline: "center",
     });
-  }, [activeTab]);
+  }, [activeTab, updatePill]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updatePill);
+    return () => window.removeEventListener("resize", updatePill);
+  }, [updatePill]);
 
   // Filter out empty tabs
   const hasNotes = data.notes.length > 0 || data.attachments.length > 0;
@@ -60,28 +81,39 @@ export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
         serviceTypeName={data.plan.serviceTypeName}
       />
 
-      {/* Scrolling tab bar */}
-      <div
-        ref={tabsRef}
-        className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0"
-        role="tablist"
-      >
-        {visibleTabs.map((tab) => (
-          <button
-            key={tab.value}
-            ref={activeTab === tab.value ? activeTabRef : null}
-            role="tab"
-            aria-selected={activeTab === tab.value}
-            className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeTab === tab.value
-                ? "bg-accent text-text-on-accent"
-                : "bg-bg-muted text-text-secondary hover:text-text-primary"
-            }`}
-            onClick={() => setActiveTab(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Scrolling segment control tab bar with animated pill */}
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0">
+        <div
+          ref={tabBarRef}
+          className="relative inline-flex rounded-xl bg-bg-muted p-1"
+          role="tablist"
+        >
+          {/* Animated background pill */}
+          {pill && (
+            <div
+              className="absolute top-1 bottom-1 rounded-[10px] bg-bg-card shadow-[0_1px_3px_rgba(26,25,24,0.06)] transition-all duration-300 ease-in-out"
+              style={{ left: pill.left, width: pill.width }}
+            />
+          )}
+          {visibleTabs.map((tab) => (
+            <button
+              key={tab.value}
+              ref={(el) => {
+                if (el) tabRefsMap.current.set(tab.value, el);
+              }}
+              role="tab"
+              aria-selected={activeTab === tab.value}
+              className={`relative z-10 shrink-0 px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
+                activeTab === tab.value
+                  ? "text-text-primary"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              onClick={() => setActiveTab(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab content */}
