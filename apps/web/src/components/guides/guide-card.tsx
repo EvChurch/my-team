@@ -29,7 +29,7 @@ export function GuideCard({ id, title, category, roleName, status }: GuideCardPr
 
   return (
     <Link href={`/guides/${id}`}>
-      <Card className="p-3.5 hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="p-3.5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-light shrink-0">
             <Icon className={`w-4 h-4 ${iconColor}`} />

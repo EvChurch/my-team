@@ -29,7 +29,7 @@ export function TeamCard({
   const tz = useTimezone();
   return (
     <Link href={`/teams/${id}`}>
-      <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <h3 className="text-[15px] font-semibold text-text-primary truncate">

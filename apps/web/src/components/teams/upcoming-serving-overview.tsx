@@ -89,7 +89,7 @@ function ScheduleCard({
   return (
     <>
       <Link href={`/plans/${schedule.planRemoteId}`}>
-        <Card className="p-4 hover:shadow-md transition-shadow h-full">
+        <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all h-full">
           <div className="flex items-start gap-3">
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${

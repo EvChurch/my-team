@@ -255,7 +255,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                       href={`/plans/${plan.planRemoteId}`}
                       className="block"
                     >
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                      <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden">
                         {/* Plan header */}
                         <div className="p-4 pb-3">
                           <h3
@@ -452,7 +452,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           )}
           {team.guides.map((guide) => (
             <Link key={guide.id} href={`/guides/${guide.id}`}>
-              <Card className="p-3 hover:shadow-md transition-shadow">
+              <Card className="p-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-accent shrink-0" />
                   <div className="flex-1 min-w-0">
