@@ -86,7 +86,7 @@ export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
 
       {/* Tab content */}
       {activeTab === "order" && (
-        <ServiceOrder items={data.serviceOrder} attachments={data.attachments} />
+        <ServiceOrder items={data.serviceOrder} />
       )}
 
       {activeTab === "times" && <PlanTimes planTimes={data.planTimes} />}

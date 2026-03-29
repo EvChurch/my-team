@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
-  Paperclip,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -59,18 +58,8 @@ type ServiceOrderItem = {
   itemNotes: ItemNote[];
 };
 
-type Attachment = {
-  id: string;
-  filename: string | null;
-  url: string | null;
-  contentType: string | null;
-  fileSize: number | null;
-  remoteLink: string | null;
-};
-
 type ServiceOrderProps = {
   items: ServiceOrderItem[];
-  attachments: Attachment[];
 };
 
 function formatDuration(seconds: number): string {
@@ -80,19 +69,7 @@ function formatDuration(seconds: number): string {
   return secs > 0 ? `${mins}:${String(secs).padStart(2, "0")}` : `${mins}m`;
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
-
-function SongItem({
-  item,
-  attachments,
-}: {
-  item: ServiceOrderItem;
-  attachments: Attachment[];
-}) {
+function SongItem({ item }: { item: ServiceOrderItem }) {
   const [showChordChart, setShowChordChart] = useState(false);
   const hasChordChart = item.arrangement?.chordChart;
 
@@ -169,24 +146,6 @@ function SongItem({
                 )}
               </button>
             )}
-            {attachments.length > 0 &&
-              attachments.map((att) => (
-                <a
-                  key={att.id}
-                  href={att.url ?? att.remoteLink ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-dark transition-colors"
-                >
-                  <Paperclip className="w-3 h-3" />
-                  {att.filename ?? "Attachment"}
-                  {att.fileSize != null && (
-                    <span className="text-text-tertiary">
-                      ({formatFileSize(att.fileSize)})
-                    </span>
-                  )}
-                </a>
-              ))}
           </div>
         </div>
       </div>
@@ -279,7 +238,7 @@ function RegularItem({ item }: { item: ServiceOrderItem }) {
   );
 }
 
-export function ServiceOrder({ items, attachments }: ServiceOrderProps) {
+export function ServiceOrder({ items }: ServiceOrderProps) {
   if (items.length === 0) return null;
 
   return (
@@ -289,7 +248,7 @@ export function ServiceOrder({ items, attachments }: ServiceOrderProps) {
           case "header":
             return <HeaderItem key={item.id} item={item} />;
           case "song":
-            return <SongItem key={item.id} item={item} attachments={[]} />;
+            return <SongItem key={item.id} item={item} />;
           case "media":
             return <MediaItem key={item.id} item={item} />;
           default:
