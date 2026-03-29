@@ -263,18 +263,32 @@ function ConfirmedSection({
   showAll: boolean;
   onToggle: () => void;
 }) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState<number | undefined>();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [collapsedHeight, setCollapsedHeight] = useState<number>(0);
+  const [fullHeight, setFullHeight] = useState<number>(0);
 
   useEffect(() => {
-    if (contentRef.current) {
-      setContentHeight(contentRef.current.scrollHeight);
-    }
-  }, [schedules, showAll]);
+    const grid = gridRef.current;
+    if (!grid) return;
 
-  // Collapsed: show 3 cards. Estimate height based on card size (~100px + 12px gap)
-  // We measure the real content and use a grid-rows trick instead
-  const collapsedCount = 3;
+    // Measure full height
+    setFullHeight(grid.scrollHeight);
+
+    // Measure collapsed height: find the bottom of the 3rd child
+    const children = Array.from(grid.children) as HTMLElement[];
+    if (children.length <= 3) {
+      setCollapsedHeight(grid.scrollHeight);
+      return;
+    }
+    // Find the bottom of the 3rd card relative to the grid top
+    const gridTop = grid.getBoundingClientRect().top;
+    let maxBottom = 0;
+    for (let i = 0; i < Math.min(3, children.length); i++) {
+      const rect = children[i]!.getBoundingClientRect();
+      maxBottom = Math.max(maxBottom, rect.bottom - gridTop);
+    }
+    setCollapsedHeight(maxBottom);
+  }, [schedules]);
 
   return (
     <section>
@@ -285,11 +299,13 @@ function ConfirmedSection({
         className="overflow-hidden transition-[max-height] duration-500 ease-in-out"
         style={{
           maxHeight: showAll
-            ? `${contentHeight ?? 9999}px`
-            : `${collapsedCount * 112}px`,
+            ? `${fullHeight}px`
+            : collapsedHeight > 0
+              ? `${collapsedHeight}px`
+              : undefined,
         }}
       >
-        <div ref={contentRef} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div ref={gridRef} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {schedules.map((schedule) => (
             <ScheduleCard key={schedule.id} schedule={schedule} />
           ))}
