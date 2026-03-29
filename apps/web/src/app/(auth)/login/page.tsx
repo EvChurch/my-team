@@ -39,7 +39,7 @@ export default async function LoginPage() {
         </div>
 
         {/* Login card */}
-        <div className="w-full max-w-sm bg-bg-card rounded-2xl shadow-[0_2px_12px_rgba(26,25,24,0.03)] p-8 flex flex-col items-center">
+        <div className="w-full max-w-sm bg-bg-card rounded-2xl shadow-[var(--shadow-card)] p-8 flex flex-col items-center">
           <Church className="w-8 h-8 text-accent mb-3" />
           <h1 className="text-2xl font-semibold text-text-primary mb-1">
             My Team

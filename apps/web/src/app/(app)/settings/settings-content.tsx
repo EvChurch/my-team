@@ -16,11 +16,14 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
+import { SegmentControl } from "@/components/ui/segment-control";
+import { useTheme } from "@/components/theme-provider";
 
 export function SettingsContent() {
   const trpc = useTRPC();
   const { data: person } = useSuspenseQuery(trpc.people.me.queryOptions());
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   const leaderTeams = person.leaders.map((l) => l.team.name);
   const roleLabel =
@@ -60,16 +63,21 @@ export function SettingsContent() {
         </div>
 
         {/* Appearance */}
-        <button
-          type="button"
-          className="flex items-center justify-between p-4 w-full text-left hover:bg-bg-muted/50 transition-colors"
-        >
+        <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Moon className="w-5 h-5 text-text-secondary" />
             <span className="text-sm text-text-primary">Appearance</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-text-tertiary" />
-        </button>
+          <SegmentControl
+            segments={[
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+              { value: "system", label: "System" },
+            ]}
+            activeSegment={theme}
+            onSegmentChange={setTheme}
+          />
+        </div>
 
         {/* Language */}
         <button

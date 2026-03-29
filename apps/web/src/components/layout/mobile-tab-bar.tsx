@@ -16,7 +16,7 @@ export function MobileTabBar() {
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
-      <div className="relative flex items-center justify-around bg-bg-card border border-border rounded-[36px] h-[62px] px-1 shadow-[0_2px_12px_rgba(26,25,24,0.06)]">
+      <div className="relative flex items-center justify-around bg-bg-card border border-border rounded-[36px] h-[62px] px-1 shadow-[var(--shadow-card-strong)]">
         {/* Sliding bubble — positioned via CSS calc based on active index */}
         {activeIndex >= 0 && (
           <div

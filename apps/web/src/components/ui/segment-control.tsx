@@ -25,7 +25,7 @@ export function SegmentControl<T extends string>({
           aria-selected={activeSegment === segment.value}
           className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
             activeSegment === segment.value
-              ? "bg-bg-card text-text-primary shadow-[0_1px_3px_rgba(26,25,24,0.06)]"
+              ? "bg-bg-card text-text-primary shadow-[var(--shadow-card-strong)]"
               : "text-text-secondary hover:text-text-primary"
           }`}
           onClick={() => onSegmentChange(segment.value)}
