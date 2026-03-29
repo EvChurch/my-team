@@ -244,9 +244,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
 
           {/* Leader view: team roster per upcoming plan */}
           {team.isCurrentUserLeader &&
-            (team.teamSchedules?.length ?? 0) > 0 && (
-              <>
-                {(team.teamSchedules ?? []).map((plan) => {
+            (team.teamSchedules?.length ?? 0) > 0 &&
+              (team.teamSchedules ?? []).map((plan) => {
                   // Group people by position/role
                   const roleGroups = new Map<string, typeof plan.people>();
                   for (const person of plan.people) {
@@ -267,6 +266,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                     <Link
                       key={plan.planRemoteId}
                       href={`/plans/${plan.planRemoteId}`}
+                      className="block"
                     >
                       <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
                         {/* Plan header */}
@@ -357,9 +357,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                       </Card>
                     </Link>
                   );
-                })}
-              </>
-            )}
+                })
+            }
         </div>
       )}
 
