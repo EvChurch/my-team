@@ -9,7 +9,7 @@ ENV TZ="$TZ"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install additional system packages (base image already includes git, curl, sudo, etc.)
+# Install additional system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
   # Sandboxing support for Claude Code
   bubblewrap \
@@ -22,8 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   # Build tools
   build-essential \
   # Utilities
+  curl \
   jq \
   nano \
+  openssh-server \
+  sudo \
   unzip \
   vim \
   # Network tools (for security testing)
@@ -32,6 +35,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   iptables \
   iproute2 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI for raw docker-compose usage; devcontainers also apply the gh feature.
+RUN mkdir -p -m 0755 /etc/apt/keyrings && \
+  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+  chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    > /etc/apt/sources.list.d/github-cli.list && \
+  apt-get update && apt-get install -y --no-install-recommends gh && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure local-only SSH access through docker-compose port bindings.
+RUN mkdir -p /run/sshd /etc/ssh/sshd_config.d && \
+  printf '%s\n' \
+    'PasswordAuthentication no' \
+    'KbdInteractiveAuthentication no' \
+    'PermitRootLogin no' \
+    'PubkeyAuthentication yes' \
+    'AllowUsers vscode' \
+    > /etc/ssh/sshd_config.d/devcontainer.conf
+
+# Install helper that syncs GitHub public keys into authorized_keys.
+COPY sync-github-authorized-keys /usr/local/bin/sync-github-authorized-keys
+RUN chmod 0755 /usr/local/bin/sync-github-authorized-keys
 
 # Install git-delta
 ARG GIT_DELTA_VERSION=0.18.2
@@ -92,7 +119,10 @@ RUN curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "$FNM_D
   export PATH="$FNM_DIR:$PATH" && \
   eval "$(fnm env)" && \
   fnm install ${NODE_VERSION} && \
-  fnm default ${NODE_VERSION}
+  fnm default ${NODE_VERSION} && \
+  npm install -g @openai/codex@latest
+
+ENV PATH="/home/vscode/.fnm/aliases/default/bin:/home/vscode/.local/bin:$PATH"
 
 # Install Oh My Zsh
 ARG ZSH_IN_DOCKER_VERSION=1.2.1

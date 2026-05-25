@@ -12,8 +12,21 @@ services:
       - claude-code-bashhistory:/commandhistory
       - claude-code-config:/home/vscode/.claude
       - claude-code-gh:/home/vscode/.config/gh
+      - devcontainer-ssh:/home/vscode/.ssh
+      - codex-config:/home/vscode/.codex
       - ${HOME}/.gitconfig:/home/vscode/.gitconfig:ro
       - .:/workspace/.devcontainer:ro
+    ports:
+      - "127.0.0.1:2297:22"
+    environment:
+      CODEX_HOME: /home/vscode/.codex
+    command: >
+      bash -lc "sudo ssh-keygen -A &&
+      sudo install -d -m 0755 /run/sshd &&
+      sudo install -d -o vscode -g vscode -m 0700 /home/vscode/.ssh &&
+      sync-github-authorized-keys &&
+      sudo /usr/sbin/sshd &&
+      sleep infinity"
     stdin_open: true
     tty: true
     cap_add:
@@ -42,4 +55,6 @@ volumes:
   claude-code-bashhistory:
   claude-code-config:
   claude-code-gh:
+  devcontainer-ssh:
+  codex-config:
   pgdata:
