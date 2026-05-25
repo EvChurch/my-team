@@ -7,10 +7,11 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "init": true,
+  "shutdownAction": "none",
   "updateRemoteUserUID": true,
   "customizations": {
     "vscode": {
-      "extensions": ["anthropic.claude-code"],
+      "extensions": ["anthropic.claude-code", "openai.chatgpt"],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {
@@ -32,6 +33,7 @@
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "CODEX_HOME": "/home/vscode/.codex",
     "POWERLEVEL9K_DISABLE_GITSTATUS": "true",
     "GIT_CONFIG_GLOBAL": "/home/vscode/.gitconfig.local",
     "UV_LINK_MODE": "copy",
