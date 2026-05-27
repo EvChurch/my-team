@@ -15,6 +15,7 @@ function ScheduleCard({
 }: {
   schedule: {
     id: string;
+    provider?: "PCO" | "ROCK";
     status: string;
     sortDate: Date | string;
     startsAt: Date | string | null;
@@ -47,6 +48,7 @@ function ScheduleCard({
   const tz = useTimezone();
   const isConfirmed = schedule.status === "CONFIRMED";
   const isUnconfirmed = schedule.status === "UNCONFIRMED";
+  const canRespond = schedule.provider !== "ROCK";
   const isPending = respondMutation.isPending;
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
@@ -89,70 +91,82 @@ function ScheduleCard({
     );
   };
 
+  const card = (
+    <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all h-full">
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
+            isConfirmed ? "bg-accent/10" : "bg-warning/10"
+          }`}
+        >
+          {isConfirmed ? (
+            <Check className="w-4 h-4 text-accent" />
+          ) : (
+            <Clock className="w-4 h-4 text-warning" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-text-primary">
+            {formatDate(schedule.sortDate, tz)}
+            {schedule.startsAt && (
+              <span className="text-text-secondary font-normal">
+                {" "}
+                at {formatTime(schedule.startsAt, tz)}
+              </span>
+            )}
+          </p>
+          {(schedule.provider || schedule.positionName || schedule.team) && (
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {schedule.provider && (
+                <span className="rounded-md bg-bg-muted px-1.5 py-0.5 text-[10px] font-medium text-text-secondary">
+                  {schedule.provider}
+                </span>
+              )}
+              <span className="text-xs text-text-secondary">
+                {[schedule.positionName, schedule.team?.name]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </div>
+          )}
+          {respondMutation.isError && (
+            <p className="text-xs text-error mt-1.5">
+              {t("failedResponse")}
+            </p>
+          )}
+        </div>
+
+        {isUnconfirmed && canRespond && (
+          <div className="flex items-center gap-1.5 shrink-0 self-center">
+            <button
+              onClick={handleAccept}
+              disabled={isPending}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
+              title={t("accept")}
+            >
+              <Check className="w-4 h-4 text-accent" />
+            </button>
+            <button
+              onClick={openDeclineModal}
+              disabled={isPending}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
+              title={tCommon("decline")}
+            >
+              <X className="w-4 h-4 text-error" />
+            </button>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+
   return (
     <>
-      <Link href={`/plans/${schedule.planRemoteId}`}>
-        <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all h-full">
-          <div className="flex items-start gap-3">
-            <div
-              className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
-                isConfirmed ? "bg-accent/10" : "bg-warning/10"
-              }`}
-            >
-              {isConfirmed ? (
-                <Check className="w-4 h-4 text-accent" />
-              ) : (
-                <Clock className="w-4 h-4 text-warning" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-text-primary">
-                {formatDate(schedule.sortDate, tz)}
-                {schedule.startsAt && (
-                  <span className="text-text-secondary font-normal">
-                    {" "}
-                    at {formatTime(schedule.startsAt, tz)}
-                  </span>
-                )}
-              </p>
-              {(schedule.positionName || schedule.team) && (
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {[schedule.positionName, schedule.team?.name]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              )}
-              {respondMutation.isError && (
-                <p className="text-xs text-error mt-1.5">
-                  {t("failedResponse")}
-                </p>
-              )}
-            </div>
-
-            {/* Accept / Decline icon buttons on the right */}
-            {isUnconfirmed && (
-              <div className="flex items-center gap-1.5 shrink-0 self-center">
-                <button
-                  onClick={handleAccept}
-                  disabled={isPending}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors disabled:opacity-50"
-                  title={t("accept")}
-                >
-                  <Check className="w-4 h-4 text-accent" />
-                </button>
-                <button
-                  onClick={openDeclineModal}
-                  disabled={isPending}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
-                  title={tCommon("decline")}
-                >
-                  <X className="w-4 h-4 text-error" />
-                </button>
-              </div>
-            )}
-          </div>
-        </Card>
-      </Link>
+      {schedule.provider === "ROCK" ? (
+        card
+      ) : (
+        <Link href={`/plans/${schedule.planRemoteId}`}>{card}</Link>
+      )}
 
       {/* Decline confirmation modal */}
       {showDeclineModal && (
@@ -228,6 +242,7 @@ function ConfirmedSection({
 }: {
   schedules: Array<{
     id: string;
+    provider?: "PCO" | "ROCK";
     status: string;
     sortDate: Date | string;
     startsAt: Date | string | null;

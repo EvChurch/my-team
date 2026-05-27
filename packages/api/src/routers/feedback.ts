@@ -18,12 +18,10 @@ export const feedbackRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       // Check if user is a leader for this team
-      const isLeader = await prisma.leader.findUnique({
+      const isLeader = await prisma.leader.findFirst({
         where: {
-          personId_teamId: {
-            personId: ctx.personId,
-            teamId: input.teamId,
-          },
+          personId: { in: ctx.personIds },
+          teamId: input.teamId,
         },
       });
 
@@ -33,7 +31,7 @@ export const feedbackRouter = createTRPCRouter({
           ...(input.recipientId && { recipientId: input.recipientId }),
           // Non-leaders can only see shared feedback or feedback they received
           ...(!isLeader && {
-            OR: [{ isShared: true }, { recipientId: ctx.personId }],
+            OR: [{ isShared: true }, { recipientId: ctx.profileId }],
           }),
         },
         include: {
@@ -75,7 +73,7 @@ export const feedbackRouter = createTRPCRouter({
         data: {
           content: input.content,
           type: input.type,
-          authorId: ctx.personId,
+          authorId: ctx.profileId,
           recipientId: input.recipientId,
           teamId: input.teamId,
           isShared: input.isShared,

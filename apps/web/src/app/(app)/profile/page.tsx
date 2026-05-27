@@ -7,7 +7,7 @@ import { ProfileContent } from "./profile-content";
 export default async function ProfilePage() {
   const t = await getTranslations("Profile");
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.people.me.queryOptions());
+  await queryClient.prefetchQuery(trpc.people.myTeamProfile.queryOptions());
 
   return (
     <div>

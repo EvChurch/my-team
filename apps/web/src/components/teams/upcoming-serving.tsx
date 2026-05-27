@@ -2,6 +2,7 @@ import { ScheduleRow } from "./schedule-row";
 
 type ScheduleItem = {
   id: string;
+  provider?: "PCO" | "ROCK";
   positionName: string | null;
   status: "CONFIRMED" | "UNCONFIRMED" | "DECLINED";
   sortDate: Date | string;

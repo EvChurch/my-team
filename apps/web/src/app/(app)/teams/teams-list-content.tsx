@@ -1,16 +1,22 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useTranslations } from "next-intl";
 import { Users } from "lucide-react";
+import { useEffect } from "react";
 import { TeamCard } from "@/components/teams/team-card";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export function TeamsListContent() {
   const trpc = useTRPC();
   const t = useTranslations("Teams");
+  const queryClient = useQueryClient();
   const { data: teams } = useSuspenseQuery(trpc.teams.list.queryOptions());
+
+  useEffect(() => {
+    void queryClient.invalidateQueries(trpc.teams.list.queryFilter());
+  }, [queryClient, trpc]);
 
   if (teams.length === 0) {
     return (
@@ -31,6 +37,7 @@ export function TeamsListContent() {
           key={team.id}
           id={team.id}
           name={team.name}
+          provider={team.provider}
           serviceTypeName={team.serviceType?.name}
           memberCount={team.memberCount}
           userRole={team.userRole}

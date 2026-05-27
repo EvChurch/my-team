@@ -26,6 +26,7 @@ type PlanTime = {
 
 type Schedule = {
   id: string;
+  provider?: "PCO" | "ROCK";
   positionName: string | null;
   status: "CONFIRMED" | "UNCONFIRMED" | "DECLINED";
   sortDate: Date | string;
@@ -100,6 +101,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
   const hasPlanTimes =
     schedule.planTimes && schedule.planTimes.length > 0;
   const isUnconfirmed = schedule.status === "UNCONFIRMED";
+  const canRespond = schedule.provider !== "ROCK";
   const isPending = respondMutation.isPending;
 
   const handleAccept = () => {
@@ -121,7 +123,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
     });
   };
 
-  const planHref = schedule.planRemoteId
+  const planHref = schedule.planRemoteId && schedule.provider !== "ROCK"
     ? `/plans/${schedule.planRemoteId}`
     : null;
 
@@ -147,6 +149,9 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
                 {schedule.team.name}
               </span>
             )}
+            {schedule.provider && (
+              <Badge variant="muted">{schedule.provider}</Badge>
+            )}
             {schedule.positionName && (
               <Badge variant="muted">{schedule.positionName}</Badge>
             )}
@@ -154,7 +159,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        {isUnconfirmed && !declining && (
+        {isUnconfirmed && canRespond && !declining && (
           <div className="flex items-center gap-1.5">
             <button
               onClick={(e) => {
@@ -180,7 +185,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
             </button>
           </div>
         )}
-        {!isUnconfirmed && (
+        {(!isUnconfirmed || !canRespond) && (
           <div className="flex items-center gap-1">
             <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
             <span className={`text-xs ${config.className}`}>

@@ -8,12 +8,12 @@ export const teamsRouter = createTRPCRouter({
    * Returns user's role (leader or position name) for badge display.
    */
   list: protectedProcedure.query(async ({ ctx }) => {
-    const personId = ctx.personId;
+    const personIds = ctx.personIds;
 
     // Find teams where user is assigned (via position) or is a leader
     const [assignedTeams, ledTeams] = await Promise.all([
       prisma.assignment.findMany({
-        where: { personId },
+        where: { personId: { in: personIds } },
         select: {
           position: {
             select: {
@@ -22,6 +22,7 @@ export const teamsRouter = createTRPCRouter({
                 select: {
                   id: true,
                   name: true,
+                  provider: true,
                   description: true,
                   serviceType: { select: { name: true } },
                   _count: {
@@ -38,12 +39,13 @@ export const teamsRouter = createTRPCRouter({
         },
       }),
       prisma.leader.findMany({
-        where: { personId },
+        where: { personId: { in: personIds } },
         select: {
           team: {
             select: {
               id: true,
               name: true,
+              provider: true,
               description: true,
               serviceType: { select: { name: true } },
               _count: {
@@ -65,6 +67,7 @@ export const teamsRouter = createTRPCRouter({
       {
         id: string;
         name: string;
+        provider: "PCO" | "ROCK";
         description: unknown;
         serviceType: { name: string } | null;
         _count: { positions: number; leaders: number; goals: number };
@@ -100,7 +103,7 @@ export const teamsRouter = createTRPCRouter({
     if (teamIds.length > 0) {
       const nextSchedules = await prisma.schedule.findMany({
         where: {
-          personId,
+          personId: { in: personIds },
           teamId: { in: teamIds },
           sortDate: { gte: new Date() },
         },
@@ -163,12 +166,10 @@ export const teamsRouter = createTRPCRouter({
             },
           },
         }),
-        prisma.leader.findUnique({
+        prisma.leader.findFirst({
           where: {
-            personId_teamId: {
-              personId: ctx.personId,
-              teamId: input.teamId,
-            },
+            personId: { in: ctx.personIds },
+            teamId: input.teamId,
           },
         }),
         prisma.goal.findMany({
@@ -204,12 +205,13 @@ export const teamsRouter = createTRPCRouter({
         }),
         prisma.schedule.findMany({
           where: {
-            personId: ctx.personId,
+            personId: { in: ctx.personIds },
             teamId: input.teamId,
             sortDate: { gte: new Date() },
           },
           select: {
             id: true,
+            provider: true,
             positionName: true,
             status: true,
             sortDate: true,
@@ -358,8 +360,14 @@ export const teamsRouter = createTRPCRouter({
           where: {
             teamId: input.teamId,
             person: {
-              assignments: {
-                some: { positionId: input.positionId },
+              identities: {
+                some: {
+                  person: {
+                    assignments: {
+                      some: { positionId: input.positionId },
+                    },
+                  },
+                },
               },
             },
           },

@@ -22,6 +22,16 @@ const personSchema = z
   })
   .passthrough()
 
+const emailSchema = z
+  .object({
+    address: z.string(),
+    blocked: z.boolean().nullable().optional(),
+    primary: z.boolean().nullable().optional(),
+  })
+  .passthrough()
+
+const emailsPayloadSchema = z.array(emailSchema)
+
 const teamPositionSchema = z
   .object({
     id: z.string(),
@@ -69,6 +79,29 @@ export type TeamsSnapshot = {
   assignments: Prisma.AssignmentUpsertArgs[]
 }
 
+async function fetchPrimaryEmail(personId: string): Promise<string | null> {
+  try {
+    const rawResponse = await fetchPCO(`/people/v2/people/${personId}/emails`)
+    const response = emailsPayloadSchema.safeParse(rawResponse)
+    if (!response.success) {
+      console.error(
+        `Invalid emails payload from PCO for person ${personId}: ${response.error.message}`
+      )
+      return null
+    }
+
+    const availableEmails = response.data.filter((email) => !email.blocked)
+    return (
+      availableEmails.find((email) => email.primary)?.address ??
+      availableEmails[0]?.address ??
+      null
+    )
+  } catch (error) {
+    console.error(`Failed to fetch PCO email for person ${personId}:`, error)
+    return null
+  }
+}
+
 export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
   const include =
     "people,person_team_position_assignments,service_types,team_leaders,team_positions"
@@ -78,6 +111,7 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
   const leaders = new Map<string, Prisma.LeaderUpsertArgs>()
   const positions = new Map<string, Prisma.PositionUpsertArgs>()
   const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
+  const personEmails = new Map<string, string | null>()
   let offset = 0
 
   while (true) {
@@ -158,6 +192,11 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
       })
 
       for (const person of team.people) {
+        if (!personEmails.has(person.id)) {
+          personEmails.set(person.id, await fetchPrimaryEmail(person.id))
+        }
+        const email = personEmails.get(person.id) ?? null
+
         people.set(person.id, {
           where: {
             remoteId_provider: { remoteId: person.id, provider: "PCO" },
@@ -165,12 +204,14 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
           create: {
             remoteId: person.id,
             provider: "PCO",
+            email,
             fullName: person.full_name,
             firstName: person.first_name,
             lastName: person.last_name,
             image: person.photo_thumbnail_url ?? null,
           },
           update: {
+            email,
             fullName: person.full_name,
             firstName: person.first_name,
             lastName: person.last_name,

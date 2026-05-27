@@ -30,7 +30,7 @@
     "profile": "个人资料"
   },
   "Auth": {
-    "signIn": "使用 Planning Center 登录",
+    "signIn": "登录",
     "signOut": "退出登录"
   },
   "Profile": {

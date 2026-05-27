@@ -55,7 +55,7 @@ export default async function LoginPage() {
           <form
             action={async () => {
               "use server";
-              await signIn("planning-center", { redirectTo: "/teams" });
+              await signIn("auth0", { redirectTo: "/teams" });
             }}
           >
             <button

@@ -20,7 +20,7 @@ export default async function AppLayout({
   }
 
   const queryClient = getQueryClient();
-  const person = await queryClient.fetchQuery(trpc.people.me.queryOptions()).catch(() => null);
+  const profile = await queryClient.fetchQuery(trpc.people.myTeamProfile.queryOptions()).catch(() => null);
 
   const cookieStore = await cookies();
   const serverTimezone = cookieStore.get("tz")?.value ?? "UTC";
@@ -35,8 +35,8 @@ export default async function AppLayout({
       <TimezoneProvider serverTimezone={serverTimezone}>
         <div className="flex h-full min-h-screen">
           <Sidebar
-            userName={person?.fullName ?? session.user.name}
-            userImage={person?.image ?? session.user.image}
+            userName={profile?.displayName ?? session.user.name}
+            userImage={profile?.image ?? session.user.image}
           />
           <main className="flex-1 overflow-y-auto pb-24 md:pb-0 md:px-12 md:py-10 px-4 py-6">
             {children}

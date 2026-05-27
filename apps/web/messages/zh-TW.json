@@ -30,7 +30,7 @@
     "profile": "個人檔案"
   },
   "Auth": {
-    "signIn": "使用 Planning Center 登入",
+    "signIn": "登入",
     "signOut": "登出"
   },
   "Profile": {
