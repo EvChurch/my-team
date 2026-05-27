@@ -11,6 +11,13 @@ datasource db {
 
 enum Provider {
   PCO
+  ROCK
+}
+
+enum ProfileMergeCandidateStatus {
+  PENDING
+  APPROVED
+  DECLINED
 }
 
 enum GoalStatus {
@@ -66,15 +73,88 @@ model Person {
   leaders     Leader[]
   assignments Assignment[]
 
-  goalsOwned    Goal[]     @relation("GoalOwner")
-  goalsReviewed Goal[]     @relation("GoalReviewer")
-  feedbackAuthored  Feedback[] @relation("FeedbackAuthor")
-  feedbackReceived  Feedback[] @relation("FeedbackRecipient")
-  guidesAuthored    Guide[]
   schedules         Schedule[]
-  preferences       UserPreference?
+
+  profileIdentities ProfileIdentity[]
 
   @@unique([remoteId, provider])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  displayName String
+  fullName    String
+  firstName   String
+  lastName    String
+  email       String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authAccounts     AuthAccount[]
+  identities       ProfileIdentity[]
+  mergeCandidates  ProfileMergeCandidate[] @relation("MergeCandidateProfile")
+  duplicateMatches ProfileMergeCandidate[] @relation("MergeCandidateDuplicate")
+  goalsOwned       Goal[]                  @relation("GoalOwner")
+  goalsReviewed    Goal[]                  @relation("GoalReviewer")
+  feedbackAuthored Feedback[]              @relation("FeedbackAuthor")
+  feedbackReceived Feedback[]              @relation("FeedbackRecipient")
+  guidesAuthored   Guide[]
+  preferences      UserPreference?
+}
+
+model AuthAccount {
+  id              String   @id @default(cuid())
+  profileId       String
+  provider        String
+  providerAccountId String
+  email           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([profileId])
+}
+
+model ProfileIdentity {
+  id        String   @id @default(cuid())
+  profileId String
+  personId  String?
+  provider  Provider
+  remoteId  String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  person  Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, remoteId])
+  @@index([profileId])
+  @@index([personId])
+}
+
+model ProfileMergeCandidate {
+  id                 String                      @id @default(cuid())
+  profileId          String
+  duplicateProfileId String?
+  provider           Provider?
+  remoteId           String?
+  confidence         Int
+  reason             String
+  status             ProfileMergeCandidateStatus @default(PENDING)
+  sourceSnapshot     Json?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  profile          Profile  @relation("MergeCandidateProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  duplicateProfile Profile? @relation("MergeCandidateDuplicate", fields: [duplicateProfileId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@index([duplicateProfileId])
+  @@index([status])
 }
 
 model ServiceType {
@@ -225,9 +305,9 @@ model Goal {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  person   Person?  @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
+  person   Profile? @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
   team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  reviewer Person? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  reviewer Profile? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
   @@index([personId])
   @@index([teamId])
@@ -246,8 +326,8 @@ model Feedback {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  author    Person? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  recipient Person? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+  author    Profile? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  recipient Profile? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
   team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
@@ -270,7 +350,7 @@ model Guide {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  author Person?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  author Profile?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
   team   Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role   Position? @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
 
@@ -289,5 +369,5 @@ model UserPreference {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person Profile @relation(fields: [personId], references: [id], onDelete: Cascade)
 }

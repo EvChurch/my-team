@@ -33,7 +33,7 @@ export const schedulesRouter = createTRPCRouter({
   upcoming: protectedProcedure.query(async ({ ctx }) => {
     return prisma.schedule.findMany({
       where: {
-        personId: ctx.personId,
+        personId: { in: ctx.personIds },
         sortDate: { gte: new Date() },
       },
       include: {
@@ -75,19 +75,25 @@ export const schedulesRouter = createTRPCRouter({
       }
 
       // Look up the schedule, verify ownership, and get person's PCO remote ID
-      const [schedule, person] = await Promise.all([
-        prisma.schedule.findUnique({
-          where: { id: input.scheduleId },
-        }),
-        prisma.person.findUnique({
-          where: { id: ctx.personId },
-          select: { remoteId: true },
-        }),
-      ]);
+      const schedule = await prisma.schedule.findUnique({
+        where: { id: input.scheduleId },
+      });
 
-      if (!schedule || schedule.personId !== ctx.personId) {
+      if (!schedule || !ctx.personIds.includes(schedule.personId)) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
+
+      if (schedule.provider !== "PCO") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Responding to Rock schedules is not supported yet.",
+        });
+      }
+
+      const person = await prisma.person.findUnique({
+        where: { id: schedule.personId },
+        select: { remoteId: true },
+      });
 
       if (!person?.remoteId) {
         throw new TRPCError({

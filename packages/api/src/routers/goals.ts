@@ -89,7 +89,7 @@ export const goalsRouter = createTRPCRouter({
           dueDate: input.dueDate,
           status: "PENDING",
           progress: 0,
-          personId: ctx.personId,
+          personId: ctx.profileId,
           teamId: input.teamId,
         },
       });
@@ -110,7 +110,7 @@ export const goalsRouter = createTRPCRouter({
         where: { id: input.goalId },
         data: {
           status: input.status,
-          reviewedBy: ctx.personId,
+          reviewedBy: ctx.profileId,
         },
       });
     }),
@@ -130,7 +130,7 @@ export const goalsRouter = createTRPCRouter({
         where: { id: input.goalId },
       });
 
-      if (goal.personId !== ctx.personId) {
+      if (goal.personId !== ctx.profileId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the goal owner can update progress.",

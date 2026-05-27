@@ -30,7 +30,7 @@
     "profile": "Profile"
   },
   "Auth": {
-    "signIn": "Sign in with Planning Center",
+    "signIn": "Sign in",
     "signOut": "Sign Out"
   },
   "Profile": {

@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/format-date";
 type TeamCardProps = {
   id: string;
   name: string;
+  provider: "PCO" | "ROCK";
   serviceTypeName?: string | null;
   memberCount: number;
   userRole: string;
@@ -21,6 +22,7 @@ type TeamCardProps = {
 export function TeamCard({
   id,
   name,
+  provider,
   serviceTypeName,
   memberCount,
   userRole,
@@ -43,7 +45,12 @@ export function TeamCard({
               </p>
             )}
           </div>
-          <Badge variant={isLeader ? "accent" : "muted"}>{userRole}</Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant={isLeader ? "accent" : "muted"}>{userRole}</Badge>
+            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-tertiary">
+              {provider}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3 text-text-tertiary mt-3">
           <div className="flex items-center gap-1.5">

@@ -7,7 +7,7 @@ import { GoalsContent } from "./goals-content";
 export default async function GoalsPage() {
   const queryClient = getQueryClient();
   const ctx = await createTRPCContext();
-  const personId = ctx.personId ?? "";
+  const personId = ctx.profileId ?? "";
 
   await Promise.all([
     queryClient.prefetchQuery(trpc.teams.list.queryOptions()),

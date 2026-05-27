@@ -30,7 +30,7 @@
     "profile": "Profile"
   },
   "Auth": {
-    "signIn": "Mag-sign in gamit ang Planning Center",
+    "signIn": "Mag-sign in",
     "signOut": "Mag-sign Out"
   },
   "Profile": {

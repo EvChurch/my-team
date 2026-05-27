@@ -10,16 +10,14 @@ export const guidesRouter = createTRPCRouter({
    * Used by the /guides page.
    */
   listAll: protectedProcedure.query(async ({ ctx }) => {
-    const personId = ctx.personId;
-
     // Find all team IDs where user is assigned or is a leader
     const [assignments, leaderships] = await Promise.all([
       prisma.assignment.findMany({
-        where: { personId },
+        where: { personId: { in: ctx.personIds } },
         select: { position: { select: { teamId: true } } },
       }),
       prisma.leader.findMany({
-        where: { personId },
+        where: { personId: { in: ctx.personIds } },
         select: { teamId: true },
       }),
     ]);
@@ -77,12 +75,10 @@ export const guidesRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       // Check if user is a leader for this team
-      const isLeader = await prisma.leader.findUnique({
+      const isLeader = await prisma.leader.findFirst({
         where: {
-          personId_teamId: {
-            personId: ctx.personId,
-            teamId: input.teamId,
-          },
+          personId: { in: ctx.personIds },
+          teamId: input.teamId,
         },
       });
 
@@ -155,7 +151,7 @@ export const guidesRouter = createTRPCRouter({
           content: input.content,
           category: input.category,
           status: "DRAFT",
-          authorId: ctx.personId,
+          authorId: ctx.profileId,
           teamId: input.teamId,
           roleId: input.roleId,
           isVisibleToTeam: input.isVisibleToTeam,
