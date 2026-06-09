@@ -25,7 +25,7 @@ declare module "@auth/core/jwt" {
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [Auth0()],
-  secret: process.env.AUTH_SECRET ?? process.env.AUTH0_SECRET,
+  secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
