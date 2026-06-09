@@ -13,7 +13,6 @@ export const env = createEnv({
     PCO_API_SECRET: z.string().min(1),
     ROCK_BASE_URL: z.string().url().optional(),
     ROCK_API_KEY: z.string().optional(),
-    ROCK_REST_KEY: z.string().optional(),
     ROCK_TEAM_GROUP_TYPE_IDS: z.string().optional(),
   },
   client: {

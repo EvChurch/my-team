@@ -195,8 +195,8 @@ function rockBaseUrl(): string {
 }
 
 function rockRestKey(): string {
-  const restKey = process.env.ROCK_REST_KEY ?? process.env.ROCK_API_KEY
-  if (!restKey) throw new Error("ROCK_REST_KEY is required for Rock sync")
+  const restKey = process.env.ROCK_API_KEY
+  if (!restKey) throw new Error("ROCK_API_KEY is required for Rock sync")
   return restKey
 }
 
