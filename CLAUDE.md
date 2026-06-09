@@ -54,7 +54,7 @@ pnpm build               # Production build
 pnpm lint                # Lint all packages
 pnpm type-check          # TypeScript check all packages
 
-# Database (from root)
+# Database
 pnpm --filter @mt/api exec prisma generate    # Generate Prisma client
 pnpm --filter @mt/api exec prisma migrate dev # Run migrations
 pnpm --filter @mt/api exec prisma db push     # Push schema changes (dev)
@@ -129,7 +129,12 @@ The app is fully localized using **next-intl 4.x** with cookie-based locale dete
 
 ## Environment Variables
 
-See `.env.example`. Key vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET`, `PCO_API_ID`, `PCO_API_SECRET`.
+Environment examples live with the services that read them:
+- `apps/web/.env.example` for the web app
+- `apps/worker/.env.example` for the worker
+- `packages/api/.env.example` for Prisma CLI commands
+
+Key vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET`, `PCO_API_ID`, `PCO_API_SECRET`.
 
 ## Design Reference
 

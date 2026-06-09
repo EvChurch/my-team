@@ -78,5 +78,5 @@ export const leaderProcedure = protectedProcedure
 ## Prevention
 
 - Always check the Next.js version's file naming conventions — they change between major versions
-- Keep OAuth identity and API access credentials separate; document which is which in `.env.example`
+- Keep OAuth identity and API access credentials separate; document which is which in the service-local `.env.example` files
 - Wire auth into tRPC context at initialization, not per-router — avoids duplicated auth checks

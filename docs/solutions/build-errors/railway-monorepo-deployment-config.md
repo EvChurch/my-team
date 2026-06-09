@@ -128,7 +128,7 @@ export function GET() {
 
 ### 7. Document environment variables
 
-Create a root `.env.example` documenting all required vars with Railway variable reference syntax:
+Document required vars in the service-local `.env.example` files with Railway variable reference syntax:
 - `DATABASE_URL=${{Postgres.DATABASE_PRIVATE_URL}}` (both services)
 - `PCO_API_ID=${{shared.PCO_API_ID}}` (both services)
 - `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET` (web only)
