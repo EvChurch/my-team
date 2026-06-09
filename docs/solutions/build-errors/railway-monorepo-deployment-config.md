@@ -131,7 +131,7 @@ export function GET() {
 Document required vars in the service-local `.env.example` files with Railway variable reference syntax:
 - `DATABASE_URL=${{Postgres.DATABASE_PRIVATE_URL}}` (both services)
 - `PCO_API_ID=${{shared.PCO_API_ID}}` (both services)
-- `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET` (web only)
+- `AUTH_SECRET` and Auth0 credentials (web only)
 - `HOSTNAME=0.0.0.0` and `SKIP_ENV_VALIDATION=1` (Railway-specific, web only)
 
 ## Why This Works

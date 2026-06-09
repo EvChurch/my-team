@@ -134,7 +134,7 @@ Environment examples live with the services that read them:
 - `apps/worker/.env.example` for the worker
 - `packages/api/.env.example` for Prisma CLI commands
 
-Key vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_PLANNING_CENTER_ID`, `AUTH_PLANNING_CENTER_SECRET`, `PCO_API_ID`, `PCO_API_SECRET`.
+Key vars: `DATABASE_URL`, `AUTH_SECRET`, Auth0 credentials, `PCO_API_ID`, and `PCO_API_SECRET`.
 
 ## Design Reference
 

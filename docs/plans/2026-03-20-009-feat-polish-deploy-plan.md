@@ -119,7 +119,7 @@ restartPolicyMaxRetries = 10
 Environment variables (both services share):
 - `DATABASE_URL` — Railway Postgres connection string
 - `AUTH_SECRET` — `openssl rand -base64 32`
-- `AUTH_PLANNING_CENTER_ID` / `AUTH_PLANNING_CENTER_SECRET`
+- Auth0 credentials
 - `PCO_API_ID` / `PCO_API_SECRET`
 - `NEXTAUTH_URL` — production URL
 

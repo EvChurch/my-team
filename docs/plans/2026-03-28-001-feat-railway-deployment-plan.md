@@ -267,8 +267,7 @@ These steps are performed in the Railway dashboard, not in code:
 6. **Configure web service variables:**
    - `DATABASE_URL=${{Postgres.DATABASE_PRIVATE_URL}}`
    - `AUTH_SECRET=<generate with: openssl rand -base64 32>`
-   - `AUTH_PLANNING_CENTER_ID=<from PCO developer portal>`
-   - `AUTH_PLANNING_CENTER_SECRET=<from PCO developer portal>`
+   - Auth0 credentials
    - `PCO_API_ID=${{shared.PCO_API_ID}}`
    - `PCO_API_SECRET=${{shared.PCO_API_SECRET}}`
    - `HOSTNAME=0.0.0.0`

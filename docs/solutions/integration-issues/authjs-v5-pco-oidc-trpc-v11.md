@@ -9,6 +9,8 @@ severity: medium
 
 # Auth.js v5 with PCO OIDC + tRPC v11 Context Integration
 
+> Historical note: the app now uses Auth0 for sign-in. Planning Center OAuth credentials are no longer part of the active environment setup; PCO API reads use `PCO_API_ID` / `PCO_API_SECRET`.
+
 ## Problem
 
 Setting up Auth.js v5 (next-auth@beta) with a custom Planning Center OIDC provider, then wiring the session into tRPC v11's context so all procedures can check auth and leader status.
@@ -30,8 +32,8 @@ Planning Center's OIDC endpoint (`https://api.planningcenteronline.com/.well-kno
 
 ### PCO OAuth is identity-only
 
-PCO OAuth (for sign-in) and PCO API access use different credentials:
-- **OAuth:** `AUTH_PLANNING_CENTER_ID` / `AUTH_PLANNING_CENTER_SECRET` — identifies the user
+PCO OAuth (for sign-in, back when this provider was active) and PCO API access used different credentials:
+- **OAuth:** legacy Planning Center OAuth app credentials identified the user
 - **API:** `PCO_API_ID` / `PCO_API_SECRET` — HTTP Basic Auth for background sync
 
 The user's OAuth access token is NOT used for API calls. The sync worker uses a separate Personal Access Token.

@@ -24,6 +24,8 @@ tags:
 
 # PCO OAuth Token Refresh for API Write Operations
 
+> Historical note: the app now uses Auth0 for sign-in and does not configure Planning Center OAuth credentials in the active env files. This document describes the older PCO OAuth approach.
+
 ## Problem
 
 The app needed to make PCO API write calls (accept/decline schedule requests) on behalf of individual users, but the auth architecture only stored the OAuth `access_token` in the JWT at login time with no refresh mechanism. Tokens expired after ~2 hours, and the app's server-side Personal Access Token (PAT) was only suitable for read-only sync operations.
@@ -51,8 +53,8 @@ POST https://api.planningcenteronline.com/oauth/token
 {
   grant_type: "refresh_token",
   refresh_token: token.refreshToken,
-  client_id: process.env.AUTH_PLANNING_CENTER_ID,
-  client_secret: process.env.AUTH_PLANNING_CENTER_SECRET
+  client_id: process.env.LEGACY_PCO_OAUTH_CLIENT_ID,
+  client_secret: process.env.LEGACY_PCO_OAUTH_CLIENT_SECRET
 }
 ```
 
