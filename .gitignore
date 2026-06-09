@@ -48,6 +48,9 @@ next-env.d.ts
 # turborepo
 .turbo/
 
+# local git worktrees
+.worktrees/
+
 # prisma generated
 generated/
 
