@@ -2,6 +2,10 @@
   "name": "my-team",
   "private": true,
   "scripts": {
+    "setup:codex": "scripts/codex-worktree-setup.sh",
+    "dev:codex": "scripts/codex-dev.sh",
+    "cleanup:codex": "scripts/codex-worktree-cleanup.sh",
+    "sync:all": "pnpm --filter worker sync:once",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",

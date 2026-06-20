@@ -10,5 +10,7 @@ export async function startSyncRockWorker(boss: PgBoss): Promise<void> {
     await SyncRockJob()
   })
   await boss.schedule(SYNC_ROCK_QUEUE, "15 * * * *")
-  await boss.send(SYNC_ROCK_QUEUE, {})
+  if (process.env.SKIP_INITIAL_SYNC !== "1") {
+    await boss.send(SYNC_ROCK_QUEUE, {})
+  }
 }

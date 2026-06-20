@@ -10,5 +10,7 @@ export async function startSyncPcoWorker(boss: PgBoss): Promise<void> {
     await SyncPcoJob()
   })
   await boss.schedule(SYNC_PCO_QUEUE, "0 * * * *")
-  await boss.send(SYNC_PCO_QUEUE, {})
+  if (process.env.SKIP_INITIAL_SYNC !== "1") {
+    await boss.send(SYNC_PCO_QUEUE, {})
+  }
 }

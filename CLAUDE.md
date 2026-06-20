@@ -54,6 +54,12 @@ pnpm build               # Production build
 pnpm lint                # Lint all packages
 pnpm type-check          # TypeScript check all packages
 
+# Codex worktrees
+pnpm setup:codex         # Copy base env, clone a per-worktree DB, install deps, generate Prisma, migrate
+pnpm dev:codex           # Run setup, then start web + worker on the required localhost:7000
+pnpm cleanup:codex       # Drop this worktree's cloned sidecar database
+pnpm sync:all            # One-shot PCO + Rock sync
+
 # Database
 pnpm --filter @mt/api exec prisma generate    # Generate Prisma client
 pnpm --filter @mt/api exec prisma migrate dev # Run migrations

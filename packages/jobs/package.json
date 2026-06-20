@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./boss": "./src/boss.ts",
+    "./sync": "./src/sync.ts",
     "./workers": "./src/workers.ts"
   },
   "dependencies": {
