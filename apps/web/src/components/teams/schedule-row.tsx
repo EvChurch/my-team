@@ -127,106 +127,93 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
     ? `/plans/${schedule.planRemoteId}`
     : null;
 
-  const rowContent = (
-    <>
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0">
-          <Calendar className="w-4 h-4 text-text-secondary" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-text-primary">
-            {formatDate(schedule.sortDate, tz)}
-            {schedule.startsAt && (
-              <span className="text-text-secondary font-normal">
-                {" "}
-                at {formatTime(schedule.startsAt, tz)}
-              </span>
-            )}
-          </p>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {showTeamName && schedule.team && (
-              <span className="text-xs text-text-secondary">
-                {schedule.team.name}
-              </span>
-            )}
-            {schedule.provider && (
-              <Badge variant="muted">{schedule.provider}</Badge>
-            )}
-            {schedule.positionName && (
-              <Badge variant="muted">{schedule.positionName}</Badge>
-            )}
-          </div>
-        </div>
+  const scheduleSummary = (
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-bg-muted shrink-0">
+        <Calendar className="w-4 h-4 text-text-secondary" />
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {isUnconfirmed && canRespond && !declining && (
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleAccept();
-              }}
-              disabled={isPending}
-              className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
-            >
-              {isPending ? "..." : "Accept"}
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleDecline();
-              }}
-              disabled={isPending}
-              className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
-            >
-              Decline
-            </button>
-          </div>
-        )}
-        {(!isUnconfirmed || !canRespond) && (
-          <div className="flex items-center gap-1">
-            <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
-            <span className={`text-xs ${config.className}`}>
-              {config.label}
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-text-primary">
+          {formatDate(schedule.sortDate, tz)}
+          {schedule.startsAt && (
+            <span className="text-text-secondary font-normal">
+              {" "}
+              at {formatTime(schedule.startsAt, tz)}
             </span>
-          </div>
-        )}
-        {hasPlanTimes && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setExpanded(!expanded);
-            }}
-            className="text-text-tertiary hover:text-text-secondary transition-colors p-0.5 -m-0.5"
-          >
-            {expanded ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
-        )}
+          )}
+        </p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {showTeamName && schedule.team && (
+            <span className="text-xs text-text-secondary">
+              {schedule.team.name}
+            </span>
+          )}
+          {schedule.positionName && (
+            <Badge variant="muted">{schedule.positionName}</Badge>
+          )}
+        </div>
       </div>
-    </>
+    </div>
+  );
+
+  const rowActions = (
+    <div className="flex items-center gap-2 shrink-0">
+      {isUnconfirmed && canRespond && !declining && (
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleAccept}
+            disabled={isPending}
+            className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
+          >
+            {isPending ? "..." : "Accept"}
+          </button>
+          <button
+            onClick={handleDecline}
+            disabled={isPending}
+            className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
+          >
+            Decline
+          </button>
+        </div>
+      )}
+      {(!isUnconfirmed || !canRespond) && (
+        <div className="flex items-center gap-1">
+          <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
+          <span className={`text-xs ${config.className}`}>
+            {config.label}
+          </span>
+        </div>
+      )}
+      {hasPlanTimes && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-text-tertiary hover:text-text-secondary transition-colors p-0.5 -m-0.5"
+        >
+          {expanded ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+        </button>
+      )}
+    </div>
   );
 
   return (
     <div>
-      {planHref ? (
-        <Link
-          href={planHref}
-          className="flex items-center justify-between gap-3 rounded-lg hover:bg-bg-muted -mx-2 px-2 py-1 -my-1 transition-colors"
-        >
-          {rowContent}
-        </Link>
-      ) : (
-        <div className="flex items-center justify-between gap-3">
-          {rowContent}
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-3 rounded-lg -mx-2 px-2 py-1 -my-1 transition-colors">
+        {planHref ? (
+          <Link
+            href={planHref}
+            className="min-w-0 flex-1 rounded-lg hover:bg-bg-muted -ml-1 pl-1 py-1 transition-colors"
+          >
+            {scheduleSummary}
+          </Link>
+        ) : (
+          <div className="min-w-0 flex-1">{scheduleSummary}</div>
+        )}
+        {rowActions}
+      </div>
 
       {/* Decline reason input */}
       {declining && (

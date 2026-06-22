@@ -46,6 +46,8 @@
   "Teams": {
     "title": "팀",
     "myTeams": "내 팀",
+    "leading": "리드",
+    "member": "멤버",
     "noTeams": "팀이 없습니다",
     "noTeamsDescription": "아직 팀에 배정되지 않았습니다. 팀은 Planning Center에서 동기화됩니다.",
     "teamLead": "팀 리더",
@@ -67,6 +69,8 @@
     "noMembersDesc": "이 팀에 배정된 멤버가 없습니다.",
     "noMembersInRole": "이 역할에 멤버가 없습니다",
     "never": "없음",
+    "callPerson": "{name}에게 전화",
+    "emailPerson": "{name}에게 이메일",
     "today": "오늘",
     "yesterday": "어제",
     "daysAgo": "{count}일 전",
@@ -89,7 +93,7 @@
     "declineConfirm": "이 봉사 일정을 거절하시겠습니까? 팀 리더에게 알림이 전송됩니다.",
     "reasonPlaceholder": "사유 (선택사항)",
     "declining": "거절 중...",
-    "failedResponse": "실패 — 로그아웃 후 다시 로그인해 주세요.",
+    "failedResponse": "이 요청을 업데이트할 수 없습니다. 다시 시도해 주세요.",
     "accept": "수락"
   },
   "Goals": {

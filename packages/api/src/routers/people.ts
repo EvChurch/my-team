@@ -1,12 +1,16 @@
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { prisma } from "../db";
+import {
+  getPersonDisplayMap,
+  getProfileDisplayMap,
+} from "../lib/display-identity";
 
 export const peopleRouter = createTRPCRouter({
   /**
    * Get the current user's canonical My Team profile and linked source records.
    */
   myTeamProfile: protectedProcedure.query(async ({ ctx }) => {
-    return prisma.profile.findUniqueOrThrow({
+    const profile = await prisma.profile.findUniqueOrThrow({
       where: { id: ctx.profileId },
       include: {
         authAccounts: true,
@@ -29,6 +33,19 @@ export const peopleRouter = createTRPCRouter({
         },
       },
     });
+
+    const displayProfile =
+      (await getProfileDisplayMap([profile])).get(profile.id) ?? profile;
+
+    return {
+      ...profile,
+      displayName: displayProfile.displayName,
+      fullName: displayProfile.fullName,
+      firstName: displayProfile.firstName,
+      lastName: displayProfile.lastName,
+      email: displayProfile.email,
+      image: displayProfile.image,
+    };
   }),
 
   /**
@@ -37,7 +54,7 @@ export const peopleRouter = createTRPCRouter({
    * PCO-shaped views until team/schedule queries are converted.
    */
   me: protectedProcedure.query(async ({ ctx }) => {
-    return prisma.person.findUniqueOrThrow({
+    const person = await prisma.person.findUniqueOrThrow({
       where: { id: ctx.personId },
       include: {
         assignments: {
@@ -66,5 +83,16 @@ export const peopleRouter = createTRPCRouter({
         },
       },
     });
+
+    const displayPerson =
+      (await getPersonDisplayMap([person])).get(person.id) ?? person;
+
+    return {
+      ...person,
+      fullName: displayPerson.fullName,
+      firstName: displayPerson.firstName,
+      lastName: displayPerson.lastName,
+      image: displayPerson.image,
+    };
   }),
 });

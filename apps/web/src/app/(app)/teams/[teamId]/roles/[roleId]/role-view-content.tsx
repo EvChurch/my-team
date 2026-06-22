@@ -174,7 +174,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
           <div className="space-y-2">
             {position.guides.map((guide) => (
               <Link key={guide.id} href={`/guides/${guide.id}`}>
-                <Card className="p-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                <Card className="border border-transparent p-3 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-accent shrink-0" />
                     <p className="text-sm font-medium text-text-primary truncate">

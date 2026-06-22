@@ -12,6 +12,7 @@ const rockPersonSchema = z
     LastName: z.string().nullable().optional(),
     FullName: z.string().nullable().optional(),
     Email: z.string().nullable().optional(),
+    PhotoId: z.number().nullable().optional(),
     PhotoUrl: z.string().nullable().optional(),
   })
   .passthrough()
@@ -57,17 +58,29 @@ const rockGroupMemberAssignmentSchema = z
   })
   .passthrough()
 
+const rockPhoneNumberSchema = z
+  .object({
+    Id: z.number(),
+    PersonId: z.number().nullable().optional(),
+    Number: z.string().nullable().optional(),
+    IsMessagingEnabled: z.boolean().nullable().optional(),
+    IsUnlisted: z.boolean().nullable().optional(),
+  })
+  .passthrough()
+
 const rockPeoplePayloadSchema = z.array(rockPersonSchema)
 const rockGroupsPayloadSchema = z.array(rockGroupSchema)
 const rockGroupMembersPayloadSchema = z.array(rockGroupMemberSchema)
 const rockGroupMemberAssignmentsPayloadSchema = z.array(
   rockGroupMemberAssignmentSchema
 )
+const rockPhoneNumbersPayloadSchema = z.array(rockPhoneNumberSchema)
 
 type RockPerson = z.infer<typeof rockPersonSchema>
 type RockGroup = z.infer<typeof rockGroupSchema>
 type RockGroupMember = z.infer<typeof rockGroupMemberSchema>
 type RockGroupMemberAssignment = z.infer<typeof rockGroupMemberAssignmentSchema>
+type RockPhoneNumber = z.infer<typeof rockPhoneNumberSchema>
 
 const rockAttributeSchema = z
   .object({
@@ -306,9 +319,13 @@ function rockName(person: RockPerson): {
   }
 }
 
-function personUpsert(person: RockPerson): Prisma.PersonUpsertArgs {
+function personUpsert(
+  person: RockPerson,
+  phone: string | null = null
+): Prisma.PersonUpsertArgs {
   const remoteId = String(person.Id)
   const name = rockName(person)
+  const image = rockPersonImage(person)
 
   return {
     where: {
@@ -321,19 +338,66 @@ function personUpsert(person: RockPerson): Prisma.PersonUpsertArgs {
       remoteId,
       provider: "ROCK",
       email: person.Email ?? null,
+      phone,
       fullName: name.fullName,
       firstName: name.firstName,
       lastName: name.lastName,
-      image: person.PhotoUrl ?? null,
+      image,
     },
     update: {
       email: person.Email ?? null,
+      phone,
       fullName: name.fullName,
       firstName: name.firstName,
       lastName: name.lastName,
-      image: person.PhotoUrl ?? null,
+      image,
     },
   }
+}
+
+function pickRockPhoneNumber(phones: RockPhoneNumber[]): string | null {
+  const availablePhones = phones.filter(
+    (phone) => !phone.IsUnlisted && phone.Number?.trim()
+  )
+  return (
+    availablePhones.find((phone) => phone.IsMessagingEnabled)?.Number ??
+    availablePhones[0]?.Number ??
+    null
+  )
+}
+
+async function fetchRockPersonPhone(personId: number): Promise<string | null> {
+  try {
+    const phones = await fetchRockPages(
+      `/api/PhoneNumbers?$filter=PersonId eq ${personId}&$select=Id,PersonId,Number,IsMessagingEnabled,IsUnlisted`,
+      rockPhoneNumbersPayloadSchema
+    )
+    return pickRockPhoneNumber(phones)
+  } catch (error) {
+    console.error(`Failed to fetch Rock phone for person ${personId}:`, error)
+    return null
+  }
+}
+
+async function getRockPersonPhone(
+  personId: number,
+  phoneCache: Map<number, Promise<string | null>>
+): Promise<string | null> {
+  const existing = phoneCache.get(personId)
+  if (existing) return existing
+  const phonePromise = fetchRockPersonPhone(personId)
+  phoneCache.set(personId, phonePromise)
+  return phonePromise
+}
+
+function rockPersonImage(person: RockPerson): string | null {
+  if (person.PhotoUrl) {
+    return person.PhotoUrl.startsWith("/")
+      ? `${rockBaseUrl()}${person.PhotoUrl}`
+      : person.PhotoUrl
+  }
+
+  return person.PhotoId ? `${rockBaseUrl()}/GetImage.ashx?id=${person.PhotoId}` : null
 }
 
 function scheduleStatus(attendance: RockAttendance): ScheduleStatus {
@@ -772,6 +836,7 @@ export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
   const positions = new Map<string, Prisma.PositionUpsertArgs>()
   const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
   const leaders = new Map<string, Prisma.LeaderUpsertArgs>()
+  const phoneCache = new Map<number, Promise<string | null>>()
 
   const groups = await fetchTeamGroups()
 
@@ -784,7 +849,10 @@ export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
       const personId = person?.Id ?? member.PersonId
       if (!personId || !person) continue
 
-      people.set(String(personId), personUpsert(person))
+      people.set(
+        String(personId),
+        personUpsert(person, await getRockPersonPhone(personId, phoneCache))
+      )
       positions.set(positionRemoteId(member), positionUpsert(member))
       assignments.set(String(member.Id), assignmentUpsert(member))
 
@@ -812,6 +880,7 @@ export async function fetchRockSchedulesSnapshot(
   const rockSchedules = new Map<number, RockSchedule | null>()
   const groupMembers = new Map<number, RockGroupMember | null>()
   const scheduleTemplates = new Map<number, RockGroupMemberScheduleTemplate | null>()
+  const phoneCache = new Map<number, Promise<string | null>>()
   const from = new Date()
   const until = scheduleSyncHorizon()
 
@@ -846,7 +915,10 @@ export async function fetchRockSchedulesSnapshot(
         const personId = person?.Id ?? alias?.PersonId
         if (!personId || !person) continue
 
-        people.set(String(personId), personUpsert(person))
+        people.set(
+          String(personId),
+          personUpsert(person, await getRockPersonPhone(personId, phoneCache))
+        )
 
         const startsAt = attendance.StartDateTime
           ? new Date(attendance.StartDateTime)
@@ -970,7 +1042,10 @@ export async function fetchRockSchedulesSnapshot(
       rockSchedules.set(template.ScheduleId, templateSchedule)
       if (!assignmentSchedule || !templateSchedule) continue
 
-      people.set(String(personId), personUpsert(person))
+      people.set(
+        String(personId),
+        personUpsert(person, await getRockPersonPhone(personId, phoneCache))
+      )
 
       const { startsAt: serviceStart } = scheduleStartAndEnd(assignmentSchedule)
       if (!serviceStart) continue

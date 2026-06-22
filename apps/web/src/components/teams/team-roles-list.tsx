@@ -20,7 +20,7 @@ export function TeamRolesList({ teamId, roles }: TeamRolesListProps) {
     <div className="space-y-2">
       {roles.map((role) => (
         <Link key={role.id} href={`/teams/${teamId}/roles/${role.id}`}>
-          <Card className="p-3 flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition-all">
+          <Card className="flex items-center justify-between border border-transparent p-3 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md">
             <div>
               <p className="text-sm font-medium text-text-primary">
                 {role.name ?? "Unnamed Role"}

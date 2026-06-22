@@ -46,6 +46,8 @@
   "Teams": {
     "title": "Mga Team",
     "myTeams": "Mga Team Ko",
+    "leading": "Namumuno",
+    "member": "Miyembro",
     "noTeams": "Wala Pang Team",
     "noTeamsDescription": "Hindi ka pa naka-assign sa anumang team. Ang mga team ay nag-sync mula sa Planning Center.",
     "teamLead": "Team Lead",
@@ -67,6 +69,8 @@
     "noMembersDesc": "Walang miyembro na naka-assign sa team na ito.",
     "noMembersInRole": "Walang miyembro sa tungkulin na ito",
     "never": "Hindi pa",
+    "callPerson": "Tawagan si {name}",
+    "emailPerson": "I-email si {name}",
     "today": "Ngayon",
     "yesterday": "Kahapon",
     "daysAgo": "{count}d nakalipas",
@@ -89,7 +93,7 @@
     "declineConfirm": "Sigurado ka bang gusto mong tanggihan ang iskedyul ng paglilingkod na ito? Aabisuhan ang iyong team leader.",
     "reasonPlaceholder": "Dahilan (opsyonal)",
     "declining": "Tinatanggihan...",
-    "failedResponse": "Nabigo — pakisign out at mag-sign in muli.",
+    "failedResponse": "Hindi na-update ang request na ito. Pakisubukang muli.",
     "accept": "Tanggapin"
   },
   "Goals": {

@@ -46,6 +46,8 @@
   "Teams": {
     "title": "Au",
     "myTeams": "A'u Au",
+    "leading": "Ta'ita'i",
+    "member": "Sui",
     "noTeams": "Leai ni Au",
     "noTeamsDescription": "E te le'i tu'uina i se au. E fa'afouina au mai le Planning Center.",
     "teamLead": "Ta'ita'i o le Au",
@@ -67,6 +69,8 @@
     "noMembersDesc": "E leai ni sui ua tu'uina i lenei au.",
     "noMembersInRole": "Leai ni sui i lenei matafaioi",
     "never": "E le'i",
+    "callPerson": "Vala'au ia {name}",
+    "emailPerson": "Imeli ia {name}",
     "today": "Aso nei",
     "yesterday": "Ananafi",
     "daysAgo": "{count}a talu ai",
@@ -89,7 +93,7 @@
     "declineConfirm": "E te mautinoa e te mana'o e teena lenei fa'atulagaga tautua? O le a fa'ailoa atu i lou ta'ita'i au.",
     "reasonPlaceholder": "Mafua'aga (filifiliga)",
     "declining": "O lo'o teenaina...",
-    "failedResponse": "Ua le manuia — fa'amolemole saini i fafo ona toe saini lea i totonu.",
+    "failedResponse": "E le'i mafai ona fa'afou lenei talosaga. Fa'amolemole toe taumafai.",
     "accept": "Talia"
   },
   "Goals": {

@@ -46,6 +46,8 @@
   "Teams": {
     "title": "チーム",
     "myTeams": "マイチーム",
+    "leading": "リード",
+    "member": "メンバー",
     "noTeams": "チームがありません",
     "noTeamsDescription": "まだチームに割り当てられていません。チームはPlanning Centerから同期されます。",
     "teamLead": "チームリーダー",
@@ -67,6 +69,8 @@
     "noMembersDesc": "このチームにメンバーが割り当てられていません。",
     "noMembersInRole": "この役割にメンバーはいません",
     "never": "なし",
+    "callPerson": "{name}に電話",
+    "emailPerson": "{name}にメール",
     "today": "今日",
     "yesterday": "昨日",
     "daysAgo": "{count}日前",
@@ -89,7 +93,7 @@
     "declineConfirm": "この奉仕スケジュールを却下してもよろしいですか？チームリーダーに通知されます。",
     "reasonPlaceholder": "理由（任意）",
     "declining": "却下中...",
-    "failedResponse": "失敗 — サインアウトして再度サインインしてください。",
+    "failedResponse": "このリクエストを更新できませんでした。もう一度お試しください。",
     "accept": "承諾"
   },
   "Goals": {

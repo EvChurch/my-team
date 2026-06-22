@@ -63,6 +63,7 @@ model Person {
   remoteId  String
   provider  Provider
   email     String?
+  phone     String?
   fullName  String
   firstName String
   lastName  String

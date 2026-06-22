@@ -46,6 +46,8 @@
   "Teams": {
     "title": "Ngā Tīma",
     "myTeams": "Aku Tīma",
+    "leading": "Ārahi",
+    "member": "Mema",
     "noTeams": "Kāore he Tīma",
     "noTeamsDescription": "Kāore anō koe i tūhono ki tētahi tīma. Ka tukutahi ngā tīma mai i Planning Center.",
     "teamLead": "Kaihautū Tīma",
@@ -67,6 +69,8 @@
     "noMembersDesc": "Kāore he mema kua tūhono ki tēnei tīma.",
     "noMembersInRole": "Kāore he mema i tēnei tūranga",
     "never": "Kāore anō",
+    "callPerson": "Waea atu ki a {name}",
+    "emailPerson": "Īmēra atu ki a {name}",
     "today": "Āianei",
     "yesterday": "Inanahi",
     "daysAgo": "{count}r i mua",
@@ -89,7 +93,7 @@
     "declineConfirm": "Kei te tino hiahia koe ki te whakakāhore i tēnei maramataka mahi? Ka whakamōhiotia tō kaihautū tīma.",
     "reasonPlaceholder": "Take (kōwhiri)",
     "declining": "E whakakāhore ana...",
-    "failedResponse": "I rahua — takiputa ka takiuru anō.",
+    "failedResponse": "Kāore i taea te whakahou i tēnei tono. Ngana anō.",
     "accept": "Whakaae"
   },
   "Goals": {

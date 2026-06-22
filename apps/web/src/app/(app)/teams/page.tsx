@@ -8,10 +8,7 @@ import { UpcomingServingOverview } from "@/components/teams/upcoming-serving-ove
 export default async function TeamsPage() {
   const t = await getTranslations("Navigation");
   const queryClient = getQueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(trpc.teams.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.schedules.upcoming.queryOptions()),
-  ]);
+  await queryClient.prefetchQuery(trpc.teams.list.queryOptions());
 
   return (
     <div>

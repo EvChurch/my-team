@@ -46,6 +46,8 @@
   "Teams": {
     "title": "Teams",
     "myTeams": "My Teams",
+    "leading": "Leading",
+    "member": "Member",
     "noTeams": "No Teams Yet",
     "noTeamsDescription": "You're not assigned to any teams. Teams are synced from Planning Center.",
     "teamLead": "Team Lead",
@@ -67,6 +69,8 @@
     "noMembersDesc": "No members are assigned to this team.",
     "noMembersInRole": "No members in this role",
     "never": "Never",
+    "callPerson": "Call {name}",
+    "emailPerson": "Email {name}",
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{count}d ago",
@@ -89,7 +93,7 @@
     "declineConfirm": "Are you sure you want to decline this serving schedule? Your team leader will be notified.",
     "reasonPlaceholder": "Reason (optional)",
     "declining": "Declining...",
-    "failedResponse": "Failed — please sign out and back in.",
+    "failedResponse": "Could not update this request. Please try again.",
     "accept": "Accept"
   },
   "Goals": {

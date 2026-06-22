@@ -4,6 +4,9 @@ import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
 import { fetchPCO } from "@mt/api/pco"
 
 const PCO_TEAMS_PAGE_SIZE = 25
+const PCO_PLANS_PAGE_SIZE = 100
+const DEFAULT_SCHEDULE_HISTORY_MONTHS = 24
+const DEFAULT_PAST_PLANS_PER_SERVICE_TYPE = 26
 
 const serviceTypeSchema = z
   .object({
@@ -31,6 +34,16 @@ const emailSchema = z
   .passthrough()
 
 const emailsPayloadSchema = z.array(emailSchema)
+
+const phoneNumberSchema = z
+  .object({
+    number: z.string().nullable().optional(),
+    blocked: z.boolean().nullable().optional(),
+    primary: z.boolean().nullable().optional(),
+  })
+  .passthrough()
+
+const phoneNumbersPayloadSchema = z.array(phoneNumberSchema)
 
 const teamPositionSchema = z
   .object({
@@ -102,6 +115,33 @@ async function fetchPrimaryEmail(personId: string): Promise<string | null> {
   }
 }
 
+async function fetchPrimaryPhone(personId: string): Promise<string | null> {
+  try {
+    const rawResponse = await fetchPCO(
+      `/people/v2/people/${personId}/phone_numbers`
+    )
+    const response = phoneNumbersPayloadSchema.safeParse(rawResponse)
+    if (!response.success) {
+      console.error(
+        `Invalid phone numbers payload from PCO for person ${personId}: ${response.error.message}`
+      )
+      return null
+    }
+
+    const availablePhones = response.data.filter(
+      (phone) => !phone.blocked && phone.number?.trim()
+    )
+    return (
+      availablePhones.find((phone) => phone.primary)?.number ??
+      availablePhones[0]?.number ??
+      null
+    )
+  } catch (error) {
+    console.error(`Failed to fetch PCO phone for person ${personId}:`, error)
+    return null
+  }
+}
+
 export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
   const include =
     "people,person_team_position_assignments,service_types,team_leaders,team_positions"
@@ -112,6 +152,7 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
   const positions = new Map<string, Prisma.PositionUpsertArgs>()
   const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
   const personEmails = new Map<string, string | null>()
+  const personPhones = new Map<string, string | null>()
   let offset = 0
 
   while (true) {
@@ -195,7 +236,11 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
         if (!personEmails.has(person.id)) {
           personEmails.set(person.id, await fetchPrimaryEmail(person.id))
         }
+        if (!personPhones.has(person.id)) {
+          personPhones.set(person.id, await fetchPrimaryPhone(person.id))
+        }
         const email = personEmails.get(person.id) ?? null
+        const phone = personPhones.get(person.id) ?? null
 
         people.set(person.id, {
           where: {
@@ -205,6 +250,7 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
             remoteId: person.id,
             provider: "PCO",
             email,
+            phone,
             fullName: person.full_name,
             firstName: person.first_name,
             lastName: person.last_name,
@@ -212,6 +258,7 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
           },
           update: {
             email,
+            phone,
             fullName: person.full_name,
             firstName: person.first_name,
             lastName: person.last_name,
@@ -425,6 +472,24 @@ export type SchedulesSnapshot = {
   schedules: ScheduleData[]
 }
 
+export function pcoScheduleHistoryCutoff(now = new Date()): Date {
+  const configuredMonths = Number(process.env.PCO_SCHEDULE_HISTORY_MONTHS)
+  const historyMonths =
+    Number.isFinite(configuredMonths) && configuredMonths > 0
+      ? configuredMonths
+      : DEFAULT_SCHEDULE_HISTORY_MONTHS
+  const cutoff = new Date(now)
+  cutoff.setMonth(cutoff.getMonth() - historyMonths)
+  return cutoff
+}
+
+function pcoPastPlansPerServiceType(): number {
+  const configuredLimit = Number(process.env.PCO_PAST_PLANS_PER_SERVICE_TYPE)
+  return Number.isFinite(configuredLimit) && configuredLimit > 0
+    ? Math.floor(configuredLimit)
+    : DEFAULT_PAST_PLANS_PER_SERVICE_TYPE
+}
+
 function findServiceTime(
   planTimes: z.infer<typeof planTimeSchema>[],
   sortDate: string
@@ -466,21 +531,64 @@ export async function fetchSchedulesSnapshot(
   serviceTypes: { remoteId: string; name: string }[]
 ): Promise<SchedulesSnapshot> {
   const schedules = new Map<string, ScheduleData>()
+  const historyCutoff = pcoScheduleHistoryCutoff()
+
+  async function fetchPlans(
+    serviceTypeRemoteId: string,
+    filter: "future" | "past"
+  ): Promise<z.infer<typeof planSchema>[]> {
+    const plans: z.infer<typeof planSchema>[] = []
+    let offset = 0
+
+    while (true) {
+      const pastLimit = pcoPastPlansPerServiceType()
+      const perPage =
+        filter === "past"
+          ? Math.min(PCO_PLANS_PAGE_SIZE, pastLimit - plans.length)
+          : PCO_PLANS_PAGE_SIZE
+      if (perPage <= 0) return plans
+
+      const params = new URLSearchParams({
+        filter,
+        include: "plan_times",
+        per_page: String(perPage),
+        order: filter === "past" ? "-sort_date" : "sort_date",
+      })
+      if (offset > 0) params.set("offset", String(offset))
+
+      const rawPlans = await fetchPCO(
+        `/services/v2/service_types/${serviceTypeRemoteId}/plans?${params.toString()}`
+      )
+      const parsed = plansPayloadSchema.safeParse(rawPlans)
+      if (!parsed.success) {
+        throw new Error(parsed.error.message)
+      }
+
+      const page = parsed.data
+      for (const plan of page) {
+        if (
+          filter === "past" &&
+          plan.sort_date &&
+          new Date(plan.sort_date) < historyCutoff
+        ) {
+          return plans
+        }
+        plans.push(plan)
+      }
+
+      if (page.length < perPage) return plans
+      offset += PCO_PLANS_PAGE_SIZE
+    }
+  }
 
   for (const { remoteId: serviceTypeRemoteId, name: serviceTypeName } of serviceTypes) {
     let plans: z.infer<typeof planSchema>[]
     try {
-      const rawPlans = await fetchPCO(
-        `/services/v2/service_types/${serviceTypeRemoteId}/plans?filter=future&include=plan_times&per_page=100&order=sort_date`
-      )
-      const parsed = plansPayloadSchema.safeParse(rawPlans)
-      if (!parsed.success) {
-        console.error(
-          `Invalid plans payload for service type ${serviceTypeRemoteId}: ${parsed.error.message}`
-        )
-        continue
-      }
-      plans = parsed.data
+      const [futurePlans, pastPlans] = await Promise.all([
+        fetchPlans(serviceTypeRemoteId, "future"),
+        fetchPlans(serviceTypeRemoteId, "past"),
+      ])
+      plans = [...pastPlans, ...futurePlans]
     } catch (error) {
       console.error(
         `Failed to fetch plans for service type ${serviceTypeRemoteId}:`,

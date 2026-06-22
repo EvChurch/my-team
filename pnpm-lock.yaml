@@ -99,6 +99,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@mt/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@mt/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs

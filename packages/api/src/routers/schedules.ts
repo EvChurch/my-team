@@ -2,21 +2,22 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { prisma } from "../db";
+import { pcoBasicAuth } from "../lib/pco";
 
 const PCO_API = "https://api.planningcenteronline.com";
 
-async function fetchPCOAsUser(
+async function fetchPCOWithServiceCredentials(
   path: string,
-  accessToken: string,
   options?: { method?: string; body?: unknown },
 ): Promise<Response> {
+  const body = options?.body ? JSON.stringify(options.body) : undefined;
   const res = await fetch(`${PCO_API}${path}`, {
     method: options?.method ?? "GET",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      Authorization: `Basic ${pcoBasicAuth()}`,
+      ...(body ? { "Content-Type": "application/json" } : {}),
     },
-    body: options?.body ? JSON.stringify(options.body) : undefined,
+    body,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -66,14 +67,6 @@ export const schedulesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.accessToken) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message:
-            "PCO access token not available. Please sign out and sign back in.",
-        });
-      }
-
       // Look up the schedule, verify ownership, and get person's PCO remote ID
       const schedule = await prisma.schedule.findUnique({
         where: { id: input.scheduleId },
@@ -110,15 +103,18 @@ export const schedulesRouter = createTRPCRouter({
       // Call PCO API
       try {
         if (input.action === "accept") {
-          await fetchPCOAsUser(`${pcoPath}/accept`, ctx.accessToken, {
+          await fetchPCOWithServiceCredentials(`${pcoPath}/accept`, {
             method: "POST",
           });
         } else {
-          await fetchPCOAsUser(`${pcoPath}/decline`, ctx.accessToken, {
+          await fetchPCOWithServiceCredentials(`${pcoPath}/decline`, {
             method: "POST",
-            body: input.reason
-              ? { data: { attributes: { reason: input.reason } } }
-              : undefined,
+            body: {
+              data: {
+                type: "Schedule",
+                attributes: { decline_reason: input.reason ?? "" },
+              },
+            },
           });
         }
       } catch (error) {
@@ -133,7 +129,7 @@ export const schedulesRouter = createTRPCRouter({
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message:
-              "PCO access token expired. Please sign out and sign back in.",
+              "PCO service credentials could not respond to this schedule.",
           });
         }
 

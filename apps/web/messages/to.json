@@ -46,6 +46,8 @@
   "Teams": {
     "title": "Ngaahi Timi",
     "myTeams": "Hoku Ngaahi Timi",
+    "leading": "Taki",
+    "member": "Mēmipa",
     "noTeams": "ʻOku ʻIkai ha Timi",
     "noTeamsDescription": "ʻOku teʻeki ai ke ke kau ki ha timi. ʻOku fakafouʻi e ngaahi timi mei he Planning Center.",
     "teamLead": "Taki ʻo e Timi",
@@ -67,6 +69,8 @@
     "noMembersDesc": "ʻOku ʻikai ha mēmipa kuo vaheʻi ki he timi ni.",
     "noMembersInRole": "ʻOku ʻikai ha mēmipa ʻi he lakanga ni",
     "never": "Taʻe",
+    "callPerson": "Telefoni ki a {name}",
+    "emailPerson": "ʻĪmeili ki a {name}",
     "today": "ʻAho ni",
     "yesterday": "ʻAneafi",
     "daysAgo": "{count}ʻa kuo hili",
@@ -89,7 +93,7 @@
     "declineConfirm": "ʻOku ke fakapapauʻi ʻoku ke fie fakafisi ʻi he palani tauhi ni? ʻE fakahā ki hoʻo taki timi.",
     "reasonPlaceholder": "ʻUhinga (fili pe)",
     "declining": "ʻOku fakafisi...",
-    "failedResponse": "Naʻe ʻikai lava — kataki hū kituʻa pea toe hū mai.",
+    "failedResponse": "Naʻe ʻikai lava ke fakaleleiʻi ʻa e kole ni. Kataki toe feinga.",
     "accept": "Tali"
   },
   "Goals": {

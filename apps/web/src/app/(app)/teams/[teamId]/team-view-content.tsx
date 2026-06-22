@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useTranslations } from "next-intl";
@@ -15,6 +15,8 @@ import {
   Target,
   MessageSquarePlus,
   BookPlus,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,11 +39,20 @@ function MemberRow({
   lastServed,
   showLastServed,
 }: {
-  member: { id: string; fullName: string; image?: string | null };
+  member: {
+    id: string;
+    fullName: string;
+    image?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  };
   lastServed?: string;
   showLastServed: boolean;
 }) {
   const t = useTranslations("Teams");
+  const phoneHref = member.phone
+    ? `tel:${member.phone.replace(/[^\d+]/g, "")}`
+    : null;
 
   function formatLastServedDate(dateStr: string): string {
     const date = new Date(dateStr);
@@ -63,12 +74,205 @@ function MemberRow({
       <div className="flex-1 min-w-0">
         <p className="text-sm text-text-primary truncate">{member.fullName}</p>
       </div>
-      {showLastServed && (
-        <span className="text-xs text-text-tertiary shrink-0">
-          {lastServed ? formatLastServedDate(lastServed) : t("never")}
-        </span>
-      )}
+      <div className="flex shrink-0 items-center gap-2">
+        {showLastServed && (
+          <span className="text-xs text-text-tertiary">
+            {lastServed ? formatLastServedDate(lastServed) : t("never")}
+          </span>
+        )}
+        <div className="flex items-center gap-1">
+          {phoneHref ? (
+            <a
+              href={phoneHref}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-bg-muted hover:text-text-primary"
+              aria-label={t("callPerson", { name: member.fullName })}
+              title={t("callPerson", { name: member.fullName })}
+            >
+              <Phone className="h-4 w-4" />
+            </a>
+          ) : (
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-tertiary/45"
+              aria-label={t("callPerson", { name: member.fullName })}
+              title={t("callPerson", { name: member.fullName })}
+            >
+              <Phone className="h-4 w-4" />
+            </span>
+          )}
+          {member.email ? (
+            <a
+              href={`mailto:${member.email}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-bg-muted hover:text-text-primary"
+              aria-label={t("emailPerson", { name: member.fullName })}
+              title={t("emailPerson", { name: member.fullName })}
+            >
+              <Mail className="h-4 w-4" />
+            </a>
+          ) : (
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-full text-text-tertiary/45"
+              aria-label={t("emailPerson", { name: member.fullName })}
+              title={t("emailPerson", { name: member.fullName })}
+            >
+              <Mail className="h-4 w-4" />
+            </span>
+          )}
+        </div>
+      </div>
     </div>
+  );
+}
+
+type TeamSchedulePlan = {
+  planRemoteId: string;
+  sortDate: string;
+  startsAt: string | null;
+  people: Array<{
+    personId: string;
+    personName: string;
+    personImage: string | null;
+    positionName: string | null;
+    status: string;
+  }>;
+};
+
+function TeamScheduleMatrix({
+  plans,
+  timezone,
+}: {
+  plans: TeamSchedulePlan[];
+  timezone: string;
+}) {
+  const t = useTranslations("Teams");
+  const roles = Array.from(
+    new Set(
+      plans.flatMap((plan) =>
+        plan.people.map((person) => person.positionName ?? "Unassigned"),
+      ),
+    ),
+  ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  if (roles.length === 0) return null;
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table
+          className="w-full border-collapse"
+          style={{ minWidth: `${Math.max(360, 160 + roles.length * 160)}px` }}
+        >
+          <thead>
+            <tr className="border-b border-border bg-bg-muted/60">
+              <th
+                className="sticky left-0 z-20 w-40 bg-bg-muted px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-text-tertiary shadow-[1px_0_0_var(--border)]"
+                scope="col"
+              >
+                {t("serving")}
+              </th>
+              {roles.map((role) => (
+                <th
+                  key={role}
+                  className="min-w-32 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-text-tertiary"
+                  scope="col"
+                >
+                  {role}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {plans.map((plan) => {
+              const peopleByRole = new Map<string, typeof plan.people>();
+              for (const person of plan.people) {
+                const role = person.positionName ?? "Unassigned";
+                const people = peopleByRole.get(role) ?? [];
+                people.push(person);
+                peopleByRole.set(role, people);
+              }
+
+              return (
+                <tr key={plan.planRemoteId} className="hover:bg-bg-muted/40">
+                  <th
+                    className="sticky left-0 z-10 bg-bg-card px-4 py-3 text-left align-top font-normal shadow-[1px_0_0_var(--border)]"
+                    scope="row"
+                  >
+                    <Link
+                      href={`/plans/${plan.planRemoteId}`}
+                      className="block rounded-lg hover:text-accent"
+                    >
+                      <span className="block text-sm font-semibold text-text-primary">
+                        {formatDate(plan.sortDate, timezone)}
+                      </span>
+                      {plan.startsAt && (
+                        <span className="block text-xs text-text-secondary">
+                          {formatTime(plan.startsAt, timezone)}
+                        </span>
+                      )}
+                    </Link>
+                  </th>
+                  {roles.map((role) => {
+                    const people = peopleByRole.get(role) ?? [];
+
+                    return (
+                      <td key={role} className="px-3 py-3 align-top">
+                        {people.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {people.map((person, index) => {
+                              const isConfirmed = person.status === "CONFIRMED";
+                              const isDeclined = person.status === "DECLINED";
+
+                              return (
+                                <div
+                                  key={`${person.personId}-${index}`}
+                                  className="relative"
+                                  title={person.personName}
+                                >
+                                  <Avatar
+                                    name={person.personName}
+                                    src={person.personImage}
+                                    size="sm"
+                                    className={
+                                      isConfirmed
+                                        ? "ring-2 ring-accent/30"
+                                        : isDeclined
+                                          ? "opacity-45 grayscale"
+                                          : "ring-2 ring-warning/35"
+                                    }
+                                  />
+                                  {isConfirmed && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-bg-card ring-1 ring-bg-card">
+                                      <Check className="h-3 w-3 text-accent" />
+                                    </span>
+                                  )}
+                                  {!isConfirmed && !isDeclined && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-bg-card ring-1 ring-bg-card">
+                                      <Clock className="h-3 w-3 text-warning" />
+                                    </span>
+                                  )}
+                                  {isDeclined && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-bg-card ring-1 ring-bg-card">
+                                      <span className="text-[10px] font-bold leading-none text-error">
+                                        x
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-text-tertiary">-</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
@@ -88,6 +292,8 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       id: a.person.id,
       fullName: a.person.fullName,
       image: a.person.image,
+      email: a.person.email,
+      phone: a.person.phone,
     })),
   }));
 
@@ -96,36 +302,67 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
     id: l.person.id,
     fullName: l.person.fullName,
     image: l.person.image,
+    email: l.person.email,
+    phone: l.person.phone,
   }));
+  const leaderIds = new Set(leaders.map((leader) => leader.id));
+  const visibleRoleGroups = roleGroups.filter((role) => {
+    const roleName = role.name.trim().toLowerCase();
+    const isLeaderRole =
+      roleName === "leader" || roleName === "team leader" || roleName === "team lead";
+    const onlyContainsTeamLeads =
+      role.members.length > 0 &&
+      role.members.every((member) => leaderIds.has(member.id));
+
+    return !(leaders.length > 0 && isLeaderRole && onlyContainsTeamLeads);
+  });
 
   const pendingGoalsCount = team.goals.filter(
     (g) => g.status === "PENDING",
   ).length;
+  const hasServingTab = team.hasScheduleHistory;
 
-  // Build tabs — only show tabs that have content (except serving which always shows)
-  const allTabs: { value: Tab; label: string }[] = [
-    { value: "serving", label: t("serving") },
-    { value: "members", label: t("membersTab") },
-    { value: "goals", label: t("goalsTab") },
-    ...(team.guides.length > 0 || team.isCurrentUserLeader
-      ? [{ value: "guides" as Tab, label: t("guidesTab") }]
-      : []),
-    ...(team.feedback.length > 0 || team.isCurrentUserLeader
-      ? [{ value: "feedback" as Tab, label: t("feedbackTab") }]
-      : []),
-    ...(team.description
-      ? [{ value: "about" as Tab, label: t("aboutTab") }]
-      : []),
-  ];
+  // Build tabs — only show tabs that have content.
+  const allTabs: { value: Tab; label: string }[] = useMemo(
+    () => [
+      ...(hasServingTab
+        ? [{ value: "serving" as Tab, label: t("serving") }]
+        : []),
+      { value: "members", label: t("membersTab") },
+      { value: "goals", label: t("goalsTab") },
+      ...(team.guides.length > 0 || team.isCurrentUserLeader
+        ? [{ value: "guides" as Tab, label: t("guidesTab") }]
+        : []),
+      ...(team.feedback.length > 0 || team.isCurrentUserLeader
+        ? [{ value: "feedback" as Tab, label: t("feedbackTab") }]
+        : []),
+      ...(team.description
+        ? [{ value: "about" as Tab, label: t("aboutTab") }]
+        : []),
+    ],
+    [
+      hasServingTab,
+      t,
+      team.description,
+      team.feedback.length,
+      team.guides.length,
+      team.isCurrentUserLeader,
+    ],
+  );
 
-  const [activeTab, setActiveTab] = useState<Tab>("serving");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    hasServingTab ? "serving" : "members",
+  );
+  const selectedTab = allTabs.some((tab) => tab.value === activeTab)
+    ? activeTab
+    : (allTabs[0]?.value ?? "members");
   const tabBarRef = useRef<HTMLDivElement>(null);
   const tabRefsMap = useRef<Map<Tab, HTMLButtonElement>>(new Map());
   const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
 
   const updatePill = useCallback(() => {
     const bar = tabBarRef.current;
-    const activeBtn = tabRefsMap.current.get(activeTab);
+    const activeBtn = tabRefsMap.current.get(selectedTab);
     if (!bar || !activeBtn) return;
     const barRect = bar.getBoundingClientRect();
     const btnRect = activeBtn.getBoundingClientRect();
@@ -133,18 +370,18 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       left: btnRect.left - barRect.left,
       width: btnRect.width,
     });
-  }, [activeTab]);
+  }, [selectedTab]);
 
   useEffect(() => {
     updatePill();
     // Also scroll active tab into view
-    const activeBtn = tabRefsMap.current.get(activeTab);
+    const activeBtn = tabRefsMap.current.get(selectedTab);
     activeBtn?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
       inline: "center",
     });
-  }, [activeTab, updatePill]);
+  }, [selectedTab, updatePill]);
 
   useEffect(() => {
     window.addEventListener("resize", updatePill);
@@ -200,9 +437,9 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                 if (el) tabRefsMap.current.set(tab.value, el);
               }}
               role="tab"
-              aria-selected={activeTab === tab.value}
+              aria-selected={selectedTab === tab.value}
               className={`relative z-10 shrink-0 px-4 py-2 rounded-[10px] text-sm font-medium transition-colors ${
-                activeTab === tab.value
+                selectedTab === tab.value
                   ? "text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
               }`}
@@ -215,7 +452,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       </div>
 
       {/* Tab content */}
-      {activeTab === "serving" && (
+      {hasServingTab && selectedTab === "serving" && (
         <div className="space-y-4">
           <Card className="p-4">
             <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-3">
@@ -233,117 +470,13 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             )}
           </Card>
 
-          {/* Leader view: team roster per upcoming plan */}
-          {team.isCurrentUserLeader &&
-            (team.teamSchedules?.length ?? 0) > 0 &&
-              (team.teamSchedules ?? []).map((plan) => {
-                  // Group people by position/role
-                  const roleGroups = new Map<string, typeof plan.people>();
-                  for (const person of plan.people) {
-                    const role = person.positionName ?? "Unassigned";
-                    if (!roleGroups.has(role))
-                      roleGroups.set(role, []);
-                    roleGroups.get(role)!.push(person);
-                  }
-
-                  const confirmedCount = plan.people.filter(
-                    (p) => p.status === "CONFIRMED",
-                  ).length;
-                  const pendingCount = plan.people.filter(
-                    (p) => p.status === "UNCONFIRMED",
-                  ).length;
-
-                  return (
-                    <Link
-                      key={plan.planRemoteId}
-                      href={`/plans/${plan.planRemoteId}`}
-                      className="block"
-                    >
-                      <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden">
-                        {/* Plan header */}
-                        <div className="p-4 pb-3">
-                          <h3
-                            className="text-sm font-semibold text-text-primary"
-                                                     >
-                            {formatDate(plan.sortDate, tz)}
-                            {plan.startsAt && (
-                              <span
-                                className="text-text-secondary font-normal"
-                                                             >
-                                {" "}
-                                at{" "}
-                                {formatTime(plan.startsAt, tz)}
-                              </span>
-                            )}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-text-tertiary">
-                              {t("person", { count: plan.people.length })}
-                            </span>
-                            {confirmedCount > 0 && (
-                              <span className="text-xs text-accent">
-                                {confirmedCount} {t("confirmed")}
-                              </span>
-                            )}
-                            {pendingCount > 0 && (
-                              <span className="text-xs text-warning">
-                                {pendingCount} {t("pending")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Role-grouped roster */}
-                        <div className="divide-y divide-border">
-                          {Array.from(roleGroups.entries()).map(
-                            ([roleName, people]) => (
-                              <div key={roleName} className="px-4 py-3">
-                                <p className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide mb-2">
-                                  {roleName}
-                                </p>
-                                <div className="space-y-1.5">
-                                  {people.map((person) => {
-                                    const isConfirmed =
-                                      person.status === "CONFIRMED";
-                                    const isDeclined =
-                                      person.status === "DECLINED";
-
-                                    return (
-                                      <div
-                                        key={person.personId}
-                                        className="flex items-center justify-between gap-2"
-                                      >
-                                        <p
-                                          className={`text-sm truncate ${isDeclined ? "text-text-tertiary line-through" : "text-text-primary"}`}
-                                        >
-                                          {person.personName}
-                                        </p>
-                                        {isConfirmed ? (
-                                          <Check className="w-3.5 h-3.5 text-accent shrink-0" />
-                                        ) : isDeclined ? (
-                                          <span className="text-[10px] text-error shrink-0">
-                                            {t("declined")}
-                                          </span>
-                                        ) : (
-                                          <Clock className="w-3.5 h-3.5 text-warning shrink-0" />
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      </Card>
-                    </Link>
-                  );
-                })
-            }
+          {team.isCurrentUserLeader && (team.teamSchedules?.length ?? 0) > 0 && (
+            <TeamScheduleMatrix plans={team.teamSchedules ?? []} timezone={tz} />
+          )}
         </div>
       )}
 
-      {activeTab === "members" && (
+      {selectedTab === "members" && (
         <div className="space-y-4">
           {/* Leaders */}
           {leaders.length > 0 && (
@@ -365,7 +498,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           )}
 
           {/* Role groups */}
-          {roleGroups.map((role) => (
+          {visibleRoleGroups.map((role) => (
             <Card key={role.id} className="p-4">
               <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wide mb-3">
                 {role.name}
@@ -389,7 +522,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             </Card>
           ))}
 
-          {leaders.length === 0 && roleGroups.length === 0 && (
+          {leaders.length === 0 && visibleRoleGroups.length === 0 && (
             <EmptyState
               icon={Users}
               title={t("noMembers")}
@@ -400,7 +533,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       )}
 
-      {activeTab === "goals" && (
+      {selectedTab === "goals" && (
         <div className="space-y-3">
           {team.isCurrentUserLeader && (
             <LeaderBar
@@ -442,7 +575,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       )}
 
-      {activeTab === "guides" && (
+      {selectedTab === "guides" && (
         <div className="space-y-3">
           {team.isCurrentUserLeader && (
             <LeaderBar
@@ -453,7 +586,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
           )}
           {team.guides.map((guide) => (
             <Link key={guide.id} href={`/guides/${guide.id}`}>
-              <Card className="p-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <Card className="border border-transparent p-3 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-accent shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -473,7 +606,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       )}
 
-      {activeTab === "feedback" && (
+      {selectedTab === "feedback" && (
         <div className="space-y-3">
           {team.isCurrentUserLeader && (
             <LeaderBar
@@ -501,7 +634,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         </div>
       )}
 
-      {activeTab === "about" && team.description && (
+      {selectedTab === "about" && team.description && (
         <Card className="p-4">
           <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
             {typeof team.description === "string"

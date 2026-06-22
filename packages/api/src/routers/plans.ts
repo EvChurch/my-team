@@ -3,6 +3,10 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { prisma } from "../db";
 import { fetchPCO } from "../lib/pco";
+import {
+  getPersonDisplayMap,
+  personDisplaySelect,
+} from "../lib/display-identity";
 
 // --- PCO API response schemas ---
 
@@ -167,7 +171,7 @@ export const plansRouter = createTRPCRouter({
       const schedule = await prisma.schedule.findFirst({
         where: {
           planRemoteId: input.planRemoteId,
-          personId: ctx.personId,
+          personId: { in: ctx.personIds },
         },
         include: {
           team: {
@@ -196,8 +200,8 @@ export const plansRouter = createTRPCRouter({
       const timeout = AbortSignal.timeout(8000);
 
       // 2. Get current user's PCO remote ID for roster highlighting
-      const person = await prisma.person.findUnique({
-        where: { id: ctx.personId },
+      const person = await prisma.person.findFirst({
+        where: { id: { in: ctx.personIds }, provider: "PCO" },
         select: { remoteId: true },
       });
       const currentUserPcoId = person?.remoteId ?? null;
@@ -253,6 +257,30 @@ export const plansRouter = createTRPCRouter({
       const teamMembers = rawMembersArray.map((member: unknown) =>
         pcoTeamMemberSchema.parse(member),
       );
+      const memberPcoIds = [
+        ...new Set(
+          teamMembers
+            .map((member) => member.person?.id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const localRosterPeople =
+        memberPcoIds.length > 0
+          ? await prisma.person.findMany({
+              where: {
+                provider: "PCO",
+                remoteId: { in: memberPcoIds },
+              },
+              select: personDisplaySelect,
+            })
+          : [];
+      const rosterDisplayMap = await getPersonDisplayMap(localRosterPeople);
+      const displayPeopleByPcoId = new Map(
+        localRosterPeople.map((person) => [
+          person.remoteId,
+          rosterDisplayMap.get(person.id) ?? person,
+        ]),
+      );
 
       const rawNotes =
         notesResult.status === "fulfilled" && Array.isArray(notesResult.value)
@@ -296,12 +324,16 @@ export const plansRouter = createTRPCRouter({
           teamGroups.set(teamId, { teamId, teamName, members: [] });
         }
 
+        const displayPerson = member.person?.id
+          ? displayPeopleByPcoId.get(member.person.id)
+          : null;
+
         teamGroups.get(teamId)!.members.push({
           id: member.id,
-          name: member.name ?? null,
+          name: displayPerson?.fullName ?? member.name ?? null,
           position: member.team_position_name ?? null,
           status: PCO_STATUS_MAP[member.status ?? ""] ?? "Unconfirmed",
-          photoThumbnail: member.photo_thumbnail ?? null,
+          photoThumbnail: displayPerson?.image ?? member.photo_thumbnail ?? null,
           personPcoId: member.person?.id ?? null,
         });
       }

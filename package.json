@@ -5,7 +5,7 @@
     "setup:codex": "scripts/codex-worktree-setup.sh",
     "dev:codex": "scripts/codex-dev.sh",
     "cleanup:codex": "scripts/codex-worktree-cleanup.sh",
-    "sync:all": "pnpm --filter worker sync:once",
+    "sync:all": "env -u DATABASE_URL pnpm --filter worker sync:once",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",

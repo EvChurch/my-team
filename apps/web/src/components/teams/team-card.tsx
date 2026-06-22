@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { Users, Calendar } from "lucide-react";
+import { Users, Calendar, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTimezone } from "@/lib/timezone";
@@ -15,6 +14,7 @@ type TeamCardProps = {
   serviceTypeName?: string | null;
   memberCount: number;
   userRole: string;
+  userRoles?: string[];
   isLeader: boolean;
   nextServingDate?: string | null;
 };
@@ -22,49 +22,56 @@ type TeamCardProps = {
 export function TeamCard({
   id,
   name,
-  provider,
   serviceTypeName,
   memberCount,
   userRole,
+  userRoles,
   isLeader,
   nextServingDate,
 }: TeamCardProps) {
-  const t = useTranslations("Teams");
   const tz = useTimezone();
+  const roles = userRoles?.length ? userRoles : isLeader ? [] : [userRole];
+  const visibleRoles = roles.slice(0, 2);
+  const hiddenRoleCount = Math.max(roles.length - visibleRoles.length, 0);
   return (
     <Link href={`/teams/${id}`}>
-      <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-[15px] font-semibold text-text-primary truncate">
-              {name}
-            </h3>
-            {serviceTypeName && (
-              <p className="text-[13px] text-text-secondary mt-0.5">
-                {serviceTypeName}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge variant={isLeader ? "accent" : "muted"}>{userRole}</Badge>
-            <span className="rounded-full bg-bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-tertiary">
-              {provider}
-            </span>
-          </div>
+      <Card className="flex min-h-[92px] flex-col justify-between border border-transparent p-4 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md cursor-pointer">
+        <div className="flex min-w-0 items-start gap-3">
+          <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-text-primary truncate">
+            {name}
+          </h3>
+          {roles.length > 0 && (
+            <div className="flex min-w-0 max-w-fit flex-shrink flex-wrap justify-end gap-1">
+              {visibleRoles.map((role) => (
+                <Badge key={role} variant="muted" className="min-w-0">
+                  <span className="truncate">{role}</span>
+                </Badge>
+              ))}
+              {hiddenRoleCount > 0 && (
+                <Badge variant="muted" className="shrink-0">
+                  +{hiddenRoleCount}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-3 text-text-tertiary mt-3">
-          <div className="flex items-center gap-1.5">
+        <div className="mt-3 flex min-w-0 items-center gap-3 text-text-tertiary">
+          <div className="flex shrink-0 items-center gap-1.5">
             <Users className="w-3.5 h-3.5" />
-            <span className="text-xs">
-              {t("members", { count: memberCount })}
-            </span>
+            <span className="text-xs">{memberCount}</span>
           </div>
           {nextServingDate && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
               <span className="text-xs">
                 {formatDate(nextServingDate, tz)}
               </span>
+            </div>
+          )}
+          {serviceTypeName && (
+            <div className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate text-xs">{serviceTypeName}</span>
             </div>
           )}
         </div>

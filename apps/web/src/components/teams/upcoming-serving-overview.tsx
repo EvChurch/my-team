@@ -2,27 +2,132 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Clock, X, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTimezone } from "@/lib/timezone";
 import { formatDate, formatTime } from "@/lib/format-date";
 
+type ScheduleItem = {
+  id: string;
+  provider?: "PCO" | "ROCK";
+  status: string;
+  sortDate: Date | string;
+  startsAt: Date | string | null;
+  positionName: string | null;
+  planRemoteId: string;
+  team: { id: string; name: string } | null;
+};
+
+type ScheduleGroup = ScheduleItem & {
+  scheduleIds: string[];
+  positionNames: string[];
+  teams: Array<{ id: string; name: string }>;
+};
+
+function uniqueBy<T>(items: T[], getKey: (item: T) => string) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = getKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function groupSchedulesByService(schedules: ScheduleItem[]): ScheduleGroup[] {
+  const groups = new Map<string, ScheduleGroup>();
+
+  for (const schedule of schedules) {
+    const serviceKey = [
+      schedule.provider ?? "UNKNOWN",
+      schedule.planRemoteId || schedule.sortDate.toString(),
+      schedule.startsAt?.toString() ?? "",
+    ].join(":");
+    const existing = groups.get(serviceKey);
+    if (!existing) {
+      groups.set(serviceKey, {
+        ...schedule,
+        scheduleIds: [schedule.id],
+        positionNames: schedule.positionName ? [schedule.positionName] : [],
+        teams: schedule.team ? [schedule.team] : [],
+      });
+      continue;
+    }
+
+    existing.scheduleIds.push(schedule.id);
+    if (schedule.positionName) {
+      existing.positionNames = uniqueBy(
+        [...existing.positionNames, schedule.positionName],
+        (name) => name,
+      );
+    }
+    if (schedule.team) {
+      existing.teams = uniqueBy([...existing.teams, schedule.team], (team) => team.id);
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
+function getMonthKey(value: Date | string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function getMonthLabel(value: Date | string, locale: string, timeZone: string) {
+  const date = new Date(value);
+  const currentYear = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+  }).format(new Date());
+  const scheduleYear = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+  }).format(date);
+
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    timeZone,
+    ...(scheduleYear !== currentYear ? { year: "numeric" } : {}),
+  }).format(date);
+}
+
+function groupSchedulesByMonth(
+  schedules: ScheduleGroup[],
+  locale: string,
+  timeZone: string,
+) {
+  const groups = new Map<
+    string,
+    { label: string; schedules: ScheduleGroup[] }
+  >();
+
+  for (const schedule of schedules) {
+    const key = getMonthKey(schedule.sortDate, timeZone);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.schedules.push(schedule);
+    } else {
+      groups.set(key, {
+        label: getMonthLabel(schedule.sortDate, locale, timeZone),
+        schedules: [schedule],
+      });
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
 function ScheduleCard({
   schedule,
 }: {
-  schedule: {
-    id: string;
-    provider?: "PCO" | "ROCK";
-    status: string;
-    sortDate: Date | string;
-    startsAt: Date | string | null;
-    positionName: string | null;
-    planRemoteId: string;
-    team: { id: string; name: string } | null;
-  };
+  schedule: ScheduleGroup;
 }) {
   const t = useTranslations("Schedules");
   const tCommon = useTranslations("Common");
@@ -35,9 +140,9 @@ function ScheduleCard({
         queryClient.invalidateQueries({
           queryKey: trpc.schedules.upcoming.queryOptions().queryKey,
         });
-        if (schedule.team?.id) {
+        for (const team of schedule.teams) {
           queryClient.invalidateQueries({
-            queryKey: trpc.teams.get.queryOptions({ teamId: schedule.team.id })
+            queryKey: trpc.teams.get.queryOptions({ teamId: team.id })
               .queryKey,
           });
         }
@@ -63,10 +168,28 @@ function ScheduleCard({
     }
   }, [showDeclineModal]);
 
+  const respondToSchedules = (action: "accept" | "decline", reason?: string) => {
+    const respondableIds = schedule.scheduleIds.filter(() => canRespond);
+    void Promise.all(
+      respondableIds.map((scheduleId) =>
+        respondMutation.mutateAsync({
+          scheduleId,
+          action,
+          reason,
+        }),
+      ),
+    ).then(() => {
+      if (action === "decline") {
+        setShowDeclineModal(false);
+        setDeclineReason("");
+      }
+    }).catch(() => undefined);
+  };
+
   const handleAccept = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    respondMutation.mutate({ scheduleId: schedule.id, action: "accept" });
+    respondToSchedules("accept");
   };
 
   const openDeclineModal = (e: React.MouseEvent) => {
@@ -76,23 +199,12 @@ function ScheduleCard({
   };
 
   const confirmDecline = () => {
-    respondMutation.mutate(
-      {
-        scheduleId: schedule.id,
-        action: "decline",
-        reason: declineReason || undefined,
-      },
-      {
-        onSuccess: () => {
-          setShowDeclineModal(false);
-          setDeclineReason("");
-        },
-      },
-    );
+    respondToSchedules("decline", declineReason || undefined);
   };
+  const roleLabel = schedule.positionNames.join(", ");
 
   const card = (
-    <Card className="p-4 hover:shadow-md hover:-translate-y-0.5 transition-all h-full">
+    <Card className="h-full border border-transparent p-4 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md">
       <div className="flex items-start gap-3">
         <div
           className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
@@ -115,18 +227,9 @@ function ScheduleCard({
               </span>
             )}
           </p>
-          {(schedule.provider || schedule.positionName || schedule.team) && (
+          {roleLabel && (
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {schedule.provider && (
-                <span className="rounded-md bg-bg-muted px-1.5 py-0.5 text-[10px] font-medium text-text-secondary">
-                  {schedule.provider}
-                </span>
-              )}
-              <span className="text-xs text-text-secondary">
-                {[schedule.positionName, schedule.team?.name]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
+              <span className="text-xs text-text-secondary">{roleLabel}</span>
             </div>
           )}
           {respondMutation.isError && (
@@ -192,7 +295,6 @@ function ScheduleCard({
                 </h3>
                 <p className="text-xs text-text-secondary">
                   {formatDate(schedule.sortDate, tz)}
-                  {schedule.team ? ` · ${schedule.team.name}` : ""}
                 </p>
               </div>
             </div>
@@ -240,33 +342,44 @@ function ConfirmedSection({
   showAll,
   onToggle,
 }: {
-  schedules: Array<{
-    id: string;
-    provider?: "PCO" | "ROCK";
-    status: string;
-    sortDate: Date | string;
-    startsAt: Date | string | null;
-    positionName: string | null;
-    planRemoteId: string;
-    team: { id: string; name: string } | null;
-  }>;
+  schedules: ScheduleGroup[];
   canToggle: boolean;
   showAll: boolean;
   onToggle: () => void;
 }) {
   const t = useTranslations("Schedules");
+  const locale = useLocale();
+  const tz = useTimezone();
   const visible = showAll ? schedules : schedules.slice(0, 3);
+  const monthGroups = groupSchedulesByMonth(visible, locale, tz);
 
   return (
     <section>
       <h2 className="text-[15px] font-semibold text-text-primary mb-3">
         {t("upcomingServing")}
       </h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((schedule) => (
-          <ScheduleCard key={schedule.id} schedule={schedule} />
-        ))}
-      </div>
+      {showAll ? (
+        <div className="space-y-4">
+          {monthGroups.map((group) => (
+            <div key={group.label} className="space-y-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+                {group.label}
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {group.schedules.map((schedule) => (
+                  <ScheduleCard key={schedule.id} schedule={schedule} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((schedule) => (
+            <ScheduleCard key={schedule.id} schedule={schedule} />
+          ))}
+        </div>
+      )}
       {canToggle && (
         <button
           onClick={onToggle}
@@ -290,41 +403,90 @@ function ConfirmedSection({
 
 export function UpcomingServingOverview() {
   const t = useTranslations("Schedules");
+  const locale = useLocale();
+  const tz = useTimezone();
   const trpc = useTRPC();
-  const { data: schedules } = useSuspenseQuery(
-    trpc.schedules.upcoming.queryOptions(),
-  );
+  const { data: schedules = [] } = useQuery({
+    ...trpc.schedules.upcoming.queryOptions(),
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
   const [showAll, setShowAll] = useState(false);
+  const [showAllRequests, setShowAllRequests] = useState(false);
 
   // Filter out declined schedules, show pending first
   const activeSchedules = schedules.filter((s) => s.status !== "DECLINED");
   const pendingSchedules = activeSchedules.filter((s) => s.status === "UNCONFIRMED");
   const confirmedSchedules = activeSchedules.filter((s) => s.status !== "UNCONFIRMED");
+  const pendingServices = groupSchedulesByService(pendingSchedules);
+  const confirmedServices = groupSchedulesByService(confirmedSchedules);
 
   if (activeSchedules.length === 0) return null;
 
-  const canToggle = confirmedSchedules.length > 3;
+  const canToggle = confirmedServices.length > 3;
+  const canToggleRequests = pendingServices.length > 3;
+  const visibleRequests = showAllRequests ? pendingServices : pendingServices.slice(0, 3);
+  const requestMonthGroups = groupSchedulesByMonth(visibleRequests, locale, tz);
 
   return (
     <div className="space-y-6 mb-6">
       {/* Serving Requests */}
-      {pendingSchedules.length > 0 && (
+      {pendingServices.length > 0 && (
         <section>
           <h2 className="text-[15px] font-semibold text-text-primary mb-3">
             {t("servingRequests")}
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {pendingSchedules.map((schedule) => (
-              <ScheduleCard key={schedule.id} schedule={schedule} />
-            ))}
-          </div>
+          {showAllRequests ? (
+            <div className="space-y-4">
+              {requestMonthGroups.map((group) => (
+                <div key={group.label} className="space-y-2">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+                    {group.label}
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.schedules.map((schedule) => (
+                      <ScheduleCard key={schedule.id} schedule={schedule} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleRequests.map((schedule, index) => (
+                <div
+                  key={schedule.id}
+                  className={index === 2 ? "hidden lg:block" : undefined}
+                >
+                  <ScheduleCard schedule={schedule} />
+                </div>
+              ))}
+            </div>
+          )}
+          {canToggleRequests && (
+            <button
+              onClick={() => setShowAllRequests(!showAllRequests)}
+              className="flex items-center gap-1 text-xs text-accent font-medium mt-3 hover:text-accent-dark transition-colors"
+            >
+              {showAllRequests ? (
+                <>
+                  {t("showLess")} <ChevronUp className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  {t("seeAll", { count: pendingServices.length })}{" "}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          )}
         </section>
       )}
 
       {/* Upcoming Serving */}
-      {confirmedSchedules.length > 0 && (
+      {confirmedServices.length > 0 && (
         <ConfirmedSection
-          schedules={confirmedSchedules}
+          schedules={confirmedServices}
           canToggle={canToggle}
           showAll={showAll}
           onToggle={() => setShowAll(!showAll)}

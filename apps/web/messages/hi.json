@@ -46,6 +46,8 @@
   "Teams": {
     "title": "टीमें",
     "myTeams": "मेरी टीमें",
+    "leading": "नेतृत्व",
+    "member": "सदस्य",
     "noTeams": "अभी कोई टीम नहीं",
     "noTeamsDescription": "आप किसी भी टीम में नहीं हैं। टीमें Planning Center से सिंक होती हैं।",
     "teamLead": "टीम लीड",
@@ -67,6 +69,8 @@
     "noMembersDesc": "इस टीम में कोई सदस्य नहीं है।",
     "noMembersInRole": "इस भूमिका में कोई सदस्य नहीं",
     "never": "कभी नहीं",
+    "callPerson": "{name} को कॉल करें",
+    "emailPerson": "{name} को ईमेल करें",
     "today": "आज",
     "yesterday": "कल",
     "daysAgo": "{count} दिन पहले",
@@ -89,7 +93,7 @@
     "declineConfirm": "क्या आप वाकई इस सेवा शेड्यूल को अस्वीकार करना चाहते हैं? आपके टीम लीडर को सूचित किया जाएगा।",
     "reasonPlaceholder": "कारण (वैकल्पिक)",
     "declining": "अस्वीकार हो रहा है...",
-    "failedResponse": "विफल — कृपया साइन आउट करके पुनः साइन इन करें।",
+    "failedResponse": "यह अनुरोध अपडेट नहीं हो सका। कृपया फिर से प्रयास करें।",
     "accept": "स्वीकार करें"
   },
   "Goals": {

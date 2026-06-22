@@ -1,7 +1,11 @@
 import { Prisma } from "@mt/api/prisma"
 import { prisma } from "@mt/api/db"
 
-import { fetchTeamsSnapshot, fetchSchedulesSnapshot } from "../pco.js"
+import {
+  fetchTeamsSnapshot,
+  fetchSchedulesSnapshot,
+  pcoScheduleHistoryCutoff,
+} from "../pco.js"
 
 export async function SyncPcoJob(): Promise<void> {
   console.log("Fetching PCO data...")
@@ -170,12 +174,12 @@ export async function SyncPcoJob(): Promise<void> {
     if (delStaleSchedules.count)
       console.log(`Deleted ${delStaleSchedules.count} stale schedules`)
 
-    // Prune past schedules
-    const delPastSchedules = await prisma.schedule.deleteMany({
-      where: { sortDate: { lt: new Date() }, provider: "PCO" },
+    // Prune schedules older than the retained history window.
+    const delOldSchedules = await prisma.schedule.deleteMany({
+      where: { sortDate: { lt: pcoScheduleHistoryCutoff() }, provider: "PCO" },
     })
-    if (delPastSchedules.count)
-      console.log(`Deleted ${delPastSchedules.count} past schedules`)
+    if (delOldSchedules.count)
+      console.log(`Deleted ${delOldSchedules.count} old schedules`)
   } catch (error) {
     console.error("Schedule sync failed (team sync data preserved):", error)
   }

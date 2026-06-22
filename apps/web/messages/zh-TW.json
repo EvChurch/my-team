@@ -46,6 +46,8 @@
   "Teams": {
     "title": "團隊",
     "myTeams": "我的團隊",
+    "leading": "帶領",
+    "member": "成員",
     "noTeams": "尚無團隊",
     "noTeamsDescription": "您尚未被指派至任何團隊。團隊資料會從 Planning Center 同步。",
     "teamLead": "團隊負責人",
@@ -67,6 +69,8 @@
     "noMembersDesc": "此團隊尚未指派任何成員。",
     "noMembersInRole": "此角色目前沒有成員",
     "never": "從未",
+    "callPerson": "致電{name}",
+    "emailPerson": "傳送電子郵件給{name}",
     "today": "今天",
     "yesterday": "昨天",
     "daysAgo": "{count}天前",
@@ -89,7 +93,7 @@
     "declineConfirm": "確定要婉拒此服事排程嗎？您的團隊負責人將會收到通知。",
     "reasonPlaceholder": "原因（選填）",
     "declining": "婉拒中...",
-    "failedResponse": "操作失敗 — 請登出後重新登入。",
+    "failedResponse": "無法更新此請求。請再試一次。",
     "accept": "接受"
   },
   "Goals": {

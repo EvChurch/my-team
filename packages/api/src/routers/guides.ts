@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
 import { prisma } from "../db";
+import {
+  getProfileDisplayMap,
+  profileDisplaySelect,
+} from "../lib/display-identity";
 
 const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
 
@@ -32,7 +36,7 @@ export const guidesRouter = createTRPCRouter({
 
     if (allTeamIds.length === 0) return [];
 
-    return prisma.guide.findMany({
+    const guides = await prisma.guide.findMany({
       where: {
         teamId: { in: allTeamIds },
         OR: [
@@ -47,18 +51,28 @@ export const guidesRouter = createTRPCRouter({
       },
       include: {
         author: {
-          select: {
-            id: true,
-            fullName: true,
-            firstName: true,
-            image: true,
-          },
+          select: profileDisplaySelect,
         },
         team: { select: { id: true, name: true } },
         role: { select: { id: true, name: true } },
       },
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
     });
+
+    const profileDisplayMap = await getProfileDisplayMap(
+      guides
+        .map((guide) => guide.author)
+        .filter((profile): profile is NonNullable<typeof profile> =>
+          Boolean(profile),
+        ),
+    );
+
+    return guides.map((guide) => ({
+      ...guide,
+      author: guide.author
+        ? (profileDisplayMap.get(guide.author.id) ?? guide.author)
+        : null,
+    }));
   }),
 
   /**
@@ -82,7 +96,7 @@ export const guidesRouter = createTRPCRouter({
         },
       });
 
-      return prisma.guide.findMany({
+      const guides = await prisma.guide.findMany({
         where: {
           teamId: input.teamId,
           ...(input.roleId && { roleId: input.roleId }),
@@ -95,17 +109,27 @@ export const guidesRouter = createTRPCRouter({
         },
         include: {
           author: {
-            select: {
-              id: true,
-              fullName: true,
-              firstName: true,
-              image: true,
-            },
+            select: profileDisplaySelect,
           },
           role: { select: { id: true, name: true } },
         },
         orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       });
+
+      const profileDisplayMap = await getProfileDisplayMap(
+        guides
+          .map((guide) => guide.author)
+          .filter((profile): profile is NonNullable<typeof profile> =>
+            Boolean(profile),
+          ),
+      );
+
+      return guides.map((guide) => ({
+        ...guide,
+        author: guide.author
+          ? (profileDisplayMap.get(guide.author.id) ?? guide.author)
+          : null,
+      }));
     }),
 
   /**
@@ -114,21 +138,27 @@ export const guidesRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.object({ guideId: z.string() }))
     .query(async ({ input }) => {
-      return prisma.guide.findUniqueOrThrow({
+      const guide = await prisma.guide.findUniqueOrThrow({
         where: { id: input.guideId },
         include: {
           author: {
-            select: {
-              id: true,
-              fullName: true,
-              firstName: true,
-              image: true,
-            },
+            select: profileDisplaySelect,
           },
           team: { select: { id: true, name: true } },
           role: { select: { id: true, name: true } },
         },
       });
+
+      const profileDisplayMap = await getProfileDisplayMap(
+        guide.author ? [guide.author] : [],
+      );
+
+      return {
+        ...guide,
+        author: guide.author
+          ? (profileDisplayMap.get(guide.author.id) ?? guide.author)
+          : null,
+      };
     }),
 
   /**

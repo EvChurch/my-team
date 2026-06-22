@@ -46,6 +46,8 @@
   "Teams": {
     "title": "团队",
     "myTeams": "我的团队",
+    "leading": "带领",
+    "member": "成员",
     "noTeams": "暂无团队",
     "noTeamsDescription": "你还没有被分配到任何团队。团队数据从 Planning Center 同步。",
     "teamLead": "团队负责人",
@@ -67,6 +69,8 @@
     "noMembersDesc": "这个团队还没有分配任何成员。",
     "noMembersInRole": "此角色暂无成员",
     "never": "从未",
+    "callPerson": "致电{name}",
+    "emailPerson": "给{name}发送邮件",
     "today": "今天",
     "yesterday": "昨天",
     "daysAgo": "{count}天前",
@@ -89,7 +93,7 @@
     "declineConfirm": "确定要拒绝此服事日程吗？你的团队负责人将收到通知。",
     "reasonPlaceholder": "原因（可选）",
     "declining": "正在拒绝...",
-    "failedResponse": "操作失败 — 请退出登录后重新登录。",
+    "failedResponse": "无法更新此请求。请重试。",
     "accept": "接受"
   },
   "Goals": {

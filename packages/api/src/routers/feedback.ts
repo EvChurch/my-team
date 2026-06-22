@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
 import { prisma } from "../db";
+import {
+  getProfileDisplayMap,
+  profileDisplaySelect,
+} from "../lib/display-identity";
 
 const feedbackTypeEnum = z.enum(["ENCOURAGEMENT", "GROWTH_AREA", "GENERAL"]);
 
@@ -25,7 +29,7 @@ export const feedbackRouter = createTRPCRouter({
         },
       });
 
-      return prisma.feedback.findMany({
+      const feedback = await prisma.feedback.findMany({
         where: {
           teamId: input.teamId,
           ...(input.recipientId && { recipientId: input.recipientId }),
@@ -36,24 +40,33 @@ export const feedbackRouter = createTRPCRouter({
         },
         include: {
           author: {
-            select: {
-              id: true,
-              fullName: true,
-              firstName: true,
-              image: true,
-            },
+            select: profileDisplaySelect,
           },
           recipient: {
-            select: {
-              id: true,
-              fullName: true,
-              firstName: true,
-              image: true,
-            },
+            select: profileDisplaySelect,
           },
         },
         orderBy: { createdAt: "desc" },
       });
+
+      const profileDisplayMap = await getProfileDisplayMap(
+        [
+          ...feedback.map((item) => item.author),
+          ...feedback.map((item) => item.recipient),
+        ].filter((profile): profile is NonNullable<typeof profile> =>
+          Boolean(profile),
+        ),
+      );
+
+      return feedback.map((item) => ({
+        ...item,
+        author: item.author
+          ? (profileDisplayMap.get(item.author.id) ?? item.author)
+          : null,
+        recipient: item.recipient
+          ? (profileDisplayMap.get(item.recipient.id) ?? item.recipient)
+          : null,
+      }));
     }),
 
   /**
