@@ -24,7 +24,7 @@ read_env_value() {
 port_open() {
   node - <<'NODE'
 const net = require("node:net")
-const socket = net.createConnection({ host: "127.0.0.1", port: 7000 })
+const socket = net.createConnection({ host: "127.0.0.1", port: 7500 })
 const done = (code) => {
   socket.destroy()
   process.exit(code)
@@ -37,8 +37,8 @@ NODE
 }
 
 if port_open; then
-  echo "[dev:codex] Port 7000 is already in use." >&2
-  echo "[dev:codex] Auth0 callbacks are configured for http://localhost:7000, so stop the other server before starting this worktree." >&2
+  echo "[dev:codex] Port 7500 is already in use." >&2
+  echo "[dev:codex] Auth0 callbacks are configured for http://localhost:7500, so stop the other server before starting this worktree." >&2
   exit 1
 fi
 
@@ -50,4 +50,4 @@ if [[ -z "$database_url" ]]; then
   exit 1
 fi
 
-APP_BASE_URL="http://localhost:7000" DATABASE_URL="$database_url" SKIP_INITIAL_SYNC=1 pnpm dev
+APP_BASE_URL="http://localhost:7500" DATABASE_URL="$database_url" SKIP_INITIAL_SYNC=1 pnpm dev

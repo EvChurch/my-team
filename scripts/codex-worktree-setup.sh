@@ -8,7 +8,7 @@ Usage: scripts/codex-worktree-setup.sh [--sync|--no-sync] [--force-env] [--reset
 Bootstraps a Codex git worktree from the base non-Codex worktree:
   - copies service .env files from the base worktree
   - points this worktree at its own cloned database
-  - keeps Auth0 callback config pinned to http://localhost:7000
+  - keeps Auth0 callback config pinned to http://localhost:7500
   - installs pnpm dependencies
   - generates Prisma client and applies migrations
   - clones the base database when this worktree database is missing or empty
@@ -315,7 +315,7 @@ target_database_url="$(database_url_with "$source_database_url" "$target_databas
 for env_file in "${env_files[@]}"; do
   set_env_value "$env_file" DATABASE_URL "$target_database_url"
 done
-set_env_value "apps/web/.env" APP_BASE_URL "http://localhost:7000"
+set_env_value "apps/web/.env" APP_BASE_URL "http://localhost:7500"
 set_env_value "apps/worker/.env" SKIP_INITIAL_SYNC "1"
 
 require_pg_tools
