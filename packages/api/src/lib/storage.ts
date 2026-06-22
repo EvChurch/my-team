@@ -1,8 +1,9 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const DEFAULT_REGION = "auto";
 const SIGNED_UPLOAD_TTL_SECONDS = 60 * 5;
+const SIGNED_READ_TTL_SECONDS = 60 * 10;
 
 type StorageConfig = {
   endpoint: string;
@@ -77,11 +78,30 @@ export async function createPresignedGuideAssetUpload(input: {
 
   const publicUrl = config.publicUrl
     ? `${config.publicUrl.replace(/\/$/, "")}/${input.key}`
-    : `${config.endpoint.replace(/\/$/, "")}/${config.bucket}/${input.key}`;
+    : `${(process.env.APP_BASE_URL ?? "").replace(/\/$/, "")}/api/guide-assets/${input.key}`;
 
   return {
     key: input.key,
     uploadUrl,
     publicUrl,
   };
+}
+
+export async function createPresignedGuideAssetReadUrl(key: string) {
+  const config = readStorageConfig();
+
+  if (!config) {
+    throw new Error(
+      "S3 guide asset reads are not configured. Set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY.",
+    );
+  }
+
+  return getSignedUrl(
+    buildClient(config),
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    }),
+    { expiresIn: SIGNED_READ_TTL_SECONDS },
+  );
 }
