@@ -187,7 +187,19 @@
     "guideSaved": "Guide saved",
     "guideSaveFailed": "Failed to save guide",
     "guidePublished": "Guide published",
-    "guidePublishFailed": "Failed to publish guide"
+    "guidePublishFailed": "Failed to publish guide",
+    "unsupportedImageType": "Upload a PNG, JPG, WebP, or GIF image.",
+    "imageTooLarge": "Images must be 10 MB or smaller.",
+    "imageUploadFailed": "Failed to upload image",
+    "unsupportedFileType": "Upload a PDF, PNG, JPG, WebP, or GIF file.",
+    "fileTooLarge": "Files must be 25 MB or smaller.",
+    "fileUploadFailed": "Failed to upload file",
+    "googleDriveUrlPrompt": "Paste a Google Drive file URL",
+    "resourceTitlePrompt": "Resource title",
+    "invalidGoogleDriveUrl": "Paste a Google Drive or Google Docs URL.",
+    "addGoogleDriveFile": "Add Google Drive File",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "Add Resource"
   },
   "Review": {
     "title": "Review Goals",

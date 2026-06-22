@@ -187,7 +187,19 @@
     "guideSaved": "Ua sefe le taiala",
     "guideSaveFailed": "Sa le mafai ona sefe le taiala",
     "guidePublished": "Ua lomia le taiala",
-    "guidePublishFailed": "Sa le mafai ona lolomi le taiala"
+    "guidePublishFailed": "Sa le mafai ona lolomi le taiala",
+    "unsupportedImageType": "Tu'u i luga se ata PNG, JPG, WebP, po'o GIF.",
+    "imageTooLarge": "E tatau ona 10 MB pe itiiti ifo ata.",
+    "imageUploadFailed": "Sa le mafai ona tu'u i luga le ata",
+    "unsupportedFileType": "Tu'u i luga se faila PDF, PNG, JPG, WebP, po'o GIF.",
+    "fileTooLarge": "E tatau ona 25 MB pe itiiti ifo faila.",
+    "fileUploadFailed": "Sa le mafai ona tu'u i luga le faila",
+    "googleDriveUrlPrompt": "Faapipii le URL o le faila Google Drive",
+    "resourceTitlePrompt": "Ulutala o le punaoa",
+    "invalidGoogleDriveUrl": "Faapipii se Google Drive po'o Google Docs URL.",
+    "addGoogleDriveFile": "Faaopoopo Faila Google Drive",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "Faaopoopo Punaoa"
   },
   "Review": {
     "title": "Iloilo Sini",

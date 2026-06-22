@@ -187,7 +187,19 @@
     "guideSaved": "指南已保存",
     "guideSaveFailed": "保存指南失败",
     "guidePublished": "指南已发布",
-    "guidePublishFailed": "发布指南失败"
+    "guidePublishFailed": "发布指南失败",
+    "unsupportedImageType": "请上传 PNG、JPG、WebP 或 GIF 图片。",
+    "imageTooLarge": "图片大小必须不超过 10 MB。",
+    "imageUploadFailed": "图片上传失败",
+    "unsupportedFileType": "请上传 PDF、PNG、JPG、WebP 或 GIF 文件。",
+    "fileTooLarge": "文件大小必须不超过 25 MB。",
+    "fileUploadFailed": "文件上传失败",
+    "googleDriveUrlPrompt": "粘贴 Google Drive 文件网址",
+    "resourceTitlePrompt": "资源标题",
+    "invalidGoogleDriveUrl": "请粘贴 Google Drive 或 Google Docs 网址。",
+    "addGoogleDriveFile": "添加 Google Drive 文件",
+    "googleDriveUrlLabel": "Google Drive 网址",
+    "addResource": "添加资源"
   },
   "Review": {
     "title": "审核目标",

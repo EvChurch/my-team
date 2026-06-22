@@ -187,7 +187,19 @@
     "guideSaved": "गाइड सहेजी गई",
     "guideSaveFailed": "गाइड सहेजने में विफल",
     "guidePublished": "गाइड प्रकाशित हुई",
-    "guidePublishFailed": "गाइड प्रकाशित करने में विफल"
+    "guidePublishFailed": "गाइड प्रकाशित करने में विफल",
+    "unsupportedImageType": "PNG, JPG, WebP या GIF इमेज अपलोड करें।",
+    "imageTooLarge": "इमेज 10 MB या उससे छोटी होनी चाहिए।",
+    "imageUploadFailed": "इमेज अपलोड करने में विफल",
+    "unsupportedFileType": "PDF, PNG, JPG, WebP या GIF फ़ाइल अपलोड करें।",
+    "fileTooLarge": "फ़ाइलें 25 MB या उससे छोटी होनी चाहिए।",
+    "fileUploadFailed": "फ़ाइल अपलोड करने में विफल",
+    "googleDriveUrlPrompt": "Google Drive फ़ाइल URL पेस्ट करें",
+    "resourceTitlePrompt": "संसाधन शीर्षक",
+    "invalidGoogleDriveUrl": "Google Drive या Google Docs URL पेस्ट करें।",
+    "addGoogleDriveFile": "Google Drive फ़ाइल जोड़ें",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "संसाधन जोड़ें"
   },
   "Review": {
     "title": "लक्ष्य समीक्षा करें",

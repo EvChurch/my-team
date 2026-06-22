@@ -187,7 +187,19 @@
     "guideSaved": "Kua tiakina te aratohu",
     "guideSaveFailed": "I rahua te tiaki aratohu",
     "guidePublished": "Kua whakaputaina te aratohu",
-    "guidePublishFailed": "I rahua te whakaputa aratohu"
+    "guidePublishFailed": "I rahua te whakaputa aratohu",
+    "unsupportedImageType": "Tukuna mai he atahanga PNG, JPG, WebP, GIF rānei.",
+    "imageTooLarge": "Me 10 MB, iti iho rānei ngā atahanga.",
+    "imageUploadFailed": "I rahua te tuku atahanga",
+    "unsupportedFileType": "Tukuna mai he kōnae PDF, PNG, JPG, WebP, GIF rānei.",
+    "fileTooLarge": "Me 25 MB, iti iho rānei ngā kōnae.",
+    "fileUploadFailed": "I rahua te tuku kōnae",
+    "googleDriveUrlPrompt": "Whakapirihia he URL kōnae Google Drive",
+    "resourceTitlePrompt": "Taitara rauemi",
+    "invalidGoogleDriveUrl": "Whakapirihia he URL Google Drive, Google Docs rānei.",
+    "addGoogleDriveFile": "Tāpiri Kōnae Google Drive",
+    "googleDriveUrlLabel": "URL Google Drive",
+    "addResource": "Tāpiri Rauemi"
   },
   "Review": {
     "title": "Arotake Whāinga",

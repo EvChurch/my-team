@@ -187,7 +187,19 @@
     "guideSaved": "가이드가 저장되었습니다",
     "guideSaveFailed": "가이드 저장에 실패했습니다",
     "guidePublished": "가이드가 게시되었습니다",
-    "guidePublishFailed": "가이드 게시에 실패했습니다"
+    "guidePublishFailed": "가이드 게시에 실패했습니다",
+    "unsupportedImageType": "PNG, JPG, WebP 또는 GIF 이미지를 업로드하세요.",
+    "imageTooLarge": "이미지는 10MB 이하여야 합니다.",
+    "imageUploadFailed": "이미지 업로드에 실패했습니다",
+    "unsupportedFileType": "PDF, PNG, JPG, WebP 또는 GIF 파일을 업로드하세요.",
+    "fileTooLarge": "파일은 25MB 이하여야 합니다.",
+    "fileUploadFailed": "파일 업로드에 실패했습니다",
+    "googleDriveUrlPrompt": "Google Drive 파일 URL을 붙여넣으세요",
+    "resourceTitlePrompt": "리소스 제목",
+    "invalidGoogleDriveUrl": "Google Drive 또는 Google Docs URL을 붙여넣으세요.",
+    "addGoogleDriveFile": "Google Drive 파일 추가",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "리소스 추가"
   },
   "Review": {
     "title": "목표 검토",

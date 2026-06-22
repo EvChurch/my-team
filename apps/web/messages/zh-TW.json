@@ -187,7 +187,19 @@
     "guideSaved": "指南已儲存",
     "guideSaveFailed": "儲存指南失敗",
     "guidePublished": "指南已發佈",
-    "guidePublishFailed": "發佈指南失敗"
+    "guidePublishFailed": "發佈指南失敗",
+    "unsupportedImageType": "請上傳 PNG、JPG、WebP 或 GIF 圖片。",
+    "imageTooLarge": "圖片大小必須不超過 10 MB。",
+    "imageUploadFailed": "圖片上傳失敗",
+    "unsupportedFileType": "請上傳 PDF、PNG、JPG、WebP 或 GIF 檔案。",
+    "fileTooLarge": "檔案大小必須不超過 25 MB。",
+    "fileUploadFailed": "檔案上傳失敗",
+    "googleDriveUrlPrompt": "貼上 Google Drive 檔案網址",
+    "resourceTitlePrompt": "資源標題",
+    "invalidGoogleDriveUrl": "請貼上 Google Drive 或 Google Docs 網址。",
+    "addGoogleDriveFile": "新增 Google Drive 檔案",
+    "googleDriveUrlLabel": "Google Drive 網址",
+    "addResource": "新增資源"
   },
   "Review": {
     "title": "審核目標",

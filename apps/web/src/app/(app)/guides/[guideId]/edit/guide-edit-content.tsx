@@ -187,7 +187,11 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
           />
 
           {/* Editor */}
-          <GuideEditor content={guide.content} onChange={setContent} />
+          <GuideEditor
+            content={guide.content}
+            teamId={guide.teamId}
+            onChange={setContent}
+          />
         </div>
 
         {/* Desktop right panel */}

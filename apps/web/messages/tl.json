@@ -187,7 +187,19 @@
     "guideSaved": "Na-save ang guide",
     "guideSaveFailed": "Hindi na-save ang guide",
     "guidePublished": "Nai-publish ang guide",
-    "guidePublishFailed": "Hindi nai-publish ang guide"
+    "guidePublishFailed": "Hindi nai-publish ang guide",
+    "unsupportedImageType": "Mag-upload ng PNG, JPG, WebP, o GIF na image.",
+    "imageTooLarge": "Dapat 10 MB o mas maliit ang mga image.",
+    "imageUploadFailed": "Hindi na-upload ang image",
+    "unsupportedFileType": "Mag-upload ng PDF, PNG, JPG, WebP, o GIF na file.",
+    "fileTooLarge": "Dapat 25 MB o mas maliit ang mga file.",
+    "fileUploadFailed": "Hindi na-upload ang file",
+    "googleDriveUrlPrompt": "I-paste ang Google Drive file URL",
+    "resourceTitlePrompt": "Pamagat ng resource",
+    "invalidGoogleDriveUrl": "Mag-paste ng Google Drive o Google Docs URL.",
+    "addGoogleDriveFile": "Magdagdag ng Google Drive File",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "Magdagdag ng Resource"
   },
   "Review": {
     "title": "Suriin ang mga Layunin",

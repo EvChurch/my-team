@@ -151,7 +151,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
           />
 
           {/* Editor */}
-          <GuideEditor content={null} onChange={setContent} />
+          <GuideEditor content={null} teamId={teamId} onChange={setContent} />
         </div>
 
         {/* Desktop right panel */}

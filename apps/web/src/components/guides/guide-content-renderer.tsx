@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { renderToHTMLString } from "@tiptap/static-renderer/pm/html-string";
+import { ResourceCard } from "./resource-card-extension";
 
 type GuideContentRendererProps = {
   content: unknown;
@@ -26,6 +27,7 @@ export function GuideContentRenderer({ content }: GuideContentRendererProps) {
             heading: { levels: [1, 2, 3] },
           }),
           Image,
+          ResourceCard,
         ],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: content as any,

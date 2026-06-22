@@ -187,7 +187,19 @@
     "guideSaved": "ガイドが保存されました",
     "guideSaveFailed": "ガイドの保存に失敗しました",
     "guidePublished": "ガイドが公開されました",
-    "guidePublishFailed": "ガイドの公開に失敗しました"
+    "guidePublishFailed": "ガイドの公開に失敗しました",
+    "unsupportedImageType": "PNG、JPG、WebP、GIF 画像をアップロードしてください。",
+    "imageTooLarge": "画像は 10 MB 以下にしてください。",
+    "imageUploadFailed": "画像のアップロードに失敗しました",
+    "unsupportedFileType": "PDF、PNG、JPG、WebP、GIF ファイルをアップロードしてください。",
+    "fileTooLarge": "ファイルは 25 MB 以下にしてください。",
+    "fileUploadFailed": "ファイルのアップロードに失敗しました",
+    "googleDriveUrlPrompt": "Google Drive ファイルの URL を貼り付けてください",
+    "resourceTitlePrompt": "リソースのタイトル",
+    "invalidGoogleDriveUrl": "Google Drive または Google Docs の URL を貼り付けてください。",
+    "addGoogleDriveFile": "Google Drive ファイルを追加",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "リソースを追加"
   },
   "Review": {
     "title": "目標を確認",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import {
   Bold,
@@ -11,13 +12,29 @@ import {
   ListOrdered,
   Link as LinkIcon,
   ImageIcon,
+  Loader2,
+  Paperclip,
+  HardDrive,
 } from "lucide-react";
 
 type EditorToolbarProps = {
   editor: Editor;
+  isUploadingAsset?: boolean;
+  onUploadImage?: (file: File) => void | Promise<void>;
+  onUploadFile?: (file: File) => void | Promise<void>;
+  onAddDriveFile?: () => void;
 };
 
-export function EditorToolbar({ editor }: EditorToolbarProps) {
+export function EditorToolbar({
+  editor,
+  isUploadingAsset = false,
+  onUploadImage,
+  onUploadFile,
+  onAddDriveFile,
+}: EditorToolbarProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const addLink = () => {
     const url = window.prompt("Enter URL");
     if (url) {
@@ -26,6 +43,11 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   };
 
   const addImage = () => {
+    if (onUploadImage) {
+      imageInputRef.current?.click();
+      return;
+    }
+
     const url = window.prompt("Enter image URL");
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
@@ -107,9 +129,58 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <ToolbarButton
         onClick={addImage}
         isActive={false}
+        disabled={isUploadingAsset}
         title="Add Image"
       >
-        <ImageIcon className="w-4 h-4" />
+        {isUploadingAsset ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <ImageIcon className="w-4 h-4" />
+        )}
+      </ToolbarButton>
+      {onUploadImage && (
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void onUploadImage(file);
+          }}
+        />
+      )}
+
+      <ToolbarButton
+        onClick={() => fileInputRef.current?.click()}
+        isActive={false}
+        disabled={isUploadingAsset || !onUploadFile}
+        title="Upload File"
+      >
+        <Paperclip className="w-4 h-4" />
+      </ToolbarButton>
+      {onUploadFile && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf,image/png,image/jpeg,image/webp,image/gif"
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void onUploadFile(file);
+          }}
+        />
+      )}
+
+      <ToolbarButton
+        onClick={() => onAddDriveFile?.()}
+        isActive={false}
+        disabled={!onAddDriveFile}
+        title="Add Google Drive File"
+      >
+        <HardDrive className="w-4 h-4" />
       </ToolbarButton>
     </div>
   );
@@ -120,22 +191,25 @@ function ToolbarButton({
   isActive,
   title,
   children,
+  disabled = false,
 }: {
   onClick: () => void;
   isActive: boolean;
   title: string;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={title}
+      disabled={disabled}
       className={`p-1.5 rounded-md transition-colors ${
         isActive
           ? "bg-accent-light text-accent"
           : "text-text-secondary hover:bg-bg-muted hover:text-text-primary"
-      }`}
+      } disabled:opacity-50 disabled:pointer-events-none`}
     >
       {children}
     </button>

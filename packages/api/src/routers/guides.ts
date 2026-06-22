@@ -1,12 +1,47 @@
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
 import { prisma } from "../db";
 import {
   getProfileDisplayMap,
   profileDisplaySelect,
 } from "../lib/display-identity";
+import { createPresignedGuideAssetUpload } from "../lib/storage";
 
 const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
+const imageContentTypeEnum = z.enum([
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const guideAssetContentTypeEnum = z.enum([
+  "application/pdf",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const maxGuideImageBytes = 10 * 1024 * 1024;
+const maxGuideFileBytes = 25 * 1024 * 1024;
+
+function extensionForContentType(
+  contentType: z.infer<typeof guideAssetContentTypeEnum>,
+) {
+  switch (contentType) {
+    case "application/pdf":
+      return "pdf";
+    case "image/gif":
+      return "gif";
+    case "image/jpeg":
+      return "jpg";
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+  }
+}
 
 export const guidesRouter = createTRPCRouter({
   /**
@@ -187,6 +222,41 @@ export const guidesRouter = createTRPCRouter({
           isVisibleToTeam: input.isVisibleToTeam,
         },
       });
+    }),
+
+  /**
+   * Create a short-lived S3-compatible upload URL for a guide image.
+   */
+  createAssetUpload: leaderProcedure
+    .input(
+      z.object({
+        fileName: z.string().min(1).max(255),
+        contentType: guideAssetContentTypeEnum,
+        contentLength: z.number().int().positive().max(maxGuideFileBytes),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const extension = extensionForContentType(input.contentType);
+      const assetType = imageContentTypeEnum.safeParse(input.contentType).success
+        ? "images"
+        : "files";
+      const key = `guides/${input.teamId}/${assetType}/${randomUUID()}.${extension}`;
+
+      try {
+        return await createPresignedGuideAssetUpload({
+          key,
+          contentType: input.contentType,
+          contentLength: input.contentLength,
+        });
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to create image upload URL.",
+        });
+      }
     }),
 
   /**

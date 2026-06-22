@@ -24,7 +24,7 @@ function getUrl() {
   const base = (() => {
     if (typeof window !== "undefined") return "";
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-    return "http://localhost:3000";
+    return process.env.APP_BASE_URL ?? "http://localhost:7500";
   })();
   return `${base}/api/trpc`;
 }

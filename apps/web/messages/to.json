@@ -187,7 +187,19 @@
     "guideSaved": "Kuo seivi e tataki",
     "guideSaveFailed": "Naʻe ʻikai lava ke seivi e tataki",
     "guidePublished": "Kuo pulusi e tataki",
-    "guidePublishFailed": "Naʻe ʻikai lava ke pulusi e tataki"
+    "guidePublishFailed": "Naʻe ʻikai lava ke pulusi e tataki",
+    "unsupportedImageType": "ʻAve hake ha fakatātā PNG, JPG, WebP, pe GIF.",
+    "imageTooLarge": "Kuo pau ke 10 MB pe siʻi ange ʻa e ngaahi fakatātā.",
+    "imageUploadFailed": "Naʻe ʻikai lava ke ʻave hake ʻa e fakatātā",
+    "unsupportedFileType": "ʻAve hake ha faile PDF, PNG, JPG, WebP, pe GIF.",
+    "fileTooLarge": "Kuo pau ke 25 MB pe siʻi ange ʻa e ngaahi faile.",
+    "fileUploadFailed": "Naʻe ʻikai lava ke ʻave hake ʻa e faile",
+    "googleDriveUrlPrompt": "Fakapipiki ha URL faile Google Drive",
+    "resourceTitlePrompt": "Hingoa ʻo e maʻuʻanga tokoni",
+    "invalidGoogleDriveUrl": "Fakapipiki ha Google Drive pe Google Docs URL.",
+    "addGoogleDriveFile": "Tānaki Faile Google Drive",
+    "googleDriveUrlLabel": "Google Drive URL",
+    "addResource": "Tānaki Maʻuʻanga Tokoni"
   },
   "Review": {
     "title": "Vakai Taumuʻa",

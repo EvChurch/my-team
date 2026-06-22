@@ -4,14 +4,17 @@
   "scripts": {
     "setup:codex": "scripts/codex-worktree-setup.sh",
     "dev:codex": "scripts/codex-dev.sh",
+    "dev:s3": "mkdir -p .local/s3 && s3rver -d .local/s3 -a 127.0.0.1 -p 4568 --no-vhost-buckets --allow-mismatched-signatures --configure-bucket my-team-local scripts/local-s3-cors.xml",
     "cleanup:codex": "scripts/codex-worktree-cleanup.sh",
     "sync:all": "env -u DATABASE_URL pnpm --filter worker sync:once",
-    "dev": "turbo dev",
+    "dev": "scripts/dev-local.sh",
+    "dev:app": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check"
   },
   "devDependencies": {
+    "s3rver": "3.7.1",
     "turbo": "^2.4"
   },
   "packageManager": "pnpm@10.32.1"
