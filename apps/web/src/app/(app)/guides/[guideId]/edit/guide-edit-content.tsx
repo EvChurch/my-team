@@ -179,8 +179,18 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         onChange={setContent}
       />
 
-      <div className="fixed bottom-4 left-4 right-4 z-[60] rounded-[36px] border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card-strong)] backdrop-blur md:hidden">
-        {editActions}
+      <div className="fixed bottom-4 left-4 right-4 z-[60] md:hidden">
+        <div
+          className="relative flex h-[62px] items-center rounded-[36px] border border-border px-4 shadow-[var(--shadow-card-strong)]"
+          style={{
+            backgroundColor:
+              "color-mix(in srgb, var(--bg-card) 35%, transparent)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+          }}
+        >
+          <div className="w-full">{editActions}</div>
+        </div>
       </div>
 
       <div className="hidden rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)] md:block">
