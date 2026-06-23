@@ -592,21 +592,23 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             >
               <button
                 type="button"
-                aria-label={tCommon("edit")}
-                title={tCommon("edit")}
+                aria-label={
+                  isArrangingGuides ? t("doneEditingGuides") : tCommon("edit")
+                }
+                title={
+                  isArrangingGuides ? t("doneEditingGuides") : tCommon("edit")
+                }
                 aria-pressed={isArrangingGuides}
                 onClick={() => setIsArrangingGuides((arranging) => !arranging)}
                 className={`inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30 ${
                   isArrangingGuides ? "bg-accent-light/30" : ""
                 }`}
               >
-                <span
-                  className={`transition-transform duration-200 ${
-                    isArrangingGuides ? "rotate-0 scale-100" : "-rotate-12 scale-95"
-                  }`}
-                >
+                {isArrangingGuides ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
                   <Pencil className="h-3.5 w-3.5" />
-                </span>
+                )}
               </button>
             </LeaderBar>
           )}
