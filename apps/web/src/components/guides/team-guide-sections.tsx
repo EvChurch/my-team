@@ -623,7 +623,7 @@ function SortableGuideRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex min-h-[64px] items-stretch rounded-xl border border-transparent transition-[background-color,border-color,box-shadow] hover:border-border hover:bg-bg-muted/30 hover:shadow-md ${
+      className={`flex min-h-[64px] items-stretch rounded-xl border border-transparent px-3 transition-[background-color,border-color,box-shadow] hover:border-border hover:bg-bg-muted/30 hover:shadow-md ${
         isDragging ? "relative z-20 opacity-40" : ""
       }`}
     >
@@ -646,7 +646,7 @@ function SortableGuideRow({
       </span>
       <Link
         href={href}
-        className="flex min-w-0 flex-1 items-center px-3 py-3"
+        className="flex min-w-0 flex-1 items-center py-3"
       >
         <GuideRowContent guide={guide} />
       </Link>
