@@ -7,9 +7,6 @@ import {
   getProfileDisplayMap,
   profileDisplaySelect,
 } from "../lib/display-identity";
-import {
-  ensureDefaultGuideSections,
-} from "../lib/guide-sections";
 import { createPresignedGuideAssetUpload } from "../lib/storage";
 
 const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
@@ -213,13 +210,6 @@ export const guidesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existingGuideCount = await prisma.guide.count({
-        where: { teamId: input.teamId },
-      });
-      if (existingGuideCount === 0) {
-        await ensureDefaultGuideSections(prisma, input.teamId);
-      }
-
       return prisma.$transaction(async (tx) => {
         await tx.guide.updateMany({
           where: { teamId: input.teamId, sectionId: null },
