@@ -135,14 +135,12 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   );
 
   return (
-    <div className="space-y-5 pt-28 md:pt-0">
+    <div className="space-y-5 pb-40 md:pb-0">
       <MobileCompactGuideHeader
         backHref={guideHref}
         backLabel={t("backToGuide")}
         title={title.trim() || t("guideTitlePlaceholder")}
         sentinelRef={headerSentinelRef}
-        actions={editActions}
-        alwaysVisible
       />
 
       <div ref={headerSentinelRef}>
@@ -180,6 +178,10 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         teamId={guide.teamId}
         onChange={setContent}
       />
+
+      <div className="fixed bottom-[calc(1rem+62px+0.75rem)] left-4 right-4 z-40 rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card-strong)] backdrop-blur md:hidden">
+        {editActions}
+      </div>
 
       <div className="hidden rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)] md:block">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
