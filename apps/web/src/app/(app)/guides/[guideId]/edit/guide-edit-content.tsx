@@ -6,7 +6,7 @@ import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Trash2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GuideEditor } from "@/components/guides/guide-editor";
@@ -106,32 +106,36 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
   const isSaving = updateMutation.isPending || publishMutation.isPending;
   const positions = team.positions ?? [];
-  const editActions = (
-    <div className="flex items-center justify-between gap-3">
-      <Button
+  const mobileActionLabelClass = "text-[10px] font-semibold uppercase tracking-[0.5px]";
+  const mobileEditActions = (
+    <>
+      <button
         type="button"
-        variant="danger"
-        className="h-9 px-3 py-0"
+        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] text-error transition-colors hover:bg-error/10"
         onClick={() => setShowDeleteConfirm(true)}
       >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-      <div className="flex items-center gap-2">
-        <Link href={guideHref}>
-          <Button type="button" variant="secondary" className="h-9 px-3 py-0">
-            {tCommon("cancel")}
-          </Button>
-        </Link>
-        <Button
-          type="button"
-          className="h-9 px-3 py-0"
-          onClick={handleSave}
-          disabled={isSaving || !title.trim()}
-        >
+        <Trash2 className="h-5 w-5" />
+        <span className={mobileActionLabelClass}>{tCommon("delete")}</span>
+      </button>
+      <Link
+        href={guideHref}
+        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] text-text-tab-inactive transition-colors hover:bg-bg-muted hover:text-text-primary"
+      >
+        <X className="h-5 w-5" />
+        <span className={mobileActionLabelClass}>{tCommon("cancel")}</span>
+      </Link>
+      <button
+        type="button"
+        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] bg-accent text-text-on-accent transition-colors hover:bg-accent-dark disabled:pointer-events-none disabled:opacity-50"
+        onClick={handleSave}
+        disabled={isSaving || !title.trim()}
+      >
+        <Check className="h-5 w-5" />
+        <span className={mobileActionLabelClass}>
           {isSaving ? t("saving") : tCommon("save")}
-        </Button>
-      </div>
-    </div>
+        </span>
+      </button>
+    </>
   );
 
   return (
@@ -181,7 +185,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
       <div className="fixed bottom-4 left-4 right-4 z-[60] md:hidden">
         <div
-          className="relative flex h-[62px] items-center rounded-[36px] border border-border px-4 shadow-[var(--shadow-card-strong)]"
+          className="relative flex h-[62px] items-center justify-around rounded-[36px] border border-border px-1 shadow-[var(--shadow-card-strong)]"
           style={{
             backgroundColor:
               "color-mix(in srgb, var(--bg-card) 35%, transparent)",
@@ -189,7 +193,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
             WebkitBackdropFilter: "blur(24px)",
           }}
         >
-          <div className="w-full">{editActions}</div>
+          {mobileEditActions}
         </div>
       </div>
 
