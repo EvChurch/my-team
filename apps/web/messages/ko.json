@@ -86,6 +86,8 @@
     "declined": "거절됨",
     "reviewGoals": "목표 검토",
     "newGuide": "새 가이드",
+    "lockGuideSections": "잠그기",
+    "unlockGuideSections": "잠금 해제",
     "addGuideSection": "섹션 추가",
     "untitledSection": "제목 없음",
     "sectionNamePlaceholder": "섹션 이름",

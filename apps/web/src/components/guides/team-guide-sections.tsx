@@ -27,6 +27,8 @@ import Link from "next/link";
 import {
   ClipboardCheck,
   GripVertical,
+  Lock,
+  LockOpen,
   Plus,
   Rocket,
   Trash2,
@@ -213,6 +215,7 @@ export function TeamGuideSections({
   const t = useTranslations("Teams");
   const [activeGuideId, setActiveGuideId] = useState<string | null>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [isArranging, setIsArranging] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [localGuides, setLocalGuides] = useState<TeamGuide[] | null>(null);
@@ -221,6 +224,7 @@ export function TeamGuideSections({
   );
   const displayedGuides = localGuides ?? guides;
   const displayedSections = localSections ?? sections;
+  const canArrange = isLeader && isArranging;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
@@ -322,6 +326,7 @@ export function TeamGuideSections({
   }
 
   function handleDragStart(event: DragStartEvent) {
+    if (!canArrange) return;
     const activeId = String(event.active.id);
     const sectionId = sectionIdFromSortableId(activeId);
 
@@ -334,6 +339,7 @@ export function TeamGuideSections({
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (!canArrange) return;
     const activeId = String(event.active.id);
     const overId = event.over?.id ? String(event.over.id) : null;
     const activeItem = listItems.find((item) => item.id === activeId);
@@ -370,6 +376,28 @@ export function TeamGuideSections({
 
   const content = (
     <div className="space-y-3">
+      {isLeader && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setIsArranging((arranging) => !arranging);
+              setEditingSectionId(null);
+              setEditingTitle("");
+            }}
+            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-bg-card px-3 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg-muted/40 hover:text-text-primary"
+            aria-pressed={isArranging}
+          >
+            {isArranging ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <LockOpen className="h-4 w-4" />
+            )}
+            {isArranging ? t("lockGuideSections") : t("unlockGuideSections")}
+          </button>
+        </div>
+      )}
+
       <SortableContext
         items={listItems.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
@@ -381,10 +409,10 @@ export function TeamGuideSections({
                 <SortableSectionDivider
                   key={item.id}
                   section={item.section}
-                  isLeader={isLeader}
                   editingSectionId={editingSectionId}
                   editingTitle={editingTitle}
                   setEditingTitle={setEditingTitle}
+                  canArrange={canArrange}
                   onStartRename={startRename}
                   onCancelRename={() => {
                     setEditingSectionId(null);
@@ -398,7 +426,7 @@ export function TeamGuideSections({
                   key={item.id}
                   guide={item.guide}
                   href={`/teams/${teamId}/guides/${item.guide.id}`}
-                  isLeader={isLeader}
+                  canArrange={canArrange}
                 />
               ),
             )
@@ -412,7 +440,7 @@ export function TeamGuideSections({
         </div>
       </SortableContext>
 
-      {isLeader && (
+      {canArrange && (
         <div className="pt-1">
           <button
             type="button"
@@ -457,7 +485,7 @@ export function TeamGuideSections({
 
 function SortableSectionDivider({
   section,
-  isLeader,
+  canArrange,
   editingSectionId,
   editingTitle,
   setEditingTitle,
@@ -467,7 +495,7 @@ function SortableSectionDivider({
   onDeleteSection,
 }: {
   section: GuideSection;
-  isLeader: boolean;
+  canArrange: boolean;
   editingSectionId: string | null;
   editingTitle: string;
   setEditingTitle: (title: string) => void;
@@ -487,7 +515,7 @@ function SortableSectionDivider({
   } = useSortable({
     id: sectionSortableId(section.id),
     data: { type: "section", sectionId: section.id },
-    disabled: !isLeader,
+    disabled: !canArrange,
   });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -502,7 +530,7 @@ function SortableSectionDivider({
         isDragging ? "relative z-20 opacity-40" : ""
       }`}
     >
-      {isLeader ? (
+      {canArrange && (
         <button
           type="button"
           aria-label={section.title}
@@ -512,8 +540,6 @@ function SortableSectionDivider({
         >
           <GripVertical className="h-4 w-4" />
         </button>
-      ) : (
-        <GripVertical className="h-4 w-4 shrink-0 text-text-tertiary" />
       )}
       {editingSectionId === section.id ? (
         <input
@@ -534,7 +560,7 @@ function SortableSectionDivider({
           className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm font-semibold text-text-primary shadow-none outline-none ring-0 focus:border-0 focus:bg-transparent focus:outline-none focus:ring-0"
           autoFocus
         />
-      ) : isLeader ? (
+      ) : canArrange ? (
         <button
           type="button"
           className="min-w-0 flex-1 cursor-text truncate bg-transparent p-0 text-left text-sm font-semibold text-text-primary outline-none ring-0 focus:outline-none focus:ring-0"
@@ -547,7 +573,7 @@ function SortableSectionDivider({
           {section.title}
         </h3>
       )}
-      {isLeader && (
+      {canArrange && (
         <div className="flex shrink-0 items-center gap-1">
           <IconButton
             label={t("deleteSection")}
@@ -575,11 +601,11 @@ function SectionTitle({ title }: { title: string }) {
 function SortableGuideRow({
   guide,
   href,
-  isLeader,
+  canArrange,
 }: {
   guide: TeamGuide;
   href: string;
-  isLeader: boolean;
+  canArrange: boolean;
 }) {
   const {
     attributes,
@@ -591,14 +617,14 @@ function SortableGuideRow({
   } = useSortable({
     id: guideSortableId(guide.id),
     data: { type: "guide", sectionId: guideSectionId(guide) },
-    disabled: !isLeader,
+    disabled: !canArrange,
   });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  if (!isLeader) {
+  if (!canArrange) {
     return (
       <Link
         href={href}

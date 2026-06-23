@@ -86,6 +86,8 @@
     "declined": "अस्वीकृत",
     "reviewGoals": "लक्ष्य समीक्षा करें",
     "newGuide": "नई गाइड",
+    "lockGuideSections": "लॉक करें",
+    "unlockGuideSections": "अनलॉक करें",
     "addGuideSection": "सेक्शन जोड़ें",
     "untitledSection": "अनाम",
     "sectionNamePlaceholder": "सेक्शन का नाम",

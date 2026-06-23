@@ -86,6 +86,8 @@
     "declined": "Tinanggihan",
     "reviewGoals": "Suriin ang mga Layunin",
     "newGuide": "Bagong Guide",
+    "lockGuideSections": "I-lock",
+    "unlockGuideSections": "I-unlock",
     "addGuideSection": "Magdagdag ng seksyon",
     "untitledSection": "Walang pamagat",
     "sectionNamePlaceholder": "Pangalan ng seksyon",
