@@ -628,10 +628,10 @@ function SortableGuideRow({
       }`}
     >
       <span
-        className={`inline-flex h-8 shrink-0 overflow-hidden transition-all duration-200 ${
+        className={`my-3 inline-flex h-8 shrink-0 overflow-hidden transition-[width,opacity,transform] duration-200 ${
           canArrange
-            ? "m-3 w-8 scale-100 opacity-100"
-            : "my-3 ml-0 mr-0 w-0 scale-90 opacity-0"
+            ? "mr-2 w-8 scale-100 opacity-100"
+            : "mr-0 w-0 scale-95 opacity-0"
         }`}
       >
         <button
@@ -646,9 +646,7 @@ function SortableGuideRow({
       </span>
       <Link
         href={href}
-        className={`flex min-w-0 flex-1 items-center py-3 ${
-          canArrange ? "pr-3" : "px-3"
-        }`}
+        className="flex min-w-0 flex-1 items-center px-3 py-3"
       >
         <GuideRowContent guide={guide} />
       </Link>
