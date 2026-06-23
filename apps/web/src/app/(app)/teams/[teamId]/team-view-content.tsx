@@ -17,6 +17,8 @@ import {
   MessageSquare,
   MessageSquarePlus,
   BookPlus,
+  Lock,
+  LockOpen,
   Mail,
   Phone,
 } from "lucide-react";
@@ -356,6 +358,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       ? "serving"
       : "members";
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
+  const [isArrangingGuides, setIsArrangingGuides] = useState(false);
   const selectedTab = allTabs.some((tab) => tab.value === activeTab)
     ? activeTab
     : (allTabs[0]?.value ?? "members");
@@ -585,7 +588,30 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               href={`/teams/${teamId}/guides/new`}
               icon={BookPlus}
               label={t("newGuide")}
-            />
+            >
+              <button
+                type="button"
+                aria-label={
+                  isArrangingGuides
+                    ? t("lockGuideSections")
+                    : t("unlockGuideSections")
+                }
+                title={
+                  isArrangingGuides
+                    ? t("lockGuideSections")
+                    : t("unlockGuideSections")
+                }
+                aria-pressed={isArrangingGuides}
+                onClick={() => setIsArrangingGuides((arranging) => !arranging)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30"
+              >
+                {isArrangingGuides ? (
+                  <Lock className="h-3.5 w-3.5" />
+                ) : (
+                  <LockOpen className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </LeaderBar>
           )}
           {team.guides.length > 0 && (
             <TeamGuideSections
@@ -593,6 +619,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               guides={team.guides}
               sections={team.guideSections}
               isLeader={team.isCurrentUserLeader}
+              isArranging={isArrangingGuides}
             />
           )}
           {team.guides.length === 0 && (

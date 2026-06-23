@@ -27,8 +27,6 @@ import Link from "next/link";
 import {
   ClipboardCheck,
   GripVertical,
-  Lock,
-  LockOpen,
   Plus,
   Rocket,
   Trash2,
@@ -56,6 +54,7 @@ type TeamGuideSectionsProps = {
   guides: TeamGuide[];
   sections: GuideSection[];
   isLeader: boolean;
+  isArranging: boolean;
 };
 
 const sectionSortablePrefix = "section:";
@@ -208,6 +207,7 @@ export function TeamGuideSections({
   guides,
   sections,
   isLeader,
+  isArranging,
 }: TeamGuideSectionsProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -215,7 +215,6 @@ export function TeamGuideSections({
   const t = useTranslations("Teams");
   const [activeGuideId, setActiveGuideId] = useState<string | null>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [isArranging, setIsArranging] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [localGuides, setLocalGuides] = useState<TeamGuide[] | null>(null);
@@ -376,28 +375,6 @@ export function TeamGuideSections({
 
   const content = (
     <div className="space-y-3">
-      {isLeader && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => {
-              setIsArranging((arranging) => !arranging);
-              setEditingSectionId(null);
-              setEditingTitle("");
-            }}
-            className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-bg-card px-3 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg-muted/40 hover:text-text-primary"
-            aria-pressed={isArranging}
-          >
-            {isArranging ? (
-              <Lock className="h-4 w-4" />
-            ) : (
-              <LockOpen className="h-4 w-4" />
-            )}
-            {isArranging ? t("lockGuideSections") : t("unlockGuideSections")}
-          </button>
-        </div>
-      )}
-
       <SortableContext
         items={listItems.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
@@ -541,7 +518,7 @@ function SortableSectionDivider({
           <GripVertical className="h-4 w-4" />
         </button>
       )}
-      {editingSectionId === section.id ? (
+      {canArrange && editingSectionId === section.id ? (
         <input
           value={editingTitle}
           onChange={(event) => setEditingTitle(event.target.value)}
