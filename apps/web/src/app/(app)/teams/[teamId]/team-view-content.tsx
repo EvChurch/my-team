@@ -17,9 +17,8 @@ import {
   MessageSquare,
   MessageSquarePlus,
   BookPlus,
-  Lock,
-  LockOpen,
   Mail,
+  Pencil,
   Phone,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -290,6 +289,7 @@ function TeamScheduleMatrix({
 export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const trpc = useTRPC();
   const t = useTranslations("Teams");
+  const tCommon = useTranslations("Common");
   const tz = useTimezone();
   const searchParams = useSearchParams();
   const { data: team } = useSuspenseQuery(
@@ -592,30 +592,20 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             >
               <button
                 type="button"
-                aria-label={
-                  isArrangingGuides
-                    ? t("lockGuideSections")
-                    : t("unlockGuideSections")
-                }
-                title={
-                  isArrangingGuides
-                    ? t("lockGuideSections")
-                    : t("unlockGuideSections")
-                }
+                aria-label={tCommon("edit")}
+                title={tCommon("edit")}
                 aria-pressed={isArrangingGuides}
                 onClick={() => setIsArrangingGuides((arranging) => !arranging)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30"
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30 ${
+                  isArrangingGuides ? "bg-accent-light/30" : ""
+                }`}
               >
                 <span
                   className={`transition-transform duration-200 ${
                     isArrangingGuides ? "rotate-0 scale-100" : "-rotate-12 scale-95"
                   }`}
                 >
-                  {isArrangingGuides ? (
-                    <Lock className="h-3.5 w-3.5" />
-                  ) : (
-                    <LockOpen className="h-3.5 w-3.5" />
-                  )}
+                  <Pencil className="h-3.5 w-3.5" />
                 </span>
               </button>
             </LeaderBar>
