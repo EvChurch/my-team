@@ -179,7 +179,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         onChange={setContent}
       />
 
-      <div className="fixed bottom-[calc(1rem+62px+0.75rem)] left-4 right-4 z-40 rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card-strong)] backdrop-blur md:hidden">
+      <div className="fixed bottom-4 left-4 right-4 z-[60] rounded-[36px] border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card-strong)] backdrop-blur md:hidden">
         {editActions}
       </div>
 
