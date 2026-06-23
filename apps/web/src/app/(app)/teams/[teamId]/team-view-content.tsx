@@ -588,6 +588,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               href={`/teams/${teamId}/guides/new`}
               icon={BookPlus}
               label={t("newGuide")}
+              actionVisible={isArrangingGuides}
             >
               <button
                 type="button"

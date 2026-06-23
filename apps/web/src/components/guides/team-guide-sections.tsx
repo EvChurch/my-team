@@ -509,15 +509,17 @@ function SortableSectionDivider({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex min-h-[44px] items-center gap-2 border-b border-border/70 px-3 py-1.5 transition-colors hover:bg-bg-muted/30 ${
+      className={`flex min-h-[44px] items-center border-b border-border/70 px-3 py-1.5 transition-colors hover:bg-bg-muted/30 ${
+        canArrange ? "gap-2" : "gap-0"
+      } ${
         isDragging ? "relative z-20 opacity-40" : ""
       }`}
     >
       <span
-        className={`inline-flex h-8 w-8 shrink-0 transition-[opacity,transform] duration-200 ${
+        className={`inline-flex h-8 shrink-0 overflow-hidden transition-all duration-200 ${
           canArrange
-            ? "scale-100 opacity-100"
-            : "pointer-events-none scale-90 opacity-0"
+            ? "w-8 scale-100 opacity-100"
+            : "pointer-events-none w-0 scale-90 opacity-0"
         }`}
       >
         <button
@@ -563,18 +565,18 @@ function SortableSectionDivider({
         </h3>
       )}
       <div
-        className={`flex shrink-0 items-center gap-1 transition-[opacity,transform] duration-200 ${
+        className={`flex shrink-0 items-center gap-1 overflow-hidden transition-all duration-200 ${
           canArrange
-            ? "scale-100 opacity-100"
-            : "pointer-events-none scale-90 opacity-0"
+            ? "w-8 scale-100 opacity-100"
+            : "pointer-events-none w-0 scale-90 opacity-0"
         }`}
       >
-          <IconButton
-            label={t("deleteSection")}
-            onClick={() => onDeleteSection(section)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </IconButton>
+        <IconButton
+          label={t("deleteSection")}
+          onClick={() => onDeleteSection(section)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </IconButton>
       </div>
     </div>
   );
@@ -626,10 +628,10 @@ function SortableGuideRow({
       }`}
     >
       <span
-        className={`m-3 inline-flex h-8 w-8 shrink-0 transition-[opacity,transform] duration-200 ${
+        className={`inline-flex h-8 shrink-0 overflow-hidden transition-all duration-200 ${
           canArrange
-            ? "scale-100 opacity-100"
-            : "pointer-events-none scale-90 opacity-0"
+            ? "m-3 w-8 scale-100 opacity-100"
+            : "my-3 ml-0 mr-0 w-0 scale-90 opacity-0"
         }`}
       >
         <button
@@ -642,7 +644,12 @@ function SortableGuideRow({
           <GripVertical className="h-4 w-4" />
         </button>
       </span>
-      <Link href={href} className="flex min-w-0 flex-1 items-center py-3 pr-3">
+      <Link
+        href={href}
+        className={`flex min-w-0 flex-1 items-center py-3 ${
+          canArrange ? "pr-3" : "px-3"
+        }`}
+      >
         <GuideRowContent guide={guide} />
       </Link>
     </div>
