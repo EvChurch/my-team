@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import {
   type GuideCategory,
 } from "@/components/guides/guide-category-select";
 import { GuideRoleSelect } from "@/components/guides/guide-role-select";
+import { MobileCompactGuideHeader } from "@/components/guides/mobile-compact-guide-header";
 import { useToast } from "@/components/ui/toast";
 
 type GuideCreateContentProps = {
@@ -27,6 +28,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
   const { toast } = useToast();
   const t = useTranslations("Guides");
   const tCommon = useTranslations("Common");
+  const headerSentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
@@ -68,15 +70,23 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
   };
 
   const isSaving = createMutation.isPending || isRedirecting;
+  const teamGuidesHref = `/teams/${teamId}?tab=guides`;
 
   // Get positions for role selector
   const positions = team.positions ?? [];
 
   return (
     <div className="space-y-5">
-      <div>
+      <MobileCompactGuideHeader
+        backHref={teamGuidesHref}
+        backLabel={team.name}
+        title={title.trim() || t("newGuide")}
+        sentinelRef={headerSentinelRef}
+      />
+
+      <div ref={headerSentinelRef}>
         <Link
-          href={`/teams/${teamId}?tab=guides`}
+          href={teamGuidesHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -106,7 +116,7 @@ export function GuideCreateContent({ teamId }: GuideCreateContentProps) {
 
       <div className="rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-end gap-2">
-          <Link href={`/teams/${teamId}?tab=guides`}>
+          <Link href={teamGuidesHref}>
             <Button type="button" variant="secondary">
               {tCommon("cancel")}
             </Button>

@@ -7,6 +7,9 @@ import {
   getProfileDisplayMap,
   profileDisplaySelect,
 } from "../lib/display-identity";
+import {
+  ensureDefaultGuideSections,
+} from "../lib/guide-sections";
 import { createPresignedGuideAssetUpload } from "../lib/storage";
 
 const guideCategoryEnum = z.enum(["QUICK_START", "TROUBLESHOOTING", "SOP"]);
@@ -210,17 +213,33 @@ export const guidesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return prisma.guide.create({
-        data: {
-          title: input.title,
-          content: input.content,
-          category: input.category,
-          status: "PUBLISHED",
-          authorId: ctx.profileId,
-          teamId: input.teamId,
-          roleId: input.roleId,
-          isVisibleToTeam: input.isVisibleToTeam,
-        },
+      const existingGuideCount = await prisma.guide.count({
+        where: { teamId: input.teamId },
+      });
+      if (existingGuideCount === 0) {
+        await ensureDefaultGuideSections(prisma, input.teamId);
+      }
+
+      return prisma.$transaction(async (tx) => {
+        await tx.guide.updateMany({
+          where: { teamId: input.teamId, sectionId: null },
+          data: { sortOrder: { increment: 1 } },
+        });
+
+        return tx.guide.create({
+          data: {
+            title: input.title,
+            content: input.content,
+            category: input.category,
+            status: "PUBLISHED",
+            authorId: ctx.profileId,
+            teamId: input.teamId,
+            roleId: input.roleId,
+            sectionId: null,
+            sortOrder: 0,
+            isVisibleToTeam: input.isVisibleToTeam,
+          },
+        });
       });
     }),
 
@@ -321,9 +340,72 @@ export const guidesRouter = createTRPCRouter({
   deleteSection: leaderProcedure
     .input(z.object({ sectionId: z.string() }))
     .mutation(async ({ input }) => {
-      return prisma.guideSection.deleteMany({
-        where: { id: input.sectionId, teamId: input.teamId },
+      await prisma.$transaction(async (tx) => {
+        const sections = await tx.guideSection.findMany({
+          where: { teamId: input.teamId },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+          select: { id: true },
+        });
+        const sectionIndex = sections.findIndex(
+          (section) => section.id === input.sectionId,
+        );
+        if (sectionIndex < 0) return;
+
+        const targetSectionId =
+          sectionIndex > 0 ? sections[sectionIndex - 1]?.id : null;
+
+        const [targetGuides, deletedSectionGuides] = await Promise.all([
+          tx.guide.findMany({
+            where: { teamId: input.teamId, sectionId: targetSectionId },
+            orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
+            select: { id: true },
+          }),
+          tx.guide.findMany({
+            where: { teamId: input.teamId, sectionId: input.sectionId },
+            orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
+            select: { id: true },
+          }),
+        ]);
+
+        const nextGuides = [...targetGuides, ...deletedSectionGuides];
+        await Promise.all([
+          ...nextGuides.map((guide, sortOrder) =>
+            tx.guide.updateMany({
+              where: { id: guide.id, teamId: input.teamId },
+              data: { sectionId: targetSectionId, sortOrder },
+            }),
+          ),
+          tx.guideSection.deleteMany({
+            where: { id: input.sectionId, teamId: input.teamId },
+          }),
+        ]);
       });
+
+      return { ok: true };
+    }),
+
+  updateSectionOrder: leaderProcedure
+    .input(
+      z.object({
+        sections: z.array(
+          z.object({
+            sectionId: z.string(),
+            sortOrder: z.number().int().min(0),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      await prisma.$transaction(
+        input.sections.map((section) =>
+          prisma.guideSection.updateMany({
+            where: { id: section.sectionId, teamId: input.teamId },
+            data: { sortOrder: section.sortOrder },
+          }),
+        ),
+      );
+
+      return { ok: true };
     }),
 
   updateOrder: leaderProcedure

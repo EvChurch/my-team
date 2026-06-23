@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { UpcomingServing } from "@/components/teams/upcoming-serving";
 import { LeaderBar } from "@/components/teams/leader-bar";
 import { Avatar } from "@/components/ui/avatar";
+import { TeamGuideSections } from "@/components/guides/team-guide-sections";
 import { useTimezone } from "@/lib/timezone";
 import { formatDate, formatTime } from "@/lib/format-date";
 
@@ -587,31 +588,12 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             />
           )}
           {team.guides.length > 0 && (
-            <Card className="overflow-hidden p-0">
-              <div className="divide-y divide-border">
-                {team.guides.map((guide) => (
-                  <Link
-                    key={guide.id}
-                    href={`/teams/${teamId}/guides/${guide.id}`}
-                    className="block px-3 py-3 transition-colors hover:bg-bg-muted/40"
-                  >
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-accent shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {guide.title}
-                        </p>
-                        {guide.role && (
-                          <p className="text-xs text-text-secondary">
-                            {guide.role.name}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </Card>
+            <TeamGuideSections
+              teamId={teamId}
+              guides={team.guides}
+              sections={team.guideSections}
+              isLeader={team.isCurrentUserLeader}
+            />
           )}
           {team.guides.length === 0 && (
             <Card className="p-4">

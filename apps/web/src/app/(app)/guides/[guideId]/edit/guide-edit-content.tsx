@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { GuideEditor } from "@/components/guides/guide-editor";
 import { GuideCategorySelect } from "@/components/guides/guide-category-select";
 import { GuideRoleSelect } from "@/components/guides/guide-role-select";
+import { MobileCompactGuideHeader } from "@/components/guides/mobile-compact-guide-header";
 import { useToast } from "@/components/ui/toast";
 
 type GuideEditContentProps = {
@@ -25,6 +26,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const headerSentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: guide } = useSuspenseQuery(
     trpc.guides.get.queryOptions({ guideId }),
@@ -107,7 +109,14 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
   return (
     <div className="space-y-5">
-      <div>
+      <MobileCompactGuideHeader
+        backHref={guideHref}
+        backLabel={t("backToGuide")}
+        title={title.trim() || t("guideTitlePlaceholder")}
+        sentinelRef={headerSentinelRef}
+      />
+
+      <div ref={headerSentinelRef}>
         <Link
           href={guideHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"

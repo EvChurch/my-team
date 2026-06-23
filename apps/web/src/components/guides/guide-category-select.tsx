@@ -59,24 +59,24 @@ export function GuideCategorySelect({
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative min-w-0">
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-bg-card px-3 py-2.5 text-left shadow-[var(--shadow-card)] transition-colors hover:bg-bg-muted/40 focus:outline-none focus:ring-2 focus:ring-accent/30"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-bg-card px-2.5 py-2 text-left shadow-[var(--shadow-card)] transition-colors hover:bg-bg-muted/40 focus:outline-none focus:ring-2 focus:ring-accent/30 sm:gap-3 sm:px-3 sm:py-2.5"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent">
+        <span className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent sm:h-9 sm:w-9">
             <SelectedIcon className="h-4 w-4" />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-semibold text-text-primary">
-              {t(selected.labelKey)}
+            <span className="block text-[10px] font-semibold uppercase text-text-tertiary">
+              {t("guideType")}
             </span>
-            <span className="mt-0.5 block truncate text-xs text-text-secondary">
-              {t(selected.descriptionKey)}
+            <span className="mt-0.5 block truncate text-sm font-semibold text-text-primary">
+              {t(selected.labelKey)}
             </span>
           </span>
         </span>
@@ -90,7 +90,7 @@ export function GuideCategorySelect({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-border bg-bg-card shadow-[var(--shadow-card-strong)]"
+          className="absolute z-30 mt-2 max-h-[min(18rem,calc(100vh-12rem))] w-full overflow-y-auto rounded-xl border border-border bg-bg-card shadow-[var(--shadow-card-strong)] sm:max-h-[min(24rem,60vh)]"
         >
           {categories.map((category) => {
             const Icon = category.icon;
@@ -106,13 +106,13 @@ export function GuideCategorySelect({
                   onChange(category.value);
                   setIsOpen(false);
                 }}
-                className="flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-bg-muted/50"
+                className="flex w-full items-start gap-2 px-2.5 py-2.5 text-left transition-colors hover:bg-bg-muted/50 sm:gap-3 sm:px-3 sm:py-3"
               >
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-muted text-text-secondary">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-muted text-text-secondary sm:h-8 sm:w-8">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-text-primary">
+                  <span className="block text-sm font-semibold leading-5 text-text-primary">
                     {t(category.labelKey)}
                   </span>
                   <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
@@ -120,7 +120,7 @@ export function GuideCategorySelect({
                   </span>
                 </span>
                 {isSelected && (
-                  <Check className="mt-1 h-4 w-4 shrink-0 text-accent" />
+                  <Check className="h-4 w-4 shrink-0 text-accent sm:mt-1" />
                 )}
               </button>
             );

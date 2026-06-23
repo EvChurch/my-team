@@ -1,17 +1,21 @@
 "use client";
 
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RoleBadge } from "@/components/guides/role-badge";
+import {
+  ArrowLeft,
+  FileText,
+  Pencil,
+  Play,
+  Users,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { GuideContentRenderer } from "@/components/guides/guide-content-renderer";
-import { useToast } from "@/components/ui/toast";
+import { MobileCompactGuideHeader } from "@/components/guides/mobile-compact-guide-header";
 
 type GuideDetailContentProps = {
   guideId: string;
@@ -23,12 +27,9 @@ export function GuideDetailContent({
   backToTeam = false,
 }: GuideDetailContentProps) {
   const trpc = useTRPC();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
   const t = useTranslations("Guides");
   const tCommon = useTranslations("Common");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const headerSentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: guide } = useSuspenseQuery(
     trpc.guides.get.queryOptions({ guideId }),
@@ -39,24 +40,19 @@ export function GuideDetailContent({
   const isLeader = teams.some((t) => t.id === guide.teamId && t.isLeader);
   const backHref = backToTeam ? `/teams/${guide.teamId}?tab=guides` : "/guides";
   const backLabel = backToTeam ? (guide.team?.name ?? t("title")) : t("title");
-
-  const deleteMutation = useMutation(
-    trpc.guides.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast(t("deleted"));
-        router.push(backHref);
-      },
-      onError: () => {
-        toast(t("deleteFailed"), "error");
-      },
-    }),
-  );
+  const categoryMeta = getCategoryMeta(guide.category, t);
 
   return (
     <div className="space-y-6 relative">
+      <MobileCompactGuideHeader
+        backHref={backHref}
+        backLabel={backLabel}
+        title={guide.title}
+        sentinelRef={headerSentinelRef}
+      />
+
       {/* Header */}
-      <div>
+      <div ref={headerSentinelRef}>
         <Link
           href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
@@ -64,37 +60,36 @@ export function GuideDetailContent({
           <ArrowLeft className="w-4 h-4" />
           {backLabel}
         </Link>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-text-primary">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="min-w-0 flex-1 text-2xl font-bold text-text-primary">
               {guide.title}
             </h1>
-            <div className="flex items-center gap-2 mt-2">
-              <RoleBadge roleName={guide.role?.name} />
-            </div>
-            {guide.author && (
-              <p className="text-xs text-text-secondary mt-2">
-                {t("by")} {guide.author.fullName} &middot; {guide.team?.name}
-              </p>
-            )}
-          </div>
-          {isLeader && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href={`/guides/${guideId}/edit`}>
-                <Button variant="secondary" className="gap-1.5">
+            {isLeader && (
+              <div className="flex shrink-0 items-center gap-2">
+                <Link
+                  href={`/guides/${guideId}/edit`}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-accent bg-transparent px-3 text-sm font-semibold text-accent transition-colors hover:bg-accent-light/30"
+                >
                   <Pencil className="w-3.5 h-3.5" />
                   {tCommon("edit")}
-                </Button>
-              </Link>
-              <Button
-                variant="danger"
-                className="gap-1.5"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
+                </Link>
+              </div>
+            )}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <DetailMetaTile
+              icon={categoryMeta.icon}
+              label={t("guideType")}
+              value={categoryMeta.label}
+              accent
+            />
+            <DetailMetaTile
+              icon={Users}
+              label={tCommon("role")}
+              value={guide.role?.name ?? tCommon("allRoles")}
+            />
+          </div>
         </div>
       </div>
 
@@ -103,36 +98,52 @@ export function GuideDetailContent({
         <GuideContentRenderer content={guide.content} />
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <Card className="p-6 max-w-sm mx-4">
-            <h2 className="text-lg font-semibold text-text-primary mb-2">
-              {t("deleteGuide")}
-            </h2>
-            <p className="text-sm text-text-secondary mb-4">
-              {t("deleteConfirm", { title: guide.title })}
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button
-                variant="danger"
-                disabled={deleteMutation.isPending}
-                onClick={() =>
-                  deleteMutation.mutate({ teamId: guide.teamId, guideId })
-                }
-              >
-                {deleteMutation.isPending ? t("deleting") : tCommon("delete")}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+    </div>
+  );
+}
+
+function getCategoryMeta(
+  category: "QUICK_START" | "TROUBLESHOOTING" | "SOP",
+  t: ReturnType<typeof useTranslations<"Guides">>,
+) {
+  switch (category) {
+    case "QUICK_START":
+      return { icon: Play, label: t("quickStart") };
+    case "TROUBLESHOOTING":
+      return { icon: Wrench, label: t("troubleshooting") };
+    case "SOP":
+      return { icon: FileText, label: t("standardOperatingProcedure") };
+  }
+}
+
+function DetailMetaTile({
+  icon: Icon,
+  label,
+  value,
+  accent = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-bg-card px-3 py-2.5 shadow-[var(--shadow-card)]">
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+          accent ? "bg-accent-light text-accent" : "bg-bg-muted text-text-secondary"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[10px] font-semibold uppercase text-text-tertiary">
+          {label}
+        </span>
+        <span className="mt-0.5 block truncate text-sm font-semibold text-text-primary">
+          {value}
+        </span>
+      </span>
     </div>
   );
 }

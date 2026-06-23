@@ -285,6 +285,9 @@ export const teamsRouter = createTRPCRouter({
           }),
         ]);
 
+      const teamGuides = guides;
+      const teamGuideSections = guideSections;
+
       const teamPersonDisplayMap = await getPersonDisplayMap([
         ...team.leaders.map((leader) => leader.person),
         ...team.positions.flatMap((position) =>
@@ -295,7 +298,7 @@ export const teamsRouter = createTRPCRouter({
         [
           ...goals.map((goal) => goal.person),
           ...feedback.map((item) => item.author),
-          ...guides.map((guide) => guide.author),
+          ...teamGuides.map((guide) => guide.author),
         ].filter((profile): profile is NonNullable<typeof profile> =>
           Boolean(profile),
         ),
@@ -329,7 +332,7 @@ export const teamsRouter = createTRPCRouter({
           ? (profileDisplayMap.get(item.author.id) ?? item.author)
           : null,
       }));
-      const displayGuides = guides.map((guide) => ({
+      const displayGuides = teamGuides.map((guide) => ({
         ...guide,
         author: guide.author
           ? (profileDisplayMap.get(guide.author.id) ?? guide.author)
@@ -433,7 +436,7 @@ export const teamsRouter = createTRPCRouter({
         goals: displayGoals,
         feedback: displayFeedback,
         guides: displayGuides,
-        guideSections,
+        guideSections: teamGuideSections,
         schedules,
         hasScheduleHistory: scheduleCount > 0 || team.serviceTypeId !== null,
         teamSchedules,
