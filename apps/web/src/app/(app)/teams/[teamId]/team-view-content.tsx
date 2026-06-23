@@ -605,11 +605,17 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                 onClick={() => setIsArrangingGuides((arranging) => !arranging)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30"
               >
-                {isArrangingGuides ? (
-                  <Lock className="h-3.5 w-3.5" />
-                ) : (
-                  <LockOpen className="h-3.5 w-3.5" />
-                )}
+                <span
+                  className={`transition-transform duration-200 ${
+                    isArrangingGuides ? "rotate-0 scale-100" : "-rotate-12 scale-95"
+                  }`}
+                >
+                  {isArrangingGuides ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <LockOpen className="h-3.5 w-3.5" />
+                  )}
+                </span>
               </button>
             </LeaderBar>
           )}

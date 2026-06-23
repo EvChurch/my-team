@@ -417,8 +417,14 @@ export function TeamGuideSections({
         </div>
       </SortableContext>
 
-      {canArrange && (
-        <div className="pt-1">
+      {isLeader && (
+        <div
+          className={`pt-1 transition-[opacity,transform] duration-200 ${
+            canArrange
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-1 opacity-0"
+          }`}
+        >
           <button
             type="button"
             onClick={handleCreateSection}
@@ -507,7 +513,13 @@ function SortableSectionDivider({
         isDragging ? "relative z-20 opacity-40" : ""
       }`}
     >
-      {canArrange && (
+      <span
+        className={`inline-flex h-8 w-8 shrink-0 transition-[opacity,transform] duration-200 ${
+          canArrange
+            ? "scale-100 opacity-100"
+            : "pointer-events-none scale-90 opacity-0"
+        }`}
+      >
         <button
           type="button"
           aria-label={section.title}
@@ -517,7 +529,7 @@ function SortableSectionDivider({
         >
           <GripVertical className="h-4 w-4" />
         </button>
-      )}
+      </span>
       {canArrange && editingSectionId === section.id ? (
         <input
           value={editingTitle}
@@ -550,16 +562,20 @@ function SortableSectionDivider({
           {section.title}
         </h3>
       )}
-      {canArrange && (
-        <div className="flex shrink-0 items-center gap-1">
+      <div
+        className={`flex shrink-0 items-center gap-1 transition-[opacity,transform] duration-200 ${
+          canArrange
+            ? "scale-100 opacity-100"
+            : "pointer-events-none scale-90 opacity-0"
+        }`}
+      >
           <IconButton
             label={t("deleteSection")}
             onClick={() => onDeleteSection(section)}
           >
             <Trash2 className="h-4 w-4" />
           </IconButton>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -601,17 +617,6 @@ function SortableGuideRow({
     transition,
   };
 
-  if (!canArrange) {
-    return (
-      <Link
-        href={href}
-        className="flex min-h-[64px] items-center rounded-xl border border-transparent px-3 py-3 transition-[background-color,border-color,box-shadow] hover:border-border hover:bg-bg-muted/30 hover:shadow-md"
-      >
-        <GuideRowContent guide={guide} />
-      </Link>
-    );
-  }
-
   return (
     <div
       ref={setNodeRef}
@@ -620,15 +625,23 @@ function SortableGuideRow({
         isDragging ? "relative z-20 opacity-40" : ""
       }`}
     >
-      <button
-        type="button"
-        className="m-3 inline-flex h-8 w-8 shrink-0 touch-none items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-muted hover:text-text-primary"
-        aria-label={guide.title}
-        {...attributes}
-        {...listeners}
+      <span
+        className={`m-3 inline-flex h-8 w-8 shrink-0 transition-[opacity,transform] duration-200 ${
+          canArrange
+            ? "scale-100 opacity-100"
+            : "pointer-events-none scale-90 opacity-0"
+        }`}
       >
-        <GripVertical className="h-4 w-4" />
-      </button>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 touch-none items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-muted hover:text-text-primary"
+          aria-label={guide.title}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      </span>
       <Link href={href} className="flex min-w-0 flex-1 items-center py-3 pr-3">
         <GuideRowContent guide={guide} />
       </Link>
