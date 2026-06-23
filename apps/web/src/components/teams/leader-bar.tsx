@@ -31,7 +31,7 @@ export function LeaderBar({
       <div className="flex shrink-0 items-center gap-2">
         <Link
           href={href}
-          className={`overflow-hidden transition-[max-width,opacity,transform] duration-200 ${
+          className={`inline-flex overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
             actionVisible
               ? "max-w-40 translate-x-0 opacity-100"
               : "pointer-events-none max-w-0 translate-x-1 opacity-0"
