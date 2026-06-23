@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Play, FileText, Wrench, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { RoleBadge } from "./role-badge";
 
@@ -9,7 +8,6 @@ type GuideCardProps = {
   title: string;
   category: "QUICK_START" | "TROUBLESHOOTING" | "SOP";
   roleName?: string | null;
-  status?: string;
 };
 
 const categoryIcons = {
@@ -24,8 +22,7 @@ const categoryColors = {
   SOP: "text-text-secondary",
 } as const;
 
-export function GuideCard({ id, title, category, roleName, status }: GuideCardProps) {
-  const t = useTranslations("Guides");
+export function GuideCard({ id, title, category, roleName }: GuideCardProps) {
   const Icon = categoryIcons[category];
   const iconColor = categoryColors[category];
 
@@ -37,16 +34,9 @@ export function GuideCard({ id, title, category, roleName, status }: GuideCardPr
             <Icon className={`w-4 h-4 ${iconColor}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-text-primary truncate">
-                {title}
-              </p>
-              {status === "DRAFT" && (
-                <span className="text-xs text-text-tertiary bg-bg-muted px-1.5 py-0.5 rounded shrink-0">
-                  {t("draft")}
-                </span>
-              )}
-            </div>
+            <p className="text-sm font-medium text-text-primary truncate">
+              {title}
+            </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <RoleBadge roleName={roleName} />

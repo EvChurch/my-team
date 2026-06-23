@@ -59,7 +59,7 @@ export function FeedbackNewContent({ teamId }: FeedbackNewContentProps) {
   return (
     <div className="max-w-xl mx-auto">
       <Link
-        href={`/teams/${teamId}`}
+        href={`/teams/${teamId}?tab=feedback`}
         className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-4"
       >
         <ArrowLeft className="w-4 h-4" />

@@ -5,18 +5,17 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useTranslations } from "next-intl";
 import { BookOpen, Search } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollFade } from "@/components/ui/scroll-fade";
 import { GuideCard } from "@/components/guides/guide-card";
+import { NewGuideButton } from "@/components/guides/new-guide-button";
 
 type GuidesListContentProps = {
   isLeader: boolean;
-  firstTeamId?: string;
+  leaderTeams: Array<{ id: string; name: string }>;
 };
 
-export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentProps) {
+export function GuidesListContent({ isLeader, leaderTeams }: GuidesListContentProps) {
   const trpc = useTRPC();
   const t = useTranslations("Guides");
   const tCommon = useTranslations("Common");
@@ -39,13 +38,7 @@ export function GuidesListContent({ isLeader, firstTeamId }: GuidesListContentPr
         icon={BookOpen}
         title={t("noGuides")}
         description={t("noGuidesDesc")}
-        action={
-          isLeader && firstTeamId ? (
-            <Link href={`/teams/${firstTeamId}/guides/new`}>
-              <Button>{t("createGuide")}</Button>
-            </Link>
-          ) : undefined
-        }
+        action={isLeader ? <NewGuideButton teams={leaderTeams} /> : undefined}
       />
     );
   }
@@ -119,7 +112,6 @@ function GuideSection({
             title={guide.title}
             category={guide.category}
             roleName={guide.role?.name}
-            status={guide.status}
           />
         ))}
       </div>

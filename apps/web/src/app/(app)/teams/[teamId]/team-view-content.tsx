@@ -5,6 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -13,6 +14,7 @@ import {
   Users,
   BookOpen,
   Target,
+  MessageSquare,
   MessageSquarePlus,
   BookPlus,
   Mail,
@@ -33,6 +35,12 @@ type TeamViewContentProps = {
 };
 
 type Tab = "serving" | "members" | "goals" | "guides" | "feedback" | "about";
+
+const tabs = ["serving", "members", "goals", "guides", "feedback", "about"] as const;
+
+function isTab(value: string | null): value is Tab {
+  return tabs.some((tab) => tab === value);
+}
 
 function MemberRow({
   member,
@@ -280,6 +288,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const trpc = useTRPC();
   const t = useTranslations("Teams");
   const tz = useTimezone();
+  const searchParams = useSearchParams();
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
   );
@@ -322,7 +331,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
   ).length;
   const hasServingTab = team.hasScheduleHistory;
 
-  // Build tabs — only show tabs that have content.
+  // Build tabs.
   const allTabs: { value: Tab; label: string }[] = useMemo(
     () => [
       ...(hasServingTab
@@ -330,29 +339,22 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
         : []),
       { value: "members", label: t("membersTab") },
       { value: "goals", label: t("goalsTab") },
-      ...(team.guides.length > 0 || team.isCurrentUserLeader
-        ? [{ value: "guides" as Tab, label: t("guidesTab") }]
-        : []),
-      ...(team.feedback.length > 0 || team.isCurrentUserLeader
-        ? [{ value: "feedback" as Tab, label: t("feedbackTab") }]
-        : []),
+      { value: "guides", label: t("guidesTab") },
+      { value: "feedback", label: t("feedbackTab") },
       ...(team.description
         ? [{ value: "about" as Tab, label: t("aboutTab") }]
         : []),
     ],
-    [
-      hasServingTab,
-      t,
-      team.description,
-      team.feedback.length,
-      team.guides.length,
-      team.isCurrentUserLeader,
-    ],
+    [hasServingTab, t, team.description],
   );
 
-  const [activeTab, setActiveTab] = useState<Tab>(
-    hasServingTab ? "serving" : "members",
-  );
+  const requestedTab = searchParams.get("tab");
+  const defaultTab = isTab(requestedTab)
+    ? requestedTab
+    : hasServingTab
+      ? "serving"
+      : "members";
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const selectedTab = allTabs.some((tab) => tab.value === activeTab)
     ? activeTab
     : (allTabs[0]?.value ?? "members");
@@ -584,25 +586,43 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               label={t("newGuide")}
             />
           )}
-          {team.guides.map((guide) => (
-            <Link key={guide.id} href={`/guides/${guide.id}`}>
-              <Card className="border border-transparent p-3 transition-colors hover:border-border hover:bg-bg-muted/30 hover:shadow-md">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-accent shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {guide.title}
-                    </p>
-                    {guide.role && (
-                      <p className="text-xs text-text-secondary">
-                        {guide.role.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
+          {team.guides.length > 0 && (
+            <Card className="overflow-hidden p-0">
+              <div className="divide-y divide-border">
+                {team.guides.map((guide) => (
+                  <Link
+                    key={guide.id}
+                    href={`/teams/${teamId}/guides/${guide.id}`}
+                    className="block px-3 py-3 transition-colors hover:bg-bg-muted/40"
+                  >
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-accent shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {guide.title}
+                        </p>
+                        {guide.role && (
+                          <p className="text-xs text-text-secondary">
+                            {guide.role.name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
+          {team.guides.length === 0 && (
+            <Card className="p-4">
+              <EmptyState
+                icon={BookOpen}
+                title={t("noGuides")}
+                description={t("noGuidesDesc")}
+                className="py-6"
+              />
+            </Card>
+          )}
         </div>
       )}
 
@@ -631,6 +651,16 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
               )}
             </Card>
           ))}
+          {team.feedback.length === 0 && (
+            <Card className="p-4">
+              <EmptyState
+                icon={MessageSquare}
+                title={t("noFeedback")}
+                description={t("noFeedbackDesc")}
+                className="py-6"
+              />
+            </Card>
+          )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type MouseEvent, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -45,6 +45,9 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   const [driveUrl, setDriveUrl] = useState("");
   const [driveTitle, setDriveTitle] = useState("");
+  const [editingResourcePosition, setEditingResourcePosition] = useState<
+    number | null
+  >(null);
   const createAssetUpload = useMutation(
     trpc.guides.createAssetUpload.mutationOptions(),
   );
@@ -171,7 +174,21 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
       }
     : undefined;
 
-  const addDriveFile = () => {
+  const resetDriveDialog = () => {
+    setDriveUrl("");
+    setDriveTitle("");
+    setEditingResourcePosition(null);
+    setIsDriveDialogOpen(false);
+  };
+
+  const openDriveDialog = () => {
+    setDriveUrl("");
+    setDriveTitle("");
+    setEditingResourcePosition(null);
+    setIsDriveDialogOpen(true);
+  };
+
+  const saveDriveFile = () => {
     let parsed: URL;
     try {
       parsed = new URL(driveUrl);
@@ -191,25 +208,72 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
       return;
     }
 
-    editor
-      ?.chain()
-      .focus()
-      .insertContent([
-        {
-          type: "resourceCard",
-          attrs: {
-            title: driveTitle.trim() || parsed.hostname,
-            url: parsed.toString(),
-            kind: "google_drive",
-          },
-        },
-        { type: "paragraph" },
-      ])
-      .run();
+    const attrs = {
+      title: driveTitle.trim() || parsed.hostname,
+      url: parsed.toString(),
+      kind: "google_drive",
+    };
 
-    setDriveUrl("");
-    setDriveTitle("");
-    setIsDriveDialogOpen(false);
+    if (editingResourcePosition !== null) {
+      editor
+        ?.chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.setNodeMarkup(editingResourcePosition, undefined, attrs);
+          return true;
+        })
+        .run();
+    } else {
+      editor
+        ?.chain()
+        .focus()
+        .insertContent([
+          {
+            type: "resourceCard",
+            attrs,
+          },
+          { type: "paragraph" },
+        ])
+        .run();
+    }
+
+    resetDriveDialog();
+  };
+
+  const resourcePositionFromElement = (element: HTMLElement) => {
+    return editor?.view.posAtDOM(element, 0) ?? null;
+  };
+
+  const handleEditorClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    const card = target.closest<HTMLElement>(
+      '[data-type="guide-resource-card"]',
+    );
+
+    if (!card || !editor) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.preventDefault();
+    event.nativeEvent.stopImmediatePropagation();
+
+    const position = resourcePositionFromElement(card);
+    if (position === null) return;
+
+    if (target.closest("[data-resource-card-remove]")) {
+      editor.chain().focus().deleteRange({ from: position, to: position + 1 }).run();
+      return;
+    }
+
+    if (card.dataset.kind !== "google_drive") {
+      editor.chain().focus().setNodeSelection(position).run();
+      return;
+    }
+
+    setDriveUrl(card.dataset.url ?? "");
+    setDriveTitle(card.dataset.title ?? "");
+    setEditingResourcePosition(position);
+    setIsDriveDialogOpen(true);
   };
 
   if (!editor) {
@@ -228,10 +292,11 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
         isUploadingAsset={createAssetUpload.isPending}
         onUploadImage={uploadImage}
         onUploadFile={uploadFile}
-        onAddDriveFile={() => setIsDriveDialogOpen(true)}
+        onAddDriveFile={openDriveDialog}
       />
       <EditorContent
         editor={editor}
+        onClickCapture={handleEditorClick}
         className="guide-editor-content px-4 py-3 min-h-[300px] text-sm text-text-primary outline-none [&_.tiptap]:outline-none [&_.tiptap]:min-h-[280px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 [&_a]:text-accent [&_a]:underline [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2"
       />
       {isDriveDialogOpen && (
@@ -269,16 +334,18 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setIsDriveDialogOpen(false)}
+                onClick={resetDriveDialog}
               >
                 {tCommon("cancel")}
               </Button>
               <Button
                 type="button"
-                onClick={addDriveFile}
+                onClick={saveDriveFile}
                 disabled={!driveUrl.trim()}
               >
-                {t("addResource")}
+                {editingResourcePosition === null
+                  ? t("addResource")
+                  : tCommon("save")}
               </Button>
             </div>
           </Card>

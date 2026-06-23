@@ -2,9 +2,7 @@ import { Suspense } from "react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient, trpc } from "@mt/api/server";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { NewGuideButton } from "@/components/guides/new-guide-button";
 import { GuidesListContent } from "./guides-list-content";
 
 export default async function GuidesPage() {
@@ -16,39 +14,27 @@ export default async function GuidesPage() {
     queryClient.fetchQuery(trpc.teams.list.queryOptions()),
   ]);
 
-  // Check if user is a leader of any team
-  const leaderTeam = teams.find((t) => t.isLeader);
-  const isLeader = !!leaderTeam;
+  const leaderTeams = teams
+    .filter((team) => team.isLeader)
+    .map((team) => ({ id: team.id, name: team.name }));
+  const isLeader = leaderTeams.length > 0;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-text-primary">{t("title")}</h1>
           <p className="text-sm text-text-secondary mt-0.5">
             {t("subtitle")}
           </p>
         </div>
-        {isLeader && leaderTeam && (
-          <>
-            {/* Desktop button */}
-            <Link href={`/teams/${leaderTeam.id}/guides/new`} className="hidden md:block">
-              <Button>{t("newGuide")}</Button>
-            </Link>
-            {/* Mobile FAB-style button */}
-            <Link href={`/teams/${leaderTeam.id}/guides/new`} className="md:hidden">
-              <Button className="w-9 h-9 p-0 rounded-full">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </Link>
-          </>
-        )}
+        <NewGuideButton teams={leaderTeams} />
       </div>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<GuidesListSkeleton />}>
           <GuidesListContent
             isLeader={isLeader}
-            firstTeamId={leaderTeam?.id}
+            leaderTeams={leaderTeams}
           />
         </Suspense>
       </HydrationBoundary>

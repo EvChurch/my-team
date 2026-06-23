@@ -187,6 +187,7 @@ model Team {
   goals       Goal[]
   feedback    Feedback[]
   guides      Guide[]
+  guideSections GuideSection[]
   schedules   Schedule[]
 
   @@unique([remoteId, provider])
@@ -346,20 +347,39 @@ model Guide {
   authorId        String?
   teamId          String
   roleId          String?
+  sectionId       String?
+  sortOrder       Int           @default(0)
   isPinned        Boolean       @default(false)
   isVisibleToTeam Boolean       @default(true)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  author Profile?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  team   Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  role   Position? @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
+  author  Profile?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  team    Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role    Position?     @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
+  section GuideSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
   @@index([teamId])
   @@index([teamId, status])
   @@index([teamId, roleId])
+  @@index([teamId, sectionId, sortOrder])
+  @@index([sectionId])
   @@index([roleId])
   @@index([authorId])
+}
+
+model GuideSection {
+  id        String   @id @default(cuid())
+  title     String
+  teamId    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team   Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  guides Guide[]
+
+  @@index([teamId, sortOrder])
 }
 
 model UserPreference {

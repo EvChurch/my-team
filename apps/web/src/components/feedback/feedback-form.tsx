@@ -67,7 +67,7 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       {
         onSuccess: () => {
           toast(t("submitted"));
-          router.push("/goals?tab=feedback");
+          router.push(`/teams/${teamId}?tab=feedback`);
         },
         onError: (err) => {
           setError(err.message);
@@ -167,7 +167,7 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/teams/${teamId}?tab=feedback`)}
         >
           {tCommon("cancel")}
         </Button>

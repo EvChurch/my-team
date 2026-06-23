@@ -65,7 +65,7 @@ export function ReviewContent({ teamId }: ReviewContentProps) {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/teams/${teamId}`}
+          href={`/teams/${teamId}?tab=goals`}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />

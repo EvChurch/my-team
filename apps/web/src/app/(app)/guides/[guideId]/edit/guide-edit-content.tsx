@@ -6,12 +6,12 @@ import { useTRPC } from "@mt/api/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Play, Wrench, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
 import { GuideEditor } from "@/components/guides/guide-editor";
+import { GuideCategorySelect } from "@/components/guides/guide-category-select";
+import { GuideRoleSelect } from "@/components/guides/guide-role-select";
 import { useToast } from "@/components/ui/toast";
 
 type GuideEditContentProps = {
@@ -26,12 +26,6 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const categories = [
-    { value: "QUICK_START" as const, label: t("quickStart"), icon: Play },
-    { value: "TROUBLESHOOTING" as const, label: t("troubleshooting"), icon: Wrench },
-    { value: "SOP" as const, label: t("sop"), icon: FileText },
-  ];
-
   const { data: guide } = useSuspenseQuery(
     trpc.guides.get.queryOptions({ guideId }),
   );
@@ -43,32 +37,40 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const [category, setCategory] = useState(guide.category);
   const [content, setContent] = useState<unknown>(guide.content);
   const [roleId, setRoleId] = useState<string>(guide.roleId ?? "");
-  const [isVisibleToTeam, setIsVisibleToTeam] = useState(guide.isVisibleToTeam);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const updateMutation = useMutation(
-    trpc.guides.update.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
-        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast(t("guideSaved"));
-      },
-      onError: () => {
-        toast(t("guideSaveFailed"), "error");
-      },
-    }),
-  );
+  const guideHref = `/teams/${guide.teamId}/guides/${guideId}`;
+  const teamGuidesHref = `/teams/${guide.teamId}?tab=guides`;
 
   const publishMutation = useMutation(
     trpc.guides.publish.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
-        toast(t("guidePublished"));
-        router.push(`/guides/${guideId}`);
+        queryClient.invalidateQueries({ queryKey: trpc.teams.get.queryOptions({ teamId: guide.teamId }).queryKey });
+        router.push(guideHref);
       },
       onError: () => {
         toast(t("guidePublishFailed"), "error");
+      },
+    }),
+  );
+
+  const updateMutation = useMutation(
+    trpc.guides.update.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.guides.get.queryOptions({ guideId }).queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.teams.get.queryOptions({ teamId: guide.teamId }).queryKey });
+        toast(t("guideSaved"));
+        if (guide.status === "PUBLISHED") {
+          router.push(guideHref);
+          return;
+        }
+        publishMutation.mutate({ teamId: guide.teamId, guideId });
+      },
+      onError: () => {
+        toast(t("guideSaveFailed"), "error");
       },
     }),
   );
@@ -77,8 +79,9 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
+        queryClient.invalidateQueries({ queryKey: trpc.teams.get.queryOptions({ teamId: guide.teamId }).queryKey });
         toast(t("deleted"));
-        router.push("/guides");
+        router.push(teamGuidesHref);
       },
       onError: () => {
         toast(t("deleteFailed"), "error");
@@ -88,235 +91,83 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
   const handleSave = () => {
     if (!title.trim()) return;
-    updateMutation.mutate(
-      {
-        teamId: guide.teamId,
-        guideId,
-        title: title.trim(),
-        content,
-        category,
-        roleId: roleId || null,
-        isVisibleToTeam,
-      },
-      {
-        onSuccess: () => {
-          router.push(`/guides/${guideId}`);
-        },
-      },
-    );
-  };
-
-  const handlePublish = () => {
-    if (!title.trim()) return;
-    updateMutation.mutate(
-      {
-        teamId: guide.teamId,
-        guideId,
-        title: title.trim(),
-        content,
-        category,
-        roleId: roleId || null,
-        isVisibleToTeam,
-      },
-      {
-        onSuccess: () => {
-          publishMutation.mutate({ teamId: guide.teamId, guideId });
-        },
-      },
-    );
+    updateMutation.mutate({
+      teamId: guide.teamId,
+      guideId,
+      title: title.trim(),
+      content,
+      category,
+      roleId: roleId || null,
+      isVisibleToTeam: true,
+    });
   };
 
   const isSaving = updateMutation.isPending || publishMutation.isPending;
   const positions = team.positions ?? [];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
       <div>
         <Link
-          href={`/guides/${guideId}`}
+          href={guideHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
           {t("backToGuide")}
         </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">{t("editGuide")}</h1>
-            <p className="text-sm text-text-secondary mt-0.5">{team.name}</p>
-          </div>
-          <Badge variant={guide.status === "PUBLISHED" ? "accent" : "muted"}>
-            {guide.status === "PUBLISHED" ? t("published") : t("draft")}
-          </Badge>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Main editor area */}
-        <div className="flex-1 space-y-4">
-          {/* Category chips */}
-          <div className="flex gap-2">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              const isActive = category === cat.value;
-              return (
-                <button
-                  key={cat.value}
-                  type="button"
-                  onClick={() => setCategory(cat.value)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-accent text-text-on-accent"
-                      : "bg-bg-muted text-text-secondary hover:bg-border"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Title */}
+        <div className="min-w-0">
           <input
             type="text"
             placeholder={t("guideTitlePlaceholder")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-xl font-semibold text-text-primary placeholder:text-text-tertiary bg-transparent outline-none"
+            aria-label={t("guideTitlePlaceholder")}
+            className="block w-full bg-transparent text-2xl font-bold text-text-primary placeholder:text-text-tertiary outline-none"
           />
-
-          {/* Editor */}
-          <GuideEditor
-            content={guide.content}
-            teamId={guide.teamId}
-            onChange={setContent}
-          />
+          <p className="text-sm text-text-secondary mt-0.5">{team.name}</p>
         </div>
+      </div>
 
-        {/* Desktop right panel */}
-        <div className="hidden md:block w-72 space-y-4 shrink-0">
-          <Card className="p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-text-primary">
-              {t("guideDetails")}
-            </h3>
+      <div className="grid gap-3 md:grid-cols-2">
+        <GuideCategorySelect value={category} onChange={setCategory} />
+        <GuideRoleSelect
+          value={roleId}
+          onChange={setRoleId}
+          positions={positions}
+        />
+      </div>
 
-            <div>
-              <p className="text-xs text-text-secondary">{tCommon("status")}</p>
-              <p className="text-sm text-text-primary mt-0.5">
-                {guide.status === "PUBLISHED" ? t("published") : t("draft")}
-              </p>
-            </div>
+      <GuideEditor
+        content={guide.content}
+        teamId={guide.teamId}
+        onChange={setContent}
+      />
 
-            {guide.author && (
-              <div>
-                <p className="text-xs text-text-secondary">{tCommon("author")}</p>
-                <p className="text-sm text-text-primary mt-0.5">
-                  {guide.author.fullName}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs text-text-secondary">{tCommon("team")}</p>
-              <p className="text-sm text-text-primary mt-0.5">{team.name}</p>
-            </div>
-
-            {/* Role selector */}
-            <div>
-              <label className="text-xs font-medium text-text-secondary block mb-1">
-                {tCommon("role")}
-              </label>
-              <select
-                value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-bg-card text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="">{tCommon("allRoles")}</option>
-                {positions.map((pos) => (
-                  <option key={pos.id} value={pos.id}>
-                    {pos.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </Card>
-
-          <Card className="p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-text-primary">
-              {t("visibility")}
-            </h3>
-            <Toggle
-              checked={isVisibleToTeam}
-              onChange={setIsVisibleToTeam}
-              label={tCommon("visibleToTeam")}
-            />
-          </Card>
-
-          <Card className="p-4">
+      <div className="rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <Button
+            type="button"
+            variant="danger"
+            className="px-3"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Link href={guideHref}>
+              <Button type="button" variant="secondary">
+                {tCommon("cancel")}
+              </Button>
+            </Link>
             <Button
-              variant="danger"
-              className="w-full gap-1.5"
-              onClick={() => setShowDeleteConfirm(true)}
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || !title.trim()}
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              {t("deleteGuide")}
+              {isSaving ? t("saving") : tCommon("save")}
             </Button>
-          </Card>
-        </div>
-      </div>
-
-      {/* Mobile metadata */}
-      <div className="md:hidden space-y-4">
-        <Card className="p-4 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-text-secondary block mb-1">
-              Role
-            </label>
-            <select
-              value={roleId}
-              onChange={(e) => setRoleId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg-card text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              <option value="">All Roles</option>
-              {positions.map((pos) => (
-                <option key={pos.id} value={pos.id}>
-                  {pos.name}
-                </option>
-              ))}
-            </select>
           </div>
-          <Toggle
-            checked={isVisibleToTeam}
-            onChange={setIsVisibleToTeam}
-            label={tCommon("visibleToTeam")}
-          />
-        </Card>
-        <Button
-          variant="danger"
-          className="w-full gap-1.5"
-          onClick={() => setShowDeleteConfirm(true)}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          Delete Guide
-        </Button>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex items-center gap-3 sticky bottom-20 md:bottom-4 bg-bg-page py-3">
-        <Button
-          variant="secondary"
-          onClick={handleSave}
-          disabled={isSaving || !title.trim()}
-        >
-          {updateMutation.isPending ? t("saving") : t("saveDraft")}
-        </Button>
-        <Button
-          onClick={handlePublish}
-          disabled={isSaving || !title.trim()}
-        >
-          {publishMutation.isPending ? t("publishing") : t("publish")}
-        </Button>
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

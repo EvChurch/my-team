@@ -215,7 +215,7 @@ export const guidesRouter = createTRPCRouter({
           title: input.title,
           content: input.content,
           category: input.category,
-          status: "DRAFT",
+          status: "PUBLISHED",
           authorId: ctx.profileId,
           teamId: input.teamId,
           roleId: input.roleId,
@@ -278,8 +278,101 @@ export const guidesRouter = createTRPCRouter({
       const { guideId, teamId: _teamId, ...data } = input;
       return prisma.guide.update({
         where: { id: guideId },
-        data,
+        data: { ...data, status: "PUBLISHED" },
       });
+    }),
+
+  createSection: leaderProcedure
+    .input(
+      z.object({
+        title: z.string().min(1).max(80),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const lastSection = await prisma.guideSection.findFirst({
+        where: { teamId: input.teamId },
+        orderBy: { sortOrder: "desc" },
+        select: { sortOrder: true },
+      });
+
+      return prisma.guideSection.create({
+        data: {
+          teamId: input.teamId,
+          title: input.title.trim(),
+          sortOrder: (lastSection?.sortOrder ?? -1) + 1,
+        },
+      });
+    }),
+
+  updateSection: leaderProcedure
+    .input(
+      z.object({
+        sectionId: z.string(),
+        title: z.string().min(1).max(80),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      return prisma.guideSection.updateMany({
+        where: { id: input.sectionId, teamId: input.teamId },
+        data: { title: input.title.trim() },
+      });
+    }),
+
+  deleteSection: leaderProcedure
+    .input(z.object({ sectionId: z.string() }))
+    .mutation(async ({ input }) => {
+      return prisma.guideSection.deleteMany({
+        where: { id: input.sectionId, teamId: input.teamId },
+      });
+    }),
+
+  updateOrder: leaderProcedure
+    .input(
+      z.object({
+        guides: z.array(
+          z.object({
+            guideId: z.string(),
+            sectionId: z.string().nullable(),
+            sortOrder: z.number().int().min(0),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const sectionIds = [
+        ...new Set(
+          input.guides
+            .map((guide) => guide.sectionId)
+            .filter((sectionId): sectionId is string => Boolean(sectionId)),
+        ),
+      ];
+
+      if (sectionIds.length > 0) {
+        const sectionCount = await prisma.guideSection.count({
+          where: { teamId: input.teamId, id: { in: sectionIds } },
+        });
+
+        if (sectionCount !== sectionIds.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "One or more guide sections do not belong to this team.",
+          });
+        }
+      }
+
+      await prisma.$transaction(
+        input.guides.map((guide) =>
+          prisma.guide.updateMany({
+            where: { id: guide.guideId, teamId: input.teamId },
+            data: {
+              sectionId: guide.sectionId,
+              sortOrder: guide.sortOrder,
+            },
+          }),
+        ),
+      );
+
+      return { ok: true };
     }),
 
   /**

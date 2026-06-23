@@ -181,8 +181,16 @@ export const teamsRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.object({ teamId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [team, isLeader, goals, feedback, guides, schedules, scheduleCount] =
-        await Promise.all([
+      const [
+        team,
+        isLeader,
+        goals,
+        feedback,
+        guides,
+        guideSections,
+        schedules,
+        scheduleCount,
+      ] = await Promise.all([
           prisma.team.findUniqueOrThrow({
             where: { id: input.teamId },
             include: {
@@ -230,9 +238,16 @@ export const teamsRouter = createTRPCRouter({
             include: {
               author: { select: profileDisplaySelect },
               role: { select: { id: true, name: true } },
+              section: { select: { id: true, title: true, sortOrder: true } },
             },
-            orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
-            take: 5,
+            orderBy: [
+              { sortOrder: "asc" },
+              { createdAt: "desc" },
+            ],
+          }),
+          prisma.guideSection.findMany({
+            where: { teamId: input.teamId },
+            orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
           }),
           prisma.schedule.findMany({
             where: {
@@ -418,6 +433,7 @@ export const teamsRouter = createTRPCRouter({
         goals: displayGoals,
         feedback: displayFeedback,
         guides: displayGuides,
+        guideSections,
         schedules,
         hasScheduleHistory: scheduleCount > 0 || team.serviceTypeId !== null,
         teamSchedules,

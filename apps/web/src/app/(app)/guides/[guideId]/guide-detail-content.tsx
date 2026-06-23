@@ -8,7 +8,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RoleBadge } from "@/components/guides/role-badge";
 import { GuideContentRenderer } from "@/components/guides/guide-content-renderer";
@@ -16,9 +15,13 @@ import { useToast } from "@/components/ui/toast";
 
 type GuideDetailContentProps = {
   guideId: string;
+  backToTeam?: boolean;
 };
 
-export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
+export function GuideDetailContent({
+  guideId,
+  backToTeam = false,
+}: GuideDetailContentProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -34,13 +37,15 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
 
   // Check if user is a leader of the guide's team
   const isLeader = teams.some((t) => t.id === guide.teamId && t.isLeader);
+  const backHref = backToTeam ? `/teams/${guide.teamId}?tab=guides` : "/guides";
+  const backLabel = backToTeam ? (guide.team?.name ?? t("title")) : t("title");
 
   const deleteMutation = useMutation(
     trpc.guides.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.guides.listAll.queryOptions().queryKey });
         toast(t("deleted"));
-        router.push("/guides");
+        router.push(backHref);
       },
       onError: () => {
         toast(t("deleteFailed"), "error");
@@ -53,11 +58,11 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
       {/* Header */}
       <div>
         <Link
-          href="/guides"
+          href={backHref}
           className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t("title")}
+          {backLabel}
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -66,9 +71,6 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
             </h1>
             <div className="flex items-center gap-2 mt-2">
               <RoleBadge roleName={guide.role?.name} />
-              <Badge variant={guide.status === "PUBLISHED" ? "accent" : "muted"}>
-                {guide.status === "PUBLISHED" ? t("published") : t("draft")}
-              </Badge>
             </div>
             {guide.author && (
               <p className="text-xs text-text-secondary mt-2">
@@ -97,9 +99,9 @@ export function GuideDetailContent({ guideId }: GuideDetailContentProps) {
       </div>
 
       {/* Content */}
-      <Card className="p-5 md:p-8">
+      <div>
         <GuideContentRenderer content={guide.content} />
-      </Card>
+      </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
