@@ -106,14 +106,43 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
 
   const isSaving = updateMutation.isPending || publishMutation.isPending;
   const positions = team.positions ?? [];
+  const editActions = (
+    <div className="flex items-center justify-between gap-3">
+      <Button
+        type="button"
+        variant="danger"
+        className="h-9 px-3 py-0"
+        onClick={() => setShowDeleteConfirm(true)}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <div className="flex items-center gap-2">
+        <Link href={guideHref}>
+          <Button type="button" variant="secondary" className="h-9 px-3 py-0">
+            {tCommon("cancel")}
+          </Button>
+        </Link>
+        <Button
+          type="button"
+          className="h-9 px-3 py-0"
+          onClick={handleSave}
+          disabled={isSaving || !title.trim()}
+        >
+          {isSaving ? t("saving") : tCommon("save")}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pt-28 md:pt-0">
       <MobileCompactGuideHeader
         backHref={guideHref}
         backLabel={t("backToGuide")}
         title={title.trim() || t("guideTitlePlaceholder")}
         sentinelRef={headerSentinelRef}
+        actions={editActions}
+        alwaysVisible
       />
 
       <div ref={headerSentinelRef}>
@@ -152,7 +181,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         onChange={setContent}
       />
 
-      <div className="rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)]">
+      <div className="hidden rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)] md:block">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <Button
             type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { ArrowLeft } from "lucide-react";
 
 type MobileCompactGuideHeaderProps = {
@@ -9,6 +9,8 @@ type MobileCompactGuideHeaderProps = {
   backLabel: string;
   title: string;
   sentinelRef: RefObject<HTMLElement | null>;
+  actions?: ReactNode;
+  alwaysVisible?: boolean;
 };
 
 export function MobileCompactGuideHeader({
@@ -16,10 +18,15 @@ export function MobileCompactGuideHeader({
   backLabel,
   title,
   sentinelRef,
+  actions,
+  alwaysVisible = false,
 }: MobileCompactGuideHeaderProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const shouldShow = alwaysVisible || isVisible;
 
   useEffect(() => {
+    if (alwaysVisible) return;
+
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
@@ -30,15 +37,15 @@ export function MobileCompactGuideHeader({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [sentinelRef]);
+  }, [alwaysVisible, sentinelRef]);
 
   return (
     <div
       className={`fixed inset-x-0 top-0 z-50 border-b border-border bg-bg-page/95 px-4 py-2.5 shadow-sm backdrop-blur transition-transform duration-200 md:hidden ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
+        shouldShow ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="space-y-1">
+      <div className="space-y-2">
         <Link
           href={backHref}
           className="inline-flex max-w-full items-center gap-1.5 rounded-lg py-0.5 pr-2 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary"
@@ -49,6 +56,7 @@ export function MobileCompactGuideHeader({
         <p className="truncate text-base font-semibold leading-5 text-text-primary">
           {title}
         </p>
+        {actions && <div>{actions}</div>}
       </div>
     </div>
   );
