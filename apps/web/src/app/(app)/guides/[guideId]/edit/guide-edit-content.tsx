@@ -196,7 +196,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         onChange={setContent}
       />
 
-      <MobileBottomBarShell className="z-[60]" surface="solid">
+      <MobileBottomBarShell className="z-[60]" surface="solid" portal>
         {mobileEditActions}
       </MobileBottomBarShell>
 

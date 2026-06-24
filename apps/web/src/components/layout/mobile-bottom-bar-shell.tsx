@@ -1,19 +1,24 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type MobileBottomBarShellProps = {
   children: ReactNode;
   className?: string;
   surface?: "frosted" | "solid";
+  portal?: boolean;
 };
 
 export function MobileBottomBarShell({
   children,
   className = "z-50",
   surface = "frosted",
+  portal = false,
 }: MobileBottomBarShellProps) {
   const isSolid = surface === "solid";
 
-  return (
+  const shell = (
     <nav className={`fixed bottom-4 left-4 right-4 md:hidden ${className}`}>
       <div
         className="relative flex h-[62px] items-center justify-around rounded-[36px] border border-border px-1 shadow-[var(--shadow-card-strong)]"
@@ -29,4 +34,12 @@ export function MobileBottomBarShell({
       </div>
     </nav>
   );
+
+  if (portal) {
+    return typeof document === "undefined"
+      ? null
+      : createPortal(shell, document.body);
+  }
+
+  return shell;
 }
