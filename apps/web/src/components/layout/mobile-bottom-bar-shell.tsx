@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 type MobileBottomBarShellProps = {
@@ -16,6 +16,11 @@ export function MobileBottomBarShell({
   surface = "frosted",
   portal = false,
 }: MobileBottomBarShellProps) {
+  const isHydrated = useSyncExternalStore(
+    subscribeAfterHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const isSolid = surface === "solid";
 
   const shell = (
@@ -35,11 +40,22 @@ export function MobileBottomBarShell({
     </nav>
   );
 
-  if (portal) {
-    return typeof document === "undefined"
-      ? null
-      : createPortal(shell, document.body);
+  if (portal && isHydrated) {
+    return createPortal(shell, document.body);
   }
 
   return shell;
+}
+
+function subscribeAfterHydration(onStoreChange: () => void) {
+  queueMicrotask(onStoreChange);
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
 }
