@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Google Drive या Google Docs URL पेस्ट करें।",
     "addGoogleDriveFile": "Google Drive फ़ाइल जोड़ें",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "संसाधन जोड़ें"
+    "addResource": "संसाधन जोड़ें",
+    "addYouTubeVideo": "YouTube वीडियो जोड़ें",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "मान्य YouTube URL पेस्ट करें।",
+    "embedVideo": "वीडियो एम्बेड करें"
   },
   "Review": {
     "title": "लक्ष्य समीक्षा करें",

@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Fakapipiki ha Google Drive pe Google Docs URL.",
     "addGoogleDriveFile": "Tānaki Faile Google Drive",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "Tānaki Maʻuʻanga Tokoni"
+    "addResource": "Tānaki Maʻuʻanga Tokoni",
+    "addYouTubeVideo": "Tānaki Vitiō YouTube",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "Fakapipiki ha YouTube URL totonu.",
+    "embedVideo": "Fakakau Vitiō"
   },
   "Review": {
     "title": "Vakai Taumuʻa",

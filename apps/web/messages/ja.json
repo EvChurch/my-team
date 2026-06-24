@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Google Drive または Google Docs の URL を貼り付けてください。",
     "addGoogleDriveFile": "Google Drive ファイルを追加",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "リソースを追加"
+    "addResource": "リソースを追加",
+    "addYouTubeVideo": "YouTube 動画を追加",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "有効な YouTube URL を貼り付けてください。",
+    "embedVideo": "動画を埋め込む"
   },
   "Review": {
     "title": "目標を確認",

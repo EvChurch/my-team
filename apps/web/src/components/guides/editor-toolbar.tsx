@@ -15,6 +15,7 @@ import {
   Loader2,
   Paperclip,
   HardDrive,
+  Youtube,
 } from "lucide-react";
 
 type EditorToolbarProps = {
@@ -23,6 +24,8 @@ type EditorToolbarProps = {
   onUploadImage?: (file: File) => void | Promise<void>;
   onUploadFile?: (file: File) => void | Promise<void>;
   onAddDriveFile?: () => void;
+  onAddYouTubeVideo?: () => void;
+  youtubeTitle: string;
 };
 
 export function EditorToolbar({
@@ -31,6 +34,8 @@ export function EditorToolbar({
   onUploadImage,
   onUploadFile,
   onAddDriveFile,
+  onAddYouTubeVideo,
+  youtubeTitle,
 }: EditorToolbarProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,6 +186,15 @@ export function EditorToolbar({
         title="Add Google Drive File"
       >
         <HardDrive className="w-4 h-4" />
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={() => onAddYouTubeVideo?.()}
+        isActive={editor.isActive("youtube")}
+        disabled={!onAddYouTubeVideo}
+        title={youtubeTitle}
+      >
+        <Youtube className="w-4 h-4" />
       </ToolbarButton>
     </div>
   );

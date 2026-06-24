@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Google Drive 또는 Google Docs URL을 붙여넣으세요.",
     "addGoogleDriveFile": "Google Drive 파일 추가",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "리소스 추가"
+    "addResource": "리소스 추가",
+    "addYouTubeVideo": "YouTube 동영상 추가",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "올바른 YouTube URL을 붙여넣으세요.",
+    "embedVideo": "동영상 삽입"
   },
   "Review": {
     "title": "목표 검토",

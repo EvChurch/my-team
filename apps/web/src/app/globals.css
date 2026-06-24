@@ -222,6 +222,21 @@ label[for] {
   border-radius: 0.5rem;
   margin: 0.75rem 0;
 }
+.guide-content div[data-youtube-video],
+.guide-editor-content div[data-youtube-video] {
+  aspect-ratio: 16 / 9;
+  margin: 0.75rem 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--bg-muted);
+}
+.guide-content .guide-youtube-iframe,
+.guide-editor-content .guide-youtube-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
 .guide-content strong {
   font-weight: 600;
   color: var(--text-primary);

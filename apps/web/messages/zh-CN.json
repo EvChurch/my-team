@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "请粘贴 Google Drive 或 Google Docs 网址。",
     "addGoogleDriveFile": "添加 Google Drive 文件",
     "googleDriveUrlLabel": "Google Drive 网址",
-    "addResource": "添加资源"
+    "addResource": "添加资源",
+    "addYouTubeVideo": "添加 YouTube 视频",
+    "youtubeUrlLabel": "YouTube 网址",
+    "invalidYouTubeUrl": "请粘贴有效的 YouTube 网址。",
+    "embedVideo": "嵌入视频"
   },
   "Review": {
     "title": "审核目标",

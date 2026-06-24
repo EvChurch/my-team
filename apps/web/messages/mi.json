@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Whakapirihia he URL Google Drive, Google Docs rānei.",
     "addGoogleDriveFile": "Tāpiri Kōnae Google Drive",
     "googleDriveUrlLabel": "URL Google Drive",
-    "addResource": "Tāpiri Rauemi"
+    "addResource": "Tāpiri Rauemi",
+    "addYouTubeVideo": "Tāpiri Ataata YouTube",
+    "youtubeUrlLabel": "URL YouTube",
+    "invalidYouTubeUrl": "Whakapirihia he URL YouTube tika.",
+    "embedVideo": "Whakamau Ataata"
   },
   "Review": {
     "title": "Arotake Whāinga",

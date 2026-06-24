@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import Youtube from "@tiptap/extension-youtube";
 import { renderToHTMLString } from "@tiptap/static-renderer/pm/html-string";
 import { ResourceCard } from "./resource-card-extension";
 
@@ -27,6 +28,14 @@ export function GuideContentRenderer({ content }: GuideContentRendererProps) {
             heading: { levels: [1, 2, 3] },
           }),
           Image,
+          Youtube.configure({
+            nocookie: true,
+            width: 640,
+            height: 360,
+            HTMLAttributes: {
+              class: "guide-youtube-iframe",
+            },
+          }),
           ResourceCard,
         ],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Paste a Google Drive or Google Docs URL.",
     "addGoogleDriveFile": "Add Google Drive File",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "Add Resource"
+    "addResource": "Add Resource",
+    "addYouTubeVideo": "Add YouTube Video",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "Paste a valid YouTube URL.",
+    "embedVideo": "Embed Video"
   },
   "Review": {
     "title": "Review Goals",

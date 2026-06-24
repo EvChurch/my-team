@@ -44,6 +44,9 @@ importers:
       '@tiptap/extension-image':
         specifier: 3.20.4
         version: 3.20.4(@tiptap/core@3.20.4(@tiptap/pm@3.20.4))
+      '@tiptap/extension-youtube':
+        specifier: 3.20.4
+        version: 3.20.4(@tiptap/core@3.20.4(@tiptap/pm@3.20.4))
       '@tiptap/pm':
         specifier: 3.20.4
         version: 3.20.4
@@ -1710,6 +1713,11 @@ packages:
 
   '@tiptap/extension-underline@3.20.4':
     resolution: {integrity: sha512-0OjMc3FDujX16G+jhvqcY/mLot8SrNtDu8ggUwNLAfiI/QIvMVgk7giFD71DATC/4Nb8i/iwAEegTD8MxBIXCg==}
+    peerDependencies:
+      '@tiptap/core': ^3.20.4
+
+  '@tiptap/extension-youtube@3.20.4':
+    resolution: {integrity: sha512-CGwoYqaZKAlY0nju0Bq7ynlGs2GJCg4/oWHAAwgNSdTrCqz8SHa1keh99ZYHy2wmVvFVXOUipIfhI6+u3E81Bg==}
     peerDependencies:
       '@tiptap/core': ^3.20.4
 
@@ -5574,6 +5582,10 @@ snapshots:
       '@tiptap/core': 3.20.4(@tiptap/pm@3.20.4)
 
   '@tiptap/extension-underline@3.20.4(@tiptap/core@3.20.4(@tiptap/pm@3.20.4))':
+    dependencies:
+      '@tiptap/core': 3.20.4(@tiptap/pm@3.20.4)
+
+  '@tiptap/extension-youtube@3.20.4(@tiptap/core@3.20.4(@tiptap/pm@3.20.4))':
     dependencies:
       '@tiptap/core': 3.20.4(@tiptap/pm@3.20.4)
 

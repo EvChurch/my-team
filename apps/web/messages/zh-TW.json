@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "請貼上 Google Drive 或 Google Docs 網址。",
     "addGoogleDriveFile": "新增 Google Drive 檔案",
     "googleDriveUrlLabel": "Google Drive 網址",
-    "addResource": "新增資源"
+    "addResource": "新增資源",
+    "addYouTubeVideo": "新增 YouTube 影片",
+    "youtubeUrlLabel": "YouTube 網址",
+    "invalidYouTubeUrl": "請貼上有效的 YouTube 網址。",
+    "embedVideo": "嵌入影片"
   },
   "Review": {
     "title": "審核目標",

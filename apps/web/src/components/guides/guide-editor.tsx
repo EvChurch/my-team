@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import Youtube, { isValidYoutubeUrl } from "@tiptap/extension-youtube";
 import { useTranslations } from "next-intl";
 import { useTRPC } from "@mt/api/client";
 import { useToast } from "@/components/ui/toast";
@@ -45,6 +46,8 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   const [driveUrl, setDriveUrl] = useState("");
   const [driveTitle, setDriveTitle] = useState("");
+  const [isYouTubeDialogOpen, setIsYouTubeDialogOpen] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [editingResourcePosition, setEditingResourcePosition] = useState<
     number | null
   >(null);
@@ -59,6 +62,14 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
         heading: { levels: [1, 2, 3] },
       }),
       Image,
+      Youtube.configure({
+        nocookie: true,
+        width: 640,
+        height: 360,
+        HTMLAttributes: {
+          class: "guide-youtube-iframe",
+        },
+      }),
       ResourceCard,
     ],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -188,6 +199,34 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
     setIsDriveDialogOpen(true);
   };
 
+  const resetYouTubeDialog = () => {
+    setYoutubeUrl("");
+    setIsYouTubeDialogOpen(false);
+  };
+
+  const openYouTubeDialog = () => {
+    setYoutubeUrl("");
+    setIsYouTubeDialogOpen(true);
+  };
+
+  const saveYouTubeVideo = () => {
+    const url = youtubeUrl.trim();
+
+    if (!isValidYoutubeUrl(url)) {
+      toast(t("invalidYouTubeUrl"), "error");
+      return;
+    }
+
+    editor
+      ?.chain()
+      .focus()
+      .setYoutubeVideo({ src: url, width: 640, height: 360 })
+      .insertContent({ type: "paragraph" })
+      .run();
+
+    resetYouTubeDialog();
+  };
+
   const saveDriveFile = () => {
     let parsed: URL;
     try {
@@ -293,6 +332,8 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
         onUploadImage={uploadImage}
         onUploadFile={uploadFile}
         onAddDriveFile={openDriveDialog}
+        onAddYouTubeVideo={openYouTubeDialog}
+        youtubeTitle={t("addYouTubeVideo")}
       />
       <EditorContent
         editor={editor}
@@ -346,6 +387,45 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
                 {editingResourcePosition === null
                   ? t("addResource")
                   : tCommon("save")}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+      {isYouTubeDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <Card className="w-full max-w-md p-5">
+            <h2 className="text-lg font-semibold text-text-primary">
+              {t("addYouTubeVideo")}
+            </h2>
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="text-xs font-medium text-text-secondary">
+                  {t("youtubeUrlLabel")}
+                </span>
+                <input
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(event) => setYoutubeUrl(event.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="mt-1 w-full rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={resetYouTubeDialog}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={saveYouTubeVideo}
+                disabled={!youtubeUrl.trim()}
+              >
+                {t("embedVideo")}
               </Button>
             </div>
           </Card>

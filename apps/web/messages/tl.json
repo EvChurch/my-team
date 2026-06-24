@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Mag-paste ng Google Drive o Google Docs URL.",
     "addGoogleDriveFile": "Magdagdag ng Google Drive File",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "Magdagdag ng Resource"
+    "addResource": "Magdagdag ng Resource",
+    "addYouTubeVideo": "Magdagdag ng YouTube Video",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "Mag-paste ng valid na YouTube URL.",
+    "embedVideo": "I-embed ang Video"
   },
   "Review": {
     "title": "Suriin ang mga Layunin",

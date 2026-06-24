@@ -226,7 +226,11 @@
     "invalidGoogleDriveUrl": "Faapipii se Google Drive po'o Google Docs URL.",
     "addGoogleDriveFile": "Faaopoopo Faila Google Drive",
     "googleDriveUrlLabel": "Google Drive URL",
-    "addResource": "Faaopoopo Punaoa"
+    "addResource": "Faaopoopo Punaoa",
+    "addYouTubeVideo": "Faaopoopo Vitio YouTube",
+    "youtubeUrlLabel": "YouTube URL",
+    "invalidYouTubeUrl": "Faapipii se YouTube URL aoga.",
+    "embedVideo": "Faapipii Vitio"
   },
   "Review": {
     "title": "Iloilo Sini",
