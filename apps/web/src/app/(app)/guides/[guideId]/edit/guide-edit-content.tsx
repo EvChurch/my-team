@@ -13,6 +13,7 @@ import { GuideEditor } from "@/components/guides/guide-editor";
 import { GuideCategorySelect } from "@/components/guides/guide-category-select";
 import { GuideRoleSelect } from "@/components/guides/guide-role-select";
 import { MobileCompactGuideHeader } from "@/components/guides/mobile-compact-guide-header";
+import { MobileBottomBarShell } from "@/components/layout/mobile-bottom-bar-shell";
 import { useToast } from "@/components/ui/toast";
 
 type GuideEditContentProps = {
@@ -107,11 +108,23 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   const isSaving = updateMutation.isPending || publishMutation.isPending;
   const positions = team.positions ?? [];
   const mobileActionLabelClass = "text-[10px] font-semibold uppercase tracking-[0.5px]";
+  const mobileActionClass =
+    "relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors duration-300";
   const mobileEditActions = (
     <>
+      <div
+        className="absolute rounded-[26px] bg-accent"
+        style={{
+          left: "calc(66.6667% + 4px)",
+          width: "calc(33.3333% - 8px)",
+          top: "50%",
+          transform: "translateY(-50%)",
+          height: "calc(100% - 10px)",
+        }}
+      />
       <button
         type="button"
-        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] text-error transition-colors hover:bg-error/10"
+        className={`${mobileActionClass} text-error hover:text-error/80`}
         onClick={() => setShowDeleteConfirm(true)}
       >
         <Trash2 className="h-5 w-5" />
@@ -119,14 +132,14 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
       </button>
       <Link
         href={guideHref}
-        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] text-text-tab-inactive transition-colors hover:bg-bg-muted hover:text-text-primary"
+        className={`${mobileActionClass} text-text-tab-inactive hover:text-text-primary`}
       >
         <X className="h-5 w-5" />
         <span className={mobileActionLabelClass}>{tCommon("cancel")}</span>
       </Link>
       <button
         type="button"
-        className="relative z-10 flex h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] bg-accent text-text-on-accent transition-colors hover:bg-accent-dark disabled:pointer-events-none disabled:opacity-50"
+        className={`${mobileActionClass} text-text-on-accent disabled:pointer-events-none disabled:opacity-50`}
         onClick={handleSave}
         disabled={isSaving || !title.trim()}
       >
@@ -139,7 +152,7 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
   );
 
   return (
-    <div className="space-y-5 pb-40 md:pb-0">
+    <div className="space-y-5">
       <MobileCompactGuideHeader
         backHref={guideHref}
         backLabel={t("backToGuide")}
@@ -183,19 +196,9 @@ export function GuideEditContent({ guideId }: GuideEditContentProps) {
         onChange={setContent}
       />
 
-      <div className="fixed bottom-4 left-4 right-4 z-[60] md:hidden">
-        <div
-          className="relative flex h-[62px] items-center justify-around rounded-[36px] border border-border px-1 shadow-[var(--shadow-card-strong)]"
-          style={{
-            backgroundColor:
-              "color-mix(in srgb, var(--bg-card) 35%, transparent)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-          }}
-        >
-          {mobileEditActions}
-        </div>
-      </div>
+      <MobileBottomBarShell className="z-[60]">
+        {mobileEditActions}
+      </MobileBottomBarShell>
 
       <div className="hidden rounded-xl border border-border bg-bg-page/95 px-4 py-3 shadow-[var(--shadow-card)] md:block">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
