@@ -10,10 +10,6 @@ export function MobileTabBar() {
   const pathname = usePathname();
   const t = useTranslations("Navigation");
 
-  if (pathname.startsWith("/guides/") && pathname.endsWith("/edit")) {
-    return null;
-  }
-
   const activeIndex = navItems.findIndex(
     (item) =>
       pathname === item.href || pathname.startsWith(`${item.href}/`)
