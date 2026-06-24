@@ -33,6 +33,12 @@ type GuideEditorProps = {
   onChange: (json: unknown) => void;
 };
 
+type YouTubeMessageKey =
+  | "addYouTubeVideo"
+  | "youtubeUrlLabel"
+  | "invalidYouTubeUrl"
+  | "embedVideo";
+
 /**
  * Rich text editor for guide content.
  * Uses Tiptap 3 with StarterKit + Image extension.
@@ -43,6 +49,22 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
   const { toast } = useToast();
   const t = useTranslations("Guides");
   const tCommon = useTranslations("Common");
+  const youtubeMessage = (key: YouTubeMessageKey, fallback: string) => {
+    try {
+      return t(key);
+    } catch {
+      return fallback;
+    }
+  };
+  const youtubeCopy = {
+    addYouTubeVideo: youtubeMessage("addYouTubeVideo", "Add YouTube Video"),
+    youtubeUrlLabel: youtubeMessage("youtubeUrlLabel", "YouTube URL"),
+    invalidYouTubeUrl: youtubeMessage(
+      "invalidYouTubeUrl",
+      "Paste a valid YouTube URL.",
+    ),
+    embedVideo: youtubeMessage("embedVideo", "Embed Video"),
+  };
   const [isDriveDialogOpen, setIsDriveDialogOpen] = useState(false);
   const [driveUrl, setDriveUrl] = useState("");
   const [driveTitle, setDriveTitle] = useState("");
@@ -213,7 +235,7 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
     const url = youtubeUrl.trim();
 
     if (!isValidYoutubeUrl(url)) {
-      toast(t("invalidYouTubeUrl"), "error");
+      toast(youtubeCopy.invalidYouTubeUrl, "error");
       return;
     }
 
@@ -333,7 +355,7 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
         onUploadFile={uploadFile}
         onAddDriveFile={openDriveDialog}
         onAddYouTubeVideo={openYouTubeDialog}
-        youtubeTitle={t("addYouTubeVideo")}
+        youtubeTitle={youtubeCopy.addYouTubeVideo}
       />
       <EditorContent
         editor={editor}
@@ -396,12 +418,12 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <Card className="w-full max-w-md p-5">
             <h2 className="text-lg font-semibold text-text-primary">
-              {t("addYouTubeVideo")}
+              {youtubeCopy.addYouTubeVideo}
             </h2>
             <div className="mt-4 space-y-3">
               <label className="block">
                 <span className="text-xs font-medium text-text-secondary">
-                  {t("youtubeUrlLabel")}
+                  {youtubeCopy.youtubeUrlLabel}
                 </span>
                 <input
                   type="url"
@@ -425,7 +447,7 @@ export function GuideEditor({ content, teamId, onChange }: GuideEditorProps) {
                 onClick={saveYouTubeVideo}
                 disabled={!youtubeUrl.trim()}
               >
-                {t("embedVideo")}
+                {youtubeCopy.embedVideo}
               </Button>
             </div>
           </Card>
