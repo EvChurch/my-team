@@ -40,6 +40,9 @@ export function GuideDetailContent({
   const isLeader = teams.some((t) => t.id === guide.teamId && t.isLeader);
   const backHref = backToTeam ? `/teams/${guide.teamId}?tab=guides` : "/guides";
   const backLabel = backToTeam ? (guide.team?.name ?? t("title")) : t("title");
+  const editHref = backToTeam
+    ? `/teams/${guide.teamId}/guides/${guideId}/edit`
+    : `/guides/${guideId}/edit`;
   const categoryMeta = getCategoryMeta(guide.category, t);
 
   return (
@@ -68,7 +71,7 @@ export function GuideDetailContent({
             {isLeader && (
               <div className="flex shrink-0 items-center gap-2">
                 <Link
-                  href={`/guides/${guideId}/edit`}
+                  href={editHref}
                   className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-accent bg-transparent px-3 text-sm font-semibold text-accent transition-colors hover:bg-accent-light/30"
                 >
                   <Pencil className="w-3.5 h-3.5" />
