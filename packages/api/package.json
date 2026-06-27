@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "test": "vitest run"
   },
   "exports": {
     "./db": "./src/db.ts",
@@ -38,6 +39,7 @@
     "next-auth": "beta",
     "prisma": "^7.5",
     "react": "19.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

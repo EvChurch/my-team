@@ -11,6 +11,7 @@
     "dev:app": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "test": "turbo test",
     "type-check": "turbo type-check"
   },
   "devDependencies": {

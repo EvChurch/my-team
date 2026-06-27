@@ -56,6 +56,38 @@ enum ScheduleStatus {
   DECLINED
 }
 
+enum TrainingModuleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TrainingScopeType {
+  CHURCH
+  PURPOSE
+  CAMPUS
+  PURPOSE_CAMPUS
+  TEAM
+  ROLE
+}
+
+enum TrainingRequirementSource {
+  COMPULSORY
+  TEAM_ONBOARDING
+  ROLE_ONBOARDING
+}
+
+enum TrainingCompletionMode {
+  ACKNOWLEDGE
+  QUIZ_ATTEMPT
+  QUIZ_PASS
+}
+
+enum TrainingExpiryBehavior {
+  BLOCKING
+  NON_BLOCKING
+}
+
 // --- PCO-synced models (read-only from app perspective) ---
 
 model Person {
@@ -74,7 +106,7 @@ model Person {
   leaders     Leader[]
   assignments Assignment[]
 
-  schedules         Schedule[]
+  schedules Schedule[]
 
   profileIdentities ProfileIdentity[]
 
@@ -92,26 +124,30 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  authAccounts     AuthAccount[]
-  identities       ProfileIdentity[]
-  mergeCandidates  ProfileMergeCandidate[] @relation("MergeCandidateProfile")
-  duplicateMatches ProfileMergeCandidate[] @relation("MergeCandidateDuplicate")
-  goalsOwned       Goal[]                  @relation("GoalOwner")
-  goalsReviewed    Goal[]                  @relation("GoalReviewer")
-  feedbackAuthored Feedback[]              @relation("FeedbackAuthor")
-  feedbackReceived Feedback[]              @relation("FeedbackRecipient")
-  guidesAuthored   Guide[]
-  preferences      UserPreference?
+  authAccounts            AuthAccount[]
+  identities              ProfileIdentity[]
+  mergeCandidates         ProfileMergeCandidate[] @relation("MergeCandidateProfile")
+  duplicateMatches        ProfileMergeCandidate[] @relation("MergeCandidateDuplicate")
+  goalsOwned              Goal[]                  @relation("GoalOwner")
+  goalsReviewed           Goal[]                  @relation("GoalReviewer")
+  feedbackAuthored        Feedback[]              @relation("FeedbackAuthor")
+  feedbackReceived        Feedback[]              @relation("FeedbackRecipient")
+  guidesAuthored          Guide[]
+  trainingModulesAuthored TrainingModule[]        @relation("TrainingModuleAuthor")
+  trainingCompletions     TrainingCompletion[]
+  trainingQuizAttempts    TrainingQuizAttempt[]
+  trainingScopeOwnerships TrainingScopeOwner[]
+  preferences             UserPreference?
 }
 
 model AuthAccount {
-  id              String   @id @default(cuid())
-  profileId       String
-  provider        String
+  id                String   @id @default(cuid())
+  profileId         String
+  provider          String
   providerAccountId String
-  email           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  email             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -172,23 +208,25 @@ model ServiceType {
 }
 
 model Team {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   remoteId      String
   provider      Provider
   name          String
   description   Json?
   serviceTypeId String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  serviceType ServiceType? @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
-  leaders     Leader[]
-  positions   Position[]
-  goals       Goal[]
-  feedback    Feedback[]
-  guides      Guide[]
-  guideSections GuideSection[]
-  schedules   Schedule[]
+  serviceType          ServiceType?          @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
+  leaders              Leader[]
+  positions            Position[]
+  goals                Goal[]
+  feedback             Feedback[]
+  guides               Guide[]
+  guideSections        GuideSection[]
+  trainingScopes       TrainingScope[]
+  trainingRequirements TrainingRequirement[]
+  schedules            Schedule[]
 
   @@unique([remoteId, provider])
 }
@@ -203,9 +241,11 @@ model Position {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  assignments Assignment[]
-  guides      Guide[]      @relation("GuideRole")
+  team                 Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignments          Assignment[]
+  guides               Guide[]               @relation("GuideRole")
+  trainingScopes       TrainingScope[]
+  trainingRequirements TrainingRequirement[]
 
   @@unique([remoteId, provider])
   @@index([teamId])
@@ -275,7 +315,7 @@ model Schedule {
 }
 
 model PlanTime {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   remoteId   String
   provider   Provider
   scheduleId String
@@ -283,8 +323,8 @@ model PlanTime {
   timeType   String?
   startsAt   DateTime?
   endsAt     DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 
@@ -308,7 +348,7 @@ model Goal {
   updatedAt   DateTime   @updatedAt
 
   person   Profile? @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
-  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   reviewer Profile? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
   @@index([personId])
@@ -330,7 +370,7 @@ model Feedback {
 
   author    Profile? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   recipient Profile? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
-  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@index([recipientId])
@@ -354,10 +394,11 @@ model Guide {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  author  Profile?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  team    Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  role    Position?     @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
-  section GuideSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  author          Profile?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  team            Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role            Position?        @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
+  section         GuideSection?    @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  trainingModules TrainingModule[]
 
   @@index([teamId])
   @@index([teamId, status])
@@ -380,6 +421,134 @@ model GuideSection {
   guides Guide[]
 
   @@index([teamId, sortOrder])
+}
+
+model TrainingScope {
+  id         String            @id @default(cuid())
+  type       TrainingScopeType
+  name       String
+  purposeKey String?
+  campusKey  String?
+  teamId     String?
+  positionId String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  team         Team?                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  position     Position?             @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  owners       TrainingScopeOwner[]
+  modules      TrainingModule[]
+  requirements TrainingRequirement[]
+
+  @@index([type])
+  @@index([teamId])
+  @@index([positionId])
+  @@index([purposeKey])
+  @@index([campusKey])
+}
+
+model TrainingScopeOwner {
+  id        String   @id @default(cuid())
+  scopeId   String
+  profileId String
+  createdAt DateTime @default(now())
+
+  scope   TrainingScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  profile Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([scopeId, profileId])
+  @@index([profileId])
+}
+
+model TrainingModule {
+  id             String                 @id @default(cuid())
+  title          String
+  description    String?
+  content        Json?
+  status         TrainingModuleStatus   @default(DRAFT)
+  scopeId        String?
+  guideId        String?
+  authorId       String?
+  completionMode TrainingCompletionMode @default(ACKNOWLEDGE)
+  quiz           Json?
+  passingScore   Int?
+  version        Int                    @default(1)
+  expiryDays     Int?
+  expiryBehavior TrainingExpiryBehavior @default(BLOCKING)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  scope        TrainingScope?        @relation(fields: [scopeId], references: [id], onDelete: SetNull)
+  guide        Guide?                @relation(fields: [guideId], references: [id], onDelete: SetNull)
+  author       Profile?              @relation("TrainingModuleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  requirements TrainingRequirement[]
+  completions  TrainingCompletion[]
+  quizAttempts TrainingQuizAttempt[]
+
+  @@index([scopeId])
+  @@index([guideId])
+  @@index([authorId])
+  @@index([status])
+}
+
+model TrainingRequirement {
+  id         String                    @id @default(cuid())
+  moduleId   String
+  source     TrainingRequirementSource
+  scopeId    String?
+  teamId     String?
+  positionId String?
+  sortOrder  Int                       @default(0)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+
+  module   TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  scope    TrainingScope? @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  team     Team?          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  position Position?      @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+  @@index([scopeId])
+  @@index([teamId])
+  @@index([positionId])
+  @@index([source])
+}
+
+model TrainingCompletion {
+  id             String    @id @default(cuid())
+  profileId      String
+  moduleId       String
+  moduleVersion  Int
+  completedAt    DateTime  @default(now())
+  expiresAt      DateTime?
+  requiresRedoAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  module  TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, moduleId])
+  @@index([moduleId])
+  @@index([expiresAt])
+}
+
+model TrainingQuizAttempt {
+  id            String   @id @default(cuid())
+  profileId     String
+  moduleId      String
+  moduleVersion Int
+  answers       Json
+  score         Int?
+  passed        Boolean?
+  attemptedAt   DateTime @default(now())
+
+  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  module  TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, moduleId])
+  @@index([moduleId])
+  @@index([attemptedAt])
 }
 
 model UserPreference {
