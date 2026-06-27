@@ -75,6 +75,24 @@ export function CourseCreateContent({
   teamId,
   positionId,
 }: CourseCreateContentProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setIsMounted(true), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="fixed inset-0 z-50 bg-bg-card" />;
+  }
+
+  return <CourseCreateContentInner teamId={teamId} positionId={positionId} />;
+}
+
+function CourseCreateContentInner({
+  teamId,
+  positionId,
+}: CourseCreateContentProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -82,8 +100,8 @@ export function CourseCreateContent({
   const t = useTranslations("TrainingAdmin");
   const tCommon = useTranslations("Common");
   const draftKey = getCourseBuilderDraftKey(teamId, positionId);
-  const [initialDraft] = useState(() => readCourseBuilderDraft(draftKey));
-  const idCounter = useRef(getNextPageIdSeed(initialDraft?.pages));
+  const hasLoadedDraft = useRef(false);
+  const idCounter = useRef(1);
   const editorRef = useRef<CourseEditorHandle>(null);
   const pageSensors = useSensors(
     useSensor(PointerSensor),
@@ -111,31 +129,23 @@ export function CourseCreateContent({
     ? (selectedPosition.name ?? t("unnamedRole"))
     : t("defaultTeamScope");
   const backHref = `/teams/${teamId}?tab=training&trainingMode=manage`;
-  const [title, setTitle] = useState(initialDraft?.title ?? "");
-  const [description, setDescription] = useState(
-    initialDraft?.description ?? "",
-  );
-  const [selectedPageId, setSelectedPageId] = useState(
-    initialDraft?.selectedPageId ?? "page-1",
-  );
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedPageId, setSelectedPageId] = useState("page-1");
   const [settingsTab, setSettingsTab] = useState<"document" | "block">(
-    initialDraft?.settingsTab ?? "document",
+    "document",
   );
   const [selectedBlock, setSelectedBlock] = useState<CourseEditorBlock | null>(
     null,
   );
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [pages, setPages] = useState<CoursePage[]>(
-    initialDraft?.pages.length
-      ? initialDraft.pages
-      : [
-          {
-            id: "page-1",
-            title: t("firstPageTitle"),
-            blocks: [],
-          },
-        ],
-  );
+  const [pages, setPages] = useState<CoursePage[]>([
+    {
+      id: "page-1",
+      title: t("firstPageTitle"),
+      blocks: [],
+    },
+  ]);
   const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0];
   const selectedBlockForInspector = selectedBlock
     ? (findBlockById(selectedPage.blocks, selectedBlock.id) ?? selectedBlock)
@@ -149,6 +159,28 @@ export function CourseCreateContent({
     title.trim().length > 0 && pages.some((page) => pageHasContent(page));
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const draft = readCourseBuilderDraft(draftKey);
+
+      if (draft) {
+        idCounter.current = getNextPageIdSeed(draft.pages);
+        setTitle(draft.title);
+        setDescription(draft.description);
+        setPages(draft.pages);
+        setSelectedPageId(draft.selectedPageId);
+        setSettingsTab(draft.settingsTab);
+        setSelectedBlock(null);
+      }
+
+      hasLoadedDraft.current = true;
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!hasLoadedDraft.current) return;
+
     const timeoutId = window.setTimeout(() => {
       writeCourseBuilderDraft(draftKey, {
         description,
