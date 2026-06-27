@@ -7,6 +7,7 @@ import { peopleRouter } from "./people";
 import { schedulesRouter } from "./schedules";
 import { plansRouter } from "./plans";
 import { preferencesRouter } from "./preferences";
+import { trainingRouter } from "./training";
 
 export const appRouter = createTRPCRouter({
   teams: teamsRouter,
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   schedules: schedulesRouter,
   plans: plansRouter,
   preferences: preferencesRouter,
+  training: trainingRouter,
 });
 
 export type AppRouter = typeof appRouter;

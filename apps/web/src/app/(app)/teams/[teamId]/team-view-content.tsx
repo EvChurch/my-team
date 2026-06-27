@@ -13,6 +13,7 @@ import {
   Clock,
   Users,
   BookOpen,
+  ClipboardCheck,
   Target,
   MessageSquare,
   MessageSquarePlus,
@@ -29,6 +30,9 @@ import { UpcomingServing } from "@/components/teams/upcoming-serving";
 import { LeaderBar } from "@/components/teams/leader-bar";
 import { Avatar } from "@/components/ui/avatar";
 import { TeamGuideSections } from "@/components/guides/team-guide-sections";
+import { TeamTrainingCompliance } from "@/components/training/team-training-compliance";
+import { TeamTrainingOverview } from "@/components/training/team-training-overview";
+import { TeamTrainingContent } from "./training/team-training-content";
 import { useTimezone } from "@/lib/timezone";
 import { formatDate, formatTime } from "@/lib/format-date";
 
@@ -36,9 +40,24 @@ type TeamViewContentProps = {
   teamId: string;
 };
 
-type Tab = "serving" | "members" | "goals" | "guides" | "feedback" | "about";
+type Tab =
+  | "serving"
+  | "members"
+  | "goals"
+  | "guides"
+  | "training"
+  | "feedback"
+  | "about";
 
-const tabs = ["serving", "members", "goals", "guides", "feedback", "about"] as const;
+const tabs = [
+  "serving",
+  "members",
+  "goals",
+  "guides",
+  "training",
+  "feedback",
+  "about",
+] as const;
 
 function isTab(value: string | null): value is Tab {
   return tabs.some((tab) => tab === value);
@@ -343,6 +362,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       { value: "members", label: t("membersTab") },
       { value: "goals", label: t("goalsTab") },
       { value: "guides", label: t("guidesTab") },
+      { value: "training", label: t("trainingTab") },
       { value: "feedback", label: t("feedbackTab") },
       ...(team.description
         ? [{ value: "about" as Tab, label: t("aboutTab") }]
@@ -352,6 +372,7 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
   );
 
   const requestedTab = searchParams.get("tab");
+  const requestedTrainingMode = searchParams.get("trainingMode");
   const defaultTab = isTab(requestedTab)
     ? requestedTab
     : hasServingTab
@@ -359,6 +380,9 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       : "members";
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const [isArrangingGuides, setIsArrangingGuides] = useState(false);
+  const [isManagingTraining, setIsManagingTraining] = useState(
+    defaultTab === "training" && requestedTrainingMode === "manage",
+  );
   const selectedTab = allTabs.some((tab) => tab.value === activeTab)
     ? activeTab
     : (allTabs[0]?.value ?? "members");
@@ -484,6 +508,10 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
 
       {selectedTab === "members" && (
         <div className="space-y-4">
+          {team.isCurrentUserLeader ? (
+            <TeamTrainingCompliance teamId={teamId} />
+          ) : null}
+
           {/* Leaders */}
           {leaders.length > 0 && (
             <Card className="p-4">
@@ -630,6 +658,54 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
                 className="py-6"
               />
             </Card>
+          )}
+        </div>
+      )}
+
+      {selectedTab === "training" && (
+        <div className="space-y-3">
+          {team.isCurrentUserLeader && (
+            <LeaderBar
+              href={`/teams/${teamId}?tab=training`}
+              icon={ClipboardCheck}
+              label={t("manageTraining")}
+              actionVisible={false}
+            >
+              <button
+                type="button"
+                aria-label={
+                  isManagingTraining
+                    ? t("doneEditingTraining")
+                    : t("manageTraining")
+                }
+                title={
+                  isManagingTraining
+                    ? t("doneEditingTraining")
+                    : t("manageTraining")
+                }
+                aria-pressed={isManagingTraining}
+                onClick={() => setIsManagingTraining((managing) => !managing)}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent transition-colors hover:bg-accent-light/30 ${
+                  isManagingTraining ? "bg-accent-light/30" : ""
+                }`}
+              >
+                {isManagingTraining ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Pencil className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </LeaderBar>
+          )}
+          {isManagingTraining ? (
+            <TeamTrainingContent
+              teamId={teamId}
+              mode="manage"
+              showBackLink={false}
+              showHeader={false}
+            />
+          ) : (
+            <TeamTrainingOverview teamId={teamId} />
           )}
         </div>
       )}
