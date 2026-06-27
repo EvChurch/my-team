@@ -266,6 +266,27 @@ export const BlockNoteCourseEditor = forwardRef<
   CourseEditorHandle,
   BlockNoteCourseEditorProps
 >(function BlockNoteCourseEditor(
+  props,
+  ref,
+) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setIsMounted(true), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="course-blocknote-editor min-h-[520px]" />;
+  }
+
+  return <BlockNoteCourseEditorInner {...props} ref={ref} />;
+});
+
+const BlockNoteCourseEditorInner = forwardRef<
+  CourseEditorHandle,
+  BlockNoteCourseEditorProps
+>(function BlockNoteCourseEditorInner(
   { initialContent, onChange, onSelectedBlockChange },
   ref,
 ) {
