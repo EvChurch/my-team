@@ -10,6 +10,14 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, HelpCircle } from "lucide-react";
 import { useTRPC } from "@mt/api/client";
+import {
+  evaluateCourseQuestionSubmission,
+  getCourseQuestionSubmissionAnswer,
+  parseCourseQuestionPages,
+  type CourseQuestionBlock,
+  type CourseQuestionEvaluation,
+  type CourseQuestionSubmission,
+} from "@mt/api/training/course-content";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +39,13 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
   );
   const quiz = parseQuiz(module.quiz);
   const course = parseCourse(module.content);
+  const courseQuestionPages = parseCourseQuestionPages(module.content);
   const [quizAnswerId, setQuizAnswerId] = useState("");
+  const [courseQuestionAnswers, setCourseQuestionAnswers] =
+    useState<CourseQuestionSubmission>({});
+  const [submittedCourseQuestionPages, setSubmittedCourseQuestionPages] = useState<
+    Record<string, CourseQuestionEvaluation>
+  >({});
   const [completedVideoBlockIds, setCompletedVideoBlockIds] = useState<
     Record<string, true>
   >({});
@@ -46,6 +60,14 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
     course && selectedCoursePage
       ? course.pages.findIndex((page) => page.id === selectedCoursePage.id)
       : -1;
+  const selectedCourseQuestionPage =
+    selectedCoursePage && courseQuestionPages.length > 0
+      ? (courseQuestionPages.find((page) => page.id === selectedCoursePage.id) ??
+        null)
+      : null;
+  const selectedCoursePageQuestionEvaluation = selectedCoursePage
+    ? submittedCourseQuestionPages[selectedCoursePage.id]
+    : undefined;
   const completeModule = useMutation(
     trpc.training.completeModule.mutationOptions(),
   );
@@ -64,11 +86,18 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
       (blockId) => !completedVideoBlockIds[blockId],
     ).length;
   const hasIncompleteRequiredVideos = firstIncompletePageIndex >= 0;
-  const isQuizLocked = Boolean(quiz && hasIncompleteRequiredVideos);
+  const isQuestionLocked = Boolean(quiz && hasIncompleteRequiredVideos);
+  const firstIncompleteQuestionPageIndex =
+    course?.pages.findIndex((page) => {
+      const questionPage = courseQuestionPages.find((item) => item.id === page.id);
+      if (!questionPage || questionPage.questions.length === 0) return false;
+      return submittedCourseQuestionPages[page.id]?.passed !== true;
+    }) ?? -1;
   const isCompleteDisabled =
     completeModule.isPending ||
     Boolean(quiz && !quizAnswerId) ||
-    hasIncompleteRequiredVideos;
+    hasIncompleteRequiredVideos ||
+    firstIncompleteQuestionPageIndex >= 0;
 
   function handleVideoComplete(blockId: string) {
     setCompletedVideoBlockIds((currentIds) => ({
@@ -79,7 +108,12 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
 
   function handleComplete() {
     completeModule.mutate(
-      { moduleId, quizAnswerId: quiz ? quizAnswerId : undefined },
+      {
+        moduleId,
+        quizAnswerId: quiz ? quizAnswerId : undefined,
+        courseQuestionAnswers:
+          courseQuestionPages.length > 0 ? courseQuestionAnswers : undefined,
+      },
       {
         onSuccess: async () => {
           await Promise.all([
@@ -98,6 +132,55 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
         },
       },
     );
+  }
+
+  function handleCourseQuestionAnswerChange(blockId: string, optionId: string) {
+    const questionBlock = courseQuestionPages
+      .flatMap((page) => page.questions)
+      .find((item) => item.id === blockId);
+    if (!questionBlock) return;
+
+    setCourseQuestionAnswers((currentAnswers) => {
+      const currentSelected = getCourseQuestionSubmissionAnswer(
+        currentAnswers,
+        blockId,
+      );
+      if (questionBlock.answerMode === "single") {
+        return { ...currentAnswers, [blockId]: optionId };
+      }
+
+      const nextSelected = currentSelected.includes(optionId)
+        ? currentSelected.filter((id) => id !== optionId)
+        : [...currentSelected, optionId];
+      return { ...currentAnswers, [blockId]: nextSelected };
+    });
+    setSubmittedCourseQuestionPages((currentPages) => {
+      if (!selectedCoursePage) return currentPages;
+      const nextPages = { ...currentPages };
+      delete nextPages[selectedCoursePage.id];
+      return nextPages;
+    });
+  }
+
+  function handleSubmitCoursePage() {
+    if (!selectedCoursePage || !selectedCourseQuestionPage) return;
+
+    const evaluation = evaluateCourseQuestionSubmission({
+      questions: selectedCourseQuestionPage.questions,
+      submission: courseQuestionAnswers,
+    });
+    setSubmittedCourseQuestionPages((currentPages) => ({
+      ...currentPages,
+      [selectedCoursePage.id]: evaluation,
+    }));
+  }
+
+  function handleNextCoursePage() {
+    if (!course || selectedCoursePageIndex < 0) return;
+    const nextPage = course.pages[selectedCoursePageIndex + 1];
+    if (nextPage) {
+      setSelectedCoursePageId(nextPage.id);
+    }
   }
 
   return (
@@ -134,12 +217,15 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
                 const isPageLocked =
                   firstIncompletePageIndex >= 0 &&
                   index > firstIncompletePageIndex;
+                const isQuestionPageLocked =
+                  firstIncompleteQuestionPageIndex >= 0 &&
+                  index > firstIncompleteQuestionPageIndex;
 
                 return (
                   <button
                     key={page.id}
                     type="button"
-                    disabled={isPageLocked}
+                    disabled={isPageLocked || isQuestionPageLocked}
                     onClick={() => setSelectedCoursePageId(page.id)}
                     className={`w-full rounded-xl px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       page.id === selectedCoursePage?.id
@@ -165,6 +251,11 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
                   </h2>
                   <BlockNoteCourseContent
                     blocks={selectedCoursePage.blocks}
+                    courseQuestionAnswers={courseQuestionAnswers}
+                    courseQuestionEvaluation={selectedCoursePageQuestionEvaluation}
+                    isQuestionLocked={incompleteSelectedPageVideoCount > 0}
+                    questionBlocks={selectedCourseQuestionPage?.questions ?? []}
+                    onQuestionAnswerChange={handleCourseQuestionAnswerChange}
                     onVideoComplete={handleVideoComplete}
                   />
                   {incompleteSelectedPageVideoCount > 0 ? (
@@ -173,6 +264,50 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
                         count: incompleteSelectedPageVideoCount,
                       })}
                     </p>
+                  ) : null}
+                  {selectedCourseQuestionPage?.questions.length ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-bg-muted px-3 py-3">
+                      <p className="text-sm font-medium text-text-secondary">
+                        {selectedCoursePageQuestionEvaluation
+                          ? selectedCoursePageQuestionEvaluation.passed
+                            ? t("quizPagePassed")
+                            : t("quizPageNeedsRetry")
+                          : t("quizInstructions")}
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={
+                          selectedCoursePageQuestionEvaluation?.passed
+                            ? selectedCoursePageIndex === course.pages.length - 1
+                              ? handleComplete
+                              : handleNextCoursePage
+                            : handleSubmitCoursePage
+                        }
+                        disabled={
+                          completeModule.isPending ||
+                          incompleteSelectedPageVideoCount > 0 ||
+                          (selectedCoursePageQuestionEvaluation?.passed === true &&
+                            selectedCoursePageIndex === course.pages.length - 1 &&
+                            Boolean(quiz && !quizAnswerId))
+                        }
+                      >
+                        {selectedCoursePageQuestionEvaluation?.passed
+                          ? selectedCoursePageIndex === course.pages.length - 1
+                            ? t("finishModule")
+                            : t("nextPage")
+                          : t("pageSubmit")}
+                      </Button>
+                    </div>
+                  ) : selectedCoursePageIndex < course.pages.length - 1 ? (
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={handleNextCoursePage}
+                        disabled={incompleteSelectedPageVideoCount > 0}
+                      >
+                        {t("nextPage")}
+                      </Button>
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -212,7 +347,7 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
               <p className="text-sm text-text-secondary">{quiz.question}</p>
             </div>
           </div>
-          {isQuizLocked ? (
+          {isQuestionLocked ? (
             <p className="mb-3 rounded-xl bg-bg-muted px-3 py-2 text-sm font-medium text-text-secondary">
               {t("requiredVideosRemaining", {
                 count: pageRequiredVideoBlockIds
@@ -229,14 +364,14 @@ export function TrainingModuleContent({ moduleId }: TrainingModuleContentProps) 
                   quizAnswerId === answer.id
                     ? "border-accent bg-accent-light/40 text-text-primary"
                     : "border-border bg-bg-muted text-text-secondary hover:bg-bg-page"
-                } ${isQuizLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+                } ${isQuestionLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
               >
                 <input
                   type="radio"
                   name="quiz-answer"
                   value={answer.id}
                   checked={quizAnswerId === answer.id}
-                  disabled={isQuizLocked}
+                  disabled={isQuestionLocked}
                   onChange={() => setQuizAnswerId(answer.id)}
                   className="h-4 w-4 accent-accent"
                 />
@@ -392,9 +527,19 @@ function parseBlockNoteBlock(block: unknown): BlockNoteBlock | null {
 
 function BlockNoteCourseContent({
   blocks,
+  courseQuestionAnswers,
+  courseQuestionEvaluation,
+  isQuestionLocked,
+  questionBlocks,
+  onQuestionAnswerChange,
   onVideoComplete,
 }: {
   blocks: BlockNoteBlock[];
+  courseQuestionAnswers: CourseQuestionSubmission;
+  courseQuestionEvaluation?: CourseQuestionEvaluation;
+  isQuestionLocked: boolean;
+  questionBlocks: CourseQuestionBlock[];
+  onQuestionAnswerChange: (blockId: string, optionId: string) => void;
   onVideoComplete: (blockId: string) => void;
 }) {
   return (
@@ -403,6 +548,11 @@ function BlockNoteCourseContent({
         <BlockNoteBlockView
           key={block.id}
           block={block}
+          courseQuestionAnswers={courseQuestionAnswers}
+          courseQuestionEvaluation={courseQuestionEvaluation}
+          isQuestionLocked={isQuestionLocked}
+          questionBlocks={questionBlocks}
+          onQuestionAnswerChange={onQuestionAnswerChange}
           onVideoComplete={onVideoComplete}
         />
       ))}
@@ -412,11 +562,22 @@ function BlockNoteCourseContent({
 
 function BlockNoteBlockView({
   block,
+  courseQuestionAnswers,
+  courseQuestionEvaluation,
+  isQuestionLocked,
+  questionBlocks,
+  onQuestionAnswerChange,
   onVideoComplete,
 }: {
   block: BlockNoteBlock;
+  courseQuestionAnswers: CourseQuestionSubmission;
+  courseQuestionEvaluation?: CourseQuestionEvaluation;
+  isQuestionLocked: boolean;
+  questionBlocks: CourseQuestionBlock[];
+  onQuestionAnswerChange: (blockId: string, optionId: string) => void;
   onVideoComplete: (blockId: string) => void;
 }) {
+  const t = useTranslations("Training");
   const text = blockNoteInlineText(block.content);
   const blockUrl =
     typeof block.props.url === "string" ? block.props.url : "";
@@ -429,6 +590,11 @@ function BlockNoteBlockView({
           <BlockNoteBlockView
             key={child.id}
             block={child}
+            courseQuestionAnswers={courseQuestionAnswers}
+            courseQuestionEvaluation={courseQuestionEvaluation}
+            isQuestionLocked={isQuestionLocked}
+            questionBlocks={questionBlocks}
+            onQuestionAnswerChange={onQuestionAnswerChange}
             onVideoComplete={onVideoComplete}
           />
         ))}
@@ -505,6 +671,123 @@ function BlockNoteBlockView({
         </a>
       );
     }
+  }
+  if (block.type === "question") {
+    const questionBlock = questionBlocks.find(
+      (question) => question.id === block.id,
+    );
+    if (!questionBlock) return null;
+
+    const result = courseQuestionEvaluation?.results.find(
+      (item) => item.blockId === block.id,
+    );
+    const selectedOptionIds = getCourseQuestionSubmissionAnswer(
+      courseQuestionAnswers,
+      block.id,
+    );
+
+    if (isQuestionLocked) {
+      return (
+        <div className="rounded-xl border border-border bg-bg-muted px-4 py-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-bg-card text-text-tertiary">
+              <HelpCircle className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">
+                {t("quizLockedTitle")}
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {t("quizLockedDesc")}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-border bg-bg-page px-4 py-4">
+        <div className="mb-3 flex items-start gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-light text-accent">
+            <HelpCircle className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+              {t("knowledgeCheck")}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-text-primary">
+              {questionBlock.prompt}
+            </p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {questionBlock.options.map((option) => {
+            const selected = selectedOptionIds.includes(option.id);
+            const feedback = result?.options.find((item) => item.id === option.id);
+            const showSelectedCorrect = Boolean(
+              result && feedback?.selected && feedback.correct,
+            );
+            const showMissedCorrect = Boolean(
+              result && feedback?.correct && !feedback.selected,
+            );
+            const showWrongSelection = Boolean(
+              result && feedback?.selected && !feedback.correct,
+            );
+
+            return (
+              <label
+                key={option.id}
+                className={[
+                  "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                  selected
+                    ? "border-accent bg-accent-light/40 text-text-primary"
+                    : "border-border bg-bg-card text-text-secondary hover:bg-bg-muted",
+                  showSelectedCorrect || showMissedCorrect
+                    ? "ring-1 ring-accent/40"
+                    : "",
+                  showWrongSelection ? "ring-1 ring-error/40" : "",
+                ].join(" ")}
+              >
+                <input
+                  type={
+                    questionBlock.answerMode === "multiple"
+                      ? "checkbox"
+                      : "radio"
+                  }
+                  name={`course-question-${block.id}`}
+                  value={option.id}
+                  checked={selected}
+                  onChange={() => onQuestionAnswerChange(block.id, option.id)}
+                  className="h-4 w-4 accent-accent"
+                />
+                <span className="min-w-0 flex-1">{option.text}</span>
+                {showSelectedCorrect ? (
+                  <Badge variant="accent">{t("quizCorrect")}</Badge>
+                ) : showMissedCorrect ? (
+                  <Badge variant="accent">{t("quizMissedCorrectAnswer")}</Badge>
+                ) : showWrongSelection ? (
+                  <Badge variant="warning">{t("quizSelectedWrongAnswer")}</Badge>
+                ) : null}
+              </label>
+            );
+          })}
+        </div>
+        {result ? (
+          <p
+            className={`mt-3 rounded-xl px-3 py-2 text-sm font-medium ${
+              result.passed
+                ? "bg-accent-light text-text-primary"
+                : result.blocking
+                  ? "bg-error/10 text-error"
+                  : "bg-bg-muted text-text-secondary"
+            }`}
+          >
+            {result.passed ? t("quizCorrect") : t("quizIncorrect")}
+          </p>
+        ) : null}
+      </div>
+    );
   }
   if (!text && !children) return null;
 
