@@ -2,6 +2,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, leaderProcedure, protectedProcedure } from "../init";
 import { prisma } from "../db";
+import {
+  evaluateCourseQuestionSubmission,
+  parseCourseQuestionPages,
+} from "../lib/training/course-content";
 import { calculateExpiry } from "../lib/training/validity";
 import { resolveTraining } from "../lib/training/resolve";
 
@@ -378,12 +382,21 @@ export const trainingRouter = createTRPCRouter({
     }),
 
   completeModule: protectedProcedure
-    .input(z.object({ moduleId: z.string(), quizAnswerId: z.string().optional() }))
+    .input(
+      z.object({
+        moduleId: z.string(),
+        quizAnswerId: z.string().optional(),
+        courseQuestionAnswers: z
+          .record(z.union([z.string(), z.array(z.string())]))
+          .optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const module = await prisma.trainingModule.findUniqueOrThrow({
         where: { id: input.moduleId },
         select: {
           id: true,
+          content: true,
           version: true,
           expiryDays: true,
           status: true,
@@ -397,6 +410,23 @@ export const trainingRouter = createTRPCRouter({
           code: "BAD_REQUEST",
           message: "Only published training modules can be completed.",
         });
+      }
+
+      const courseQuestionBlocks = parseCourseQuestionPages(module.content).flatMap(
+        (page) => page.questions,
+      );
+      if (courseQuestionBlocks.length > 0) {
+        const evaluation = evaluateCourseQuestionSubmission({
+          questions: courseQuestionBlocks,
+          submission: input.courseQuestionAnswers ?? {},
+        });
+
+        if (!evaluation.passed) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Answer the required course questions before completing this module.",
+          });
+        }
       }
 
       if (

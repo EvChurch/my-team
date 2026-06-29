@@ -23,6 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft,
   BookOpenCheck,
+  CircleHelp,
   FileText,
   GripVertical,
   Plus,
@@ -35,6 +36,10 @@ import {
 } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useTRPC } from "@mt/api/client";
+import {
+  ensureSingleCorrectCourseQuestionOption,
+  parseCourseQuestionOptions,
+} from "@mt/api/training/course-content";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -554,6 +559,7 @@ function BlockInspector({
   onUpdateProps: (props: Record<string, unknown>) => void;
 }) {
   const t = useTranslations("TrainingAdmin");
+  const tSafe = getTrainingAdminMessage(t);
 
   if (!block) {
     return (
@@ -574,6 +580,7 @@ function BlockInspector({
   }
 
   const isVideoBlock = block.type === "video";
+  const isQuestionBlock = block.type === "question";
   const blockName =
     typeof block.props.name === "string" ? block.props.name : "";
   const blockUrl = typeof block.props.url === "string" ? block.props.url : "";
@@ -588,6 +595,27 @@ function BlockInspector({
     typeof block.props.endTime === "number" && block.props.endTime > startTime
       ? block.props.endTime
       : duration;
+  const questionProgressBehavior =
+    block.props.progressBehavior === "ALLOW_CONTINUE"
+      ? "ALLOW_CONTINUE"
+      : "BLOCK_UNTIL_CORRECT";
+  const questionAnswerMode =
+    block.props.answerMode === "multiple" ? "multiple" : "single";
+  const questionOptions = parseCourseQuestionOptions(block.props.optionsJson, {
+    preserveEmpty: true,
+    ensureMinimum: true,
+  });
+
+  function updateQuestionAnswerMode(answerMode: "single" | "multiple") {
+    onUpdateProps({
+      answerMode,
+      optionsJson: JSON.stringify(
+        answerMode === "single"
+          ? ensureSingleCorrectCourseQuestionOption(questionOptions)
+          : questionOptions,
+      ),
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -596,13 +624,19 @@ function BlockInspector({
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-bg-muted text-accent">
             {isVideoBlock ? (
               <Video className="h-4 w-4" />
+            ) : isQuestionBlock ? (
+              <CircleHelp className="h-4 w-4" />
             ) : (
               <FileText className="h-4 w-4" />
             )}
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
-              {isVideoBlock ? t("videoBlock") : t("selectedBlock")}
+              {isVideoBlock
+                ? t("videoBlock")
+                : isQuestionBlock
+                  ? tSafe("questionBlock", "Question")
+                  : t("selectedBlock")}
             </p>
             <p className="text-xs text-text-secondary">
               {t("selectedBlockType", { type: block.type })}
@@ -737,6 +771,51 @@ function BlockInspector({
                 ].join(" ")}
               />
             </span>
+          </label>
+        </div>
+      ) : isQuestionBlock ? (
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+              {tSafe("questionType", "Question type")}
+            </span>
+            <select
+              value={questionAnswerMode}
+              onChange={(event) =>
+                updateQuestionAnswerMode(
+                  event.target.value === "multiple" ? "multiple" : "single",
+                )
+              }
+              className="w-full rounded-xl bg-bg-card px-3 py-2.5 text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
+            >
+              <option value="single">{t("singleAnswer")}</option>
+              <option value="multiple">{t("multipleAnswers")}</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+              {tSafe("questionProgressBehavior", "Progress behavior")}
+            </span>
+            <select
+              value={questionProgressBehavior}
+              onChange={(event) =>
+                onUpdateProps({
+                  progressBehavior:
+                    event.target.value === "ALLOW_CONTINUE"
+                      ? "ALLOW_CONTINUE"
+                      : "BLOCK_UNTIL_CORRECT",
+                })
+              }
+              className="w-full rounded-xl bg-bg-card px-3 py-2.5 text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
+            >
+              <option value="BLOCK_UNTIL_CORRECT">
+                {tSafe("questionBlockUntilCorrect", "Block until correct")}
+              </option>
+              <option value="ALLOW_CONTINUE">
+                {tSafe("questionAllowContinue", "Allow continue after feedback")}
+              </option>
+            </select>
           </label>
         </div>
       ) : (
@@ -987,6 +1066,19 @@ function findBlockById(
 }
 
 function blockHasContent(block: CourseEditorBlock): boolean {
+  if (block.type === "question") {
+    const prompt =
+      typeof block.props.prompt === "string" ? block.props.prompt : "";
+    const options = parseCourseQuestionOptions(block.props.optionsJson, {
+      preserveEmpty: true,
+      ensureMinimum: true,
+    });
+    return (
+      prompt.trim().length > 0 ||
+      blockNoteInlineText(block.content).length > 0 ||
+      options.some((option) => option.text.trim().length > 0)
+    );
+  }
   if (
     typeof block.props.url === "string" &&
     block.props.url.trim().length > 0
@@ -997,6 +1089,16 @@ function blockHasContent(block: CourseEditorBlock): boolean {
     return block.content.some((item) => inlineContentHasText(item));
   }
   return block.children.some((child) => blockHasContent(child));
+}
+
+function getTrainingAdminMessage(
+  t: ReturnType<typeof useTranslations<"TrainingAdmin">>,
+) {
+  return (
+    key: string,
+    fallback: string,
+    values?: Record<string, string | number | Date>,
+  ) => (t.has(key) ? t(key, values) : fallback);
 }
 
 function inlineContentHasText(content: unknown): boolean {
@@ -1013,6 +1115,28 @@ function inlineContentHasText(content: unknown): boolean {
     return content.content.some((item) => inlineContentHasText(item));
   }
   return false;
+}
+
+function blockNoteInlineText(content: unknown): string {
+  if (typeof content === "string") return content.trim();
+  if (!Array.isArray(content)) return "";
+
+  return content
+    .map((item) => {
+      if (!item || typeof item !== "object") return "";
+      if (
+        "type" in item &&
+        item.type === "text" &&
+        "text" in item &&
+        typeof item.text === "string"
+      ) {
+        return item.text;
+      }
+      if ("content" in item) return blockNoteInlineText(item.content);
+      return "";
+    })
+    .join("")
+    .trim();
 }
 
 function getCourseBuilderDraftKey(teamId: string, positionId?: string) {
