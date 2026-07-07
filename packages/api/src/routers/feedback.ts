@@ -1,16 +1,90 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, leaderProcedure } from "../init";
 import { prisma } from "../db";
 import {
   getProfileDisplayMap,
   profileDisplaySelect,
 } from "../lib/display-identity";
+import { feedbackRecipientVisibilityWhere } from "./feedback-visibility";
 
 const feedbackTypeEnum = z.enum(["ENCOURAGEMENT", "GROWTH_AREA", "GENERAL"]);
 
+async function resolveRecipientProfileId(recipientId: string) {
+  const profile = await prisma.profile.findUnique({
+    where: { id: recipientId },
+    select: { id: true },
+  });
+  if (profile) return profile.id;
+
+  const person = await prisma.person.findUnique({
+    where: { id: recipientId },
+    select: {
+      id: true,
+      provider: true,
+      remoteId: true,
+      email: true,
+      fullName: true,
+      firstName: true,
+      lastName: true,
+      image: true,
+    },
+  });
+
+  if (!person) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Please select a valid team member.",
+    });
+  }
+
+  const existingIdentity = await prisma.profileIdentity.findUnique({
+    where: {
+      provider_remoteId: {
+        provider: person.provider,
+        remoteId: person.remoteId,
+      },
+    },
+    select: { id: true, profileId: true, personId: true },
+  });
+  if (existingIdentity) {
+    if (!existingIdentity.personId) {
+      await prisma.profileIdentity.update({
+        where: { id: existingIdentity.id },
+        data: { personId: person.id, email: person.email },
+      });
+    }
+
+    return existingIdentity.profileId;
+  }
+
+  const createdProfile = await prisma.profile.create({
+    data: {
+      displayName: person.fullName,
+      fullName: person.fullName,
+      firstName: person.firstName,
+      lastName: person.lastName,
+      email: person.email,
+      image: person.image,
+      identities: {
+        create: {
+          provider: person.provider,
+          remoteId: person.remoteId,
+          personId: person.id,
+          email: person.email,
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  return createdProfile.id;
+}
+
 export const feedbackRouter = createTRPCRouter({
   /**
-   * List feedback. Non-leaders can only see shared feedback.
+   * List feedback. Leaders can see all feedback; members can only see feedback
+   * explicitly shared with them.
    * Filter by teamId, recipientId.
    */
   list: protectedProcedure
@@ -33,9 +107,9 @@ export const feedbackRouter = createTRPCRouter({
         where: {
           teamId: input.teamId,
           ...(input.recipientId && { recipientId: input.recipientId }),
-          // Non-leaders can only see shared feedback or feedback they received
-          ...(!isLeader && {
-            OR: [{ isShared: true }, { recipientId: ctx.profileId }],
+          ...feedbackRecipientVisibilityWhere({
+            isLeader: Boolean(isLeader),
+            profileId: ctx.profileId,
           }),
         },
         include: {
@@ -82,12 +156,16 @@ export const feedbackRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const recipientProfileId = await resolveRecipientProfileId(
+        input.recipientId,
+      );
+
       return prisma.feedback.create({
         data: {
           content: input.content,
           type: input.type,
           authorId: ctx.profileId,
-          recipientId: input.recipientId,
+          recipientId: recipientProfileId,
           teamId: input.teamId,
           isShared: input.isShared,
         },

@@ -281,7 +281,9 @@ function FeedbackTab({ teamIds }: FeedbackTabProps) {
             content={fb.content}
             type={fb.type}
             authorName={fb.author?.fullName}
+            authorImage={fb.author?.image}
             recipientName={fb.recipient?.fullName}
+            recipientImage={fb.recipient?.image}
             createdAt={fb.createdAt}
           />
         ))}

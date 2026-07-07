@@ -195,6 +195,7 @@
     "feedbackLabel": "Feedback",
     "placeholder": "Write your feedback...",
     "shareWithMember": "Share with team member",
+    "shareWithMemberNote": "Feedback is always visible to the team leaders.",
     "sending": "Sending...",
     "sendFeedback": "Send Feedback",
     "submitted": "Feedback submitted",

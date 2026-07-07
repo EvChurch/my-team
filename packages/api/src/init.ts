@@ -113,41 +113,73 @@ export const createTRPCContext = cache(
               select: { id: true, provider: true, remoteId: true, email: true },
             })
           : [];
+        const existingIdentity = people.length
+          ? await prisma.profileIdentity.findFirst({
+              where: {
+                OR: people.map((person) => ({
+                  provider: person.provider,
+                  remoteId: person.remoteId,
+                })),
+              },
+              select: { profileId: true },
+            })
+          : null;
 
         const displayName =
           session.user.name ?? session.user.email ?? "My Team User";
         const { firstName, lastName } = splitName(displayName);
 
-        const profile = await prisma.profile.create({
-          data: {
-            displayName,
-            fullName: displayName,
-            firstName,
-            lastName,
-            email,
-            image: session.user.image ?? null,
-            authAccounts: {
-              create: {
-                provider: "auth0",
-                providerAccountId: session.user.auth0Id,
+        const profile = existingIdentity
+          ? await prisma.profile.update({
+              where: { id: existingIdentity.profileId },
+              data: {
+                displayName,
+                fullName: displayName,
+                firstName,
+                lastName,
                 email,
+                image: session.user.image ?? null,
+                authAccounts: {
+                  create: {
+                    provider: "auth0",
+                    providerAccountId: session.user.auth0Id,
+                    email,
+                  },
+                },
               },
-            },
-            identities: people.length
-              ? {
-                  create: people.map((person) => ({
-                    provider: person.provider,
-                    remoteId: person.remoteId,
-                    personId: person.id,
-                    email: person.email,
-                  })),
-                }
-              : undefined,
-          },
-          select: { id: true },
-        });
+              select: { id: true },
+            })
+          : await prisma.profile.create({
+              data: {
+                displayName,
+                fullName: displayName,
+                firstName,
+                lastName,
+                email,
+                image: session.user.image ?? null,
+                authAccounts: {
+                  create: {
+                    provider: "auth0",
+                    providerAccountId: session.user.auth0Id,
+                    email,
+                  },
+                },
+                identities: people.length
+                  ? {
+                      create: people.map((person) => ({
+                        provider: person.provider,
+                        remoteId: person.remoteId,
+                        personId: person.id,
+                        email: person.email,
+                      })),
+                    }
+                  : undefined,
+              },
+              select: { id: true },
+            });
 
         profileId = profile.id;
+        await linkPeopleByEmail(profileId, email);
         personIds = people.map((person) => person.id);
         personId = personIds[0] ?? null;
       }

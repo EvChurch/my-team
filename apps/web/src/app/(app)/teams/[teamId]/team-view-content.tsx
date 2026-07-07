@@ -32,6 +32,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { TeamGuideSections } from "@/components/guides/team-guide-sections";
 import { TeamTrainingCompliance } from "@/components/training/team-training-compliance";
 import { TeamTrainingOverview } from "@/components/training/team-training-overview";
+import { FeedbackCard } from "@/components/feedback/feedback-card";
 import { TeamTrainingContent } from "./training/team-training-content";
 import { useTimezone } from "@/lib/timezone";
 import { formatDate, formatTime } from "@/lib/format-date";
@@ -720,20 +721,16 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             />
           )}
           {team.feedback.map((fb) => (
-            <Card
+            <FeedbackCard
               key={fb.id}
-              className="p-4 border-l-4"
-              style={{ borderLeftColor: "var(--accent)" }}
-            >
-              <p className="text-sm text-text-primary italic leading-relaxed">
-                &ldquo;{fb.content}&rdquo;
-              </p>
-              {fb.author && (
-                <p className="text-xs text-text-secondary mt-2">
-                  &mdash; {fb.author.fullName}
-                </p>
-              )}
-            </Card>
+              content={fb.content}
+              type={fb.type}
+              authorName={fb.author?.fullName}
+              authorImage={fb.author?.image}
+              recipientName={fb.recipient?.fullName}
+              recipientImage={fb.recipient?.image}
+              createdAt={fb.createdAt}
+            />
           ))}
           {team.feedback.length === 0 && (
             <Card className="p-4">

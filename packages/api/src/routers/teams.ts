@@ -7,6 +7,7 @@ import {
   personDisplaySelect,
   profileDisplaySelect,
 } from "../lib/display-identity";
+import { feedbackRecipientVisibilityWhere } from "./feedback-visibility";
 
 export const teamsRouter = createTRPCRouter({
   /**
@@ -181,9 +182,15 @@ export const teamsRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.object({ teamId: z.string() }))
     .query(async ({ ctx, input }) => {
+      const isLeader = await prisma.leader.findFirst({
+        where: {
+          personId: { in: ctx.personIds },
+          teamId: input.teamId,
+        },
+      });
+
       const [
         team,
-        isLeader,
         goals,
         feedback,
         guides,
@@ -211,12 +218,6 @@ export const teamsRouter = createTRPCRouter({
               },
             },
           }),
-          prisma.leader.findFirst({
-            where: {
-              personId: { in: ctx.personIds },
-              teamId: input.teamId,
-            },
-          }),
           prisma.goal.findMany({
             where: { teamId: input.teamId },
             include: {
@@ -226,9 +227,16 @@ export const teamsRouter = createTRPCRouter({
             take: 5,
           }),
           prisma.feedback.findMany({
-            where: { teamId: input.teamId, isShared: true },
+            where: {
+              teamId: input.teamId,
+              ...feedbackRecipientVisibilityWhere({
+                isLeader: Boolean(isLeader),
+                profileId: ctx.profileId,
+              }),
+            },
             include: {
               author: { select: profileDisplaySelect },
+              recipient: { select: profileDisplaySelect },
             },
             orderBy: { createdAt: "desc" },
             take: 3,
@@ -298,6 +306,7 @@ export const teamsRouter = createTRPCRouter({
         [
           ...goals.map((goal) => goal.person),
           ...feedback.map((item) => item.author),
+          ...feedback.map((item) => item.recipient),
           ...teamGuides.map((guide) => guide.author),
         ].filter((profile): profile is NonNullable<typeof profile> =>
           Boolean(profile),
@@ -330,6 +339,9 @@ export const teamsRouter = createTRPCRouter({
         ...item,
         author: item.author
           ? (profileDisplayMap.get(item.author.id) ?? item.author)
+          : null,
+        recipient: item.recipient
+          ? (profileDisplayMap.get(item.recipient.id) ?? item.recipient)
           : null,
       }));
       const displayGuides = teamGuides.map((guide) => ({

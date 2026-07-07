@@ -155,11 +155,15 @@ export function FeedbackForm({ teamId, members }: FeedbackFormProps) {
       </div>
 
       {/* Visibility Toggle */}
-      <Toggle
-        checked={isShared}
-        onChange={setIsShared}
-        label={t("shareWithMember")}
-      />
+      <div className="flex items-start gap-3">
+        <Toggle checked={isShared} onChange={setIsShared} />
+        <div>
+          <p className="text-sm text-text-primary">{t("shareWithMember")}</p>
+          <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+            {t("shareWithMemberNote")}
+          </p>
+        </div>
+      </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
 
