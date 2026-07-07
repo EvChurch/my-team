@@ -1,5 +1,6 @@
 import { ArrowLeft, ExternalLink, Clock } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 type PlanHeaderProps = {
   title: string | null;
@@ -26,6 +27,9 @@ export function PlanHeader({
   planningCenterUrl,
   serviceTypeName,
 }: PlanHeaderProps) {
+  const t = useTranslations("Plans");
+  const tCommon = useTranslations("Common");
+
   return (
     <div>
       <Link
@@ -33,7 +37,7 @@ export function PlanHeader({
         className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-3"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back
+        {tCommon("back")}
       </Link>
 
       <div className="flex items-start justify-between gap-3">
@@ -42,7 +46,7 @@ export function PlanHeader({
             {serviceTypeName}
           </p>
           <h1 className="text-xl font-semibold text-text-primary mt-1">
-            {title ?? dates ?? "Service Plan"}
+            {title ?? dates ?? t("servicePlan")}
           </h1>
           {dates && title && (
             <p className="text-sm text-text-secondary mt-0.5">{dates}</p>
@@ -50,7 +54,7 @@ export function PlanHeader({
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
             {seriesTitle && (
               <span className="text-xs text-text-tertiary">
-                Series: {seriesTitle}
+                {t("series", { series: seriesTitle })}
               </span>
             )}
             {totalLength != null && totalLength > 0 && (
@@ -69,7 +73,7 @@ export function PlanHeader({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors shrink-0"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            View in PCO
+            {t("viewInPco")}
           </a>
         )}
       </div>

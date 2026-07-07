@@ -1,4 +1,5 @@
 import { Paperclip, Download, ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 
 type Attachment = {
@@ -22,6 +23,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export function PlanAttachments({ attachments }: PlanAttachmentsProps) {
+  const t = useTranslations("Plans");
   if (attachments.length === 0) return null;
 
   return (
@@ -44,7 +46,7 @@ export function PlanAttachments({ attachments }: PlanAttachmentsProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-accent truncate">
-                    {att.filename ?? "Attachment"}
+                    {att.filename ?? t("attachment")}
                   </p>
                   <div className="flex items-center gap-2 text-xs text-text-tertiary">
                     {att.contentType && (

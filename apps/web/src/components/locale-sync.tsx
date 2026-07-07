@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { defaultLocale } from "@/i18n/config";
 
 export function LocaleSync({
   dbLocale,
@@ -13,8 +14,10 @@ export function LocaleSync({
   const router = useRouter();
 
   useEffect(() => {
-    if (dbLocale && dbLocale !== cookieLocale) {
-      document.cookie = `locale=${dbLocale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
+    const locale = dbLocale === defaultLocale ? dbLocale : defaultLocale;
+
+    if (locale !== cookieLocale) {
+      document.cookie = `locale=${locale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
       router.refresh();
     }
   }, [dbLocale, cookieLocale, router]);

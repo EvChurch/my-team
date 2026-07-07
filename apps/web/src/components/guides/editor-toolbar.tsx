@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import type { Editor } from "@tiptap/react";
+import { useTranslations } from "next-intl";
 import {
   Bold,
   Italic,
@@ -37,11 +38,12 @@ export function EditorToolbar({
   onAddYouTubeVideo,
   youtubeTitle,
 }: EditorToolbarProps) {
+  const t = useTranslations("Guides");
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addLink = () => {
-    const url = window.prompt("Enter URL");
+    const url = window.prompt(t("enterUrlPrompt"));
     if (url) {
       editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     }
@@ -53,7 +55,7 @@ export function EditorToolbar({
       return;
     }
 
-    const url = window.prompt("Enter image URL");
+    const url = window.prompt(t("enterImageUrlPrompt"));
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
@@ -64,7 +66,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive("bold")}
-        title="Bold"
+        title={t("toolbarBold")}
       >
         <Bold className="w-4 h-4" />
       </ToolbarButton>
@@ -72,7 +74,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive("italic")}
-        title="Italic"
+        title={t("toolbarItalic")}
       >
         <Italic className="w-4 h-4" />
       </ToolbarButton>
@@ -82,7 +84,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive("heading", { level: 1 })}
-        title="Heading 1"
+        title={t("toolbarHeading1")}
       >
         <Heading1 className="w-4 h-4" />
       </ToolbarButton>
@@ -90,7 +92,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive("heading", { level: 2 })}
-        title="Heading 2"
+        title={t("toolbarHeading2")}
       >
         <Heading2 className="w-4 h-4" />
       </ToolbarButton>
@@ -98,7 +100,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive("heading", { level: 3 })}
-        title="Heading 3"
+        title={t("toolbarHeading3")}
       >
         <Heading3 className="w-4 h-4" />
       </ToolbarButton>
@@ -108,7 +110,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive("bulletList")}
-        title="Bullet List"
+        title={t("toolbarBulletList")}
       >
         <List className="w-4 h-4" />
       </ToolbarButton>
@@ -116,7 +118,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive("orderedList")}
-        title="Ordered List"
+        title={t("toolbarOrderedList")}
       >
         <ListOrdered className="w-4 h-4" />
       </ToolbarButton>
@@ -126,7 +128,7 @@ export function EditorToolbar({
       <ToolbarButton
         onClick={addLink}
         isActive={editor.isActive("link")}
-        title="Add Link"
+        title={t("toolbarAddLink")}
       >
         <LinkIcon className="w-4 h-4" />
       </ToolbarButton>
@@ -135,7 +137,7 @@ export function EditorToolbar({
         onClick={addImage}
         isActive={false}
         disabled={isUploadingAsset}
-        title="Add Image"
+        title={t("toolbarAddImage")}
       >
         {isUploadingAsset ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -161,7 +163,7 @@ export function EditorToolbar({
         onClick={() => fileInputRef.current?.click()}
         isActive={false}
         disabled={isUploadingAsset || !onUploadFile}
-        title="Upload File"
+        title={t("toolbarUploadFile")}
       >
         <Paperclip className="w-4 h-4" />
       </ToolbarButton>
@@ -183,7 +185,7 @@ export function EditorToolbar({
         onClick={() => onAddDriveFile?.()}
         isActive={false}
         disabled={!onAddDriveFile}
-        title="Add Google Drive File"
+        title={t("addGoogleDriveFile")}
       >
         <HardDrive className="w-4 h-4" />
       </ToolbarButton>

@@ -99,17 +99,21 @@ pnpm --filter worker dev
 
 ## Internationalization
 
-The app is localized with `next-intl` using cookie-based locale detection.
+The app uses `next-intl` with cookie-based locale detection. During active
+product development, English is the only supported locale, but keep the existing
+internationalization architecture working.
 
 - Every new or modified UI string must use translation keys from
   `apps/web/messages/en.json`.
-- Add matching translations to all locale files: `zh-CN`, `zh-TW`, `mi`, `sm`,
-  `hi`, `ko`, `to`, `tl`, and `ja`.
+- Do not hardcode ordinary UI copy in components when it can use the existing
+  message system.
+- `apps/web/messages/en.json` is the only locale file. Do not add non-English
+  locale files unless the user explicitly asks to reintroduce them.
 - Server components use `getTranslations` from `next-intl/server`.
 - Client components use `useTranslations` from `next-intl`.
 - Use ICU MessageFormat for plurals.
 - Toasts, errors, form labels, placeholders, and empty states all need
-  translations.
+  English message keys.
 - Error boundaries may hardcode English only as a last-resort fallback.
 
 ## Design

@@ -8,6 +8,7 @@ import {
   useRef,
   useEffect,
 } from "react";
+import { useTranslations } from "next-intl";
 import { CheckCircle, XCircle, X } from "lucide-react";
 
 type ToastVariant = "success" | "error";
@@ -62,6 +63,7 @@ function ToastItem({
   toast: Toast;
   onDismiss: (id: number) => void;
 }) {
+  const tCommon = useTranslations("Common");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -97,7 +99,7 @@ function ToastItem({
           setTimeout(() => onDismiss(toast.id), 200);
         }}
         className="p-0.5 text-text-tertiary hover:text-text-primary shrink-0"
-        aria-label="Dismiss"
+        aria-label={tCommon("dismiss")}
       >
         <X className="w-3.5 h-3.5" />
       </button>

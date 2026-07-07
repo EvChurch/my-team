@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import {
   Calendar,
@@ -47,28 +48,24 @@ type ScheduleRowProps = {
 const statusConfig = {
   CONFIRMED: {
     icon: Check,
-    label: "Confirmed",
+    labelKey: "confirmed",
     className: "text-accent",
   },
   UNCONFIRMED: {
     icon: Clock,
-    label: "Unconfirmed",
+    labelKey: "unconfirmed",
     className: "text-text-tertiary",
   },
   DECLINED: {
     icon: X,
-    label: "Declined",
+    labelKey: "declined",
     className: "text-error",
   },
 } as const;
 
-const typeLabels: Record<string, string> = {
-  service: "Service",
-  rehearsal: "Rehearsal",
-  other: "Other",
-};
-
 export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
+  const t = useTranslations("Schedules");
+  const tCommon = useTranslations("Common");
   const tz = useTimezone();
   const [expanded, setExpanded] = useState(false);
   const [declining, setDeclining] = useState(false);
@@ -103,6 +100,11 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
   const isUnconfirmed = schedule.status === "UNCONFIRMED";
   const canRespond = schedule.provider !== "ROCK";
   const isPending = respondMutation.isPending;
+  const timeTypeLabels: Record<string, string> = {
+    service: t("timeType.service"),
+    rehearsal: t("timeType.rehearsal"),
+    other: t("timeType.other"),
+  };
 
   const handleAccept = () => {
     respondMutation.mutate({
@@ -138,7 +140,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
           {schedule.startsAt && (
             <span className="text-text-secondary font-normal">
               {" "}
-              at {formatTime(schedule.startsAt, tz)}
+              {tCommon("at")} {formatTime(schedule.startsAt, tz)}
             </span>
           )}
         </p>
@@ -165,14 +167,14 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
             disabled={isPending}
             className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-accent text-text-on-accent hover:bg-accent-dark transition-colors disabled:opacity-50"
           >
-            {isPending ? "..." : "Accept"}
+            {isPending ? "..." : t("accept")}
           </button>
           <button
             onClick={handleDecline}
             disabled={isPending}
             className="px-2.5 py-1 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors disabled:opacity-50"
           >
-            Decline
+            {tCommon("decline")}
           </button>
         </div>
       )}
@@ -180,7 +182,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
         <div className="flex items-center gap-1">
           <StatusIcon className={`w-3.5 h-3.5 ${config.className}`} />
           <span className={`text-xs ${config.className}`}>
-            {config.label}
+            {t(config.labelKey)}
           </span>
         </div>
       )}
@@ -223,7 +225,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
         >
           <input
             type="text"
-            placeholder="Reason (optional)"
+            placeholder={t("reasonPlaceholder")}
             value={declineReason}
             onChange={(e) => setDeclineReason(e.target.value)}
             className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-border bg-bg-card text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
@@ -233,7 +235,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
             disabled={isPending}
             className="px-2.5 py-1.5 text-xs font-medium rounded-[10px] bg-error text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {isPending ? "..." : "Decline"}
+            {isPending ? "..." : tCommon("decline")}
           </button>
           <button
             onClick={() => {
@@ -242,7 +244,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
             }}
             className="px-2.5 py-1.5 text-xs font-medium rounded-[10px] bg-bg-muted text-text-secondary hover:bg-border transition-colors"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
         </div>
       )}
@@ -255,7 +257,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
               <div className="flex items-center gap-2">
                 {pt.timeType && (
                   <Badge variant="muted" className="text-[10px] px-1.5 py-0.5">
-                    {typeLabels[pt.timeType.toLowerCase()] ?? pt.timeType}
+                    {timeTypeLabels[pt.timeType.toLowerCase()] ?? pt.timeType}
                   </Badge>
                 )}
                 <span className="text-xs text-text-primary">
@@ -275,7 +277,7 @@ export function ScheduleRow({ schedule, showTeamName }: ScheduleRowProps) {
       {/* Mutation error */}
       {respondMutation.isError && (
         <p className="ml-11 mt-1 text-xs text-error">
-          Failed to respond. Please try again.
+          {t("failedResponse")}
         </p>
       )}
     </div>

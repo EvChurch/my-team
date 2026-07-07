@@ -31,7 +31,7 @@ export const preferencesRouter = createTRPCRouter({
   }),
 
   setLocale: protectedProcedure
-    .input(z.object({ locale: z.enum(["en", "zh-CN", "zh-TW", "mi", "sm", "hi", "ko", "to", "tl", "ja"]) }))
+    .input(z.object({ locale: z.enum(["en"]) }))
     .mutation(async ({ ctx, input }) => {
       await prisma.userPreference.upsert({
         where: { personId: ctx.profileId },

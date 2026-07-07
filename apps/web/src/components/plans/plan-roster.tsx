@@ -1,4 +1,5 @@
 import { Check, Clock, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -25,18 +26,19 @@ type PlanRosterProps = {
 
 const statusConfig: Record<
   string,
-  { icon: typeof Check; label: string; className: string }
+  { icon: typeof Check; labelKey: string; className: string }
 > = {
-  Confirmed: { icon: Check, label: "Confirmed", className: "text-accent" },
+  Confirmed: { icon: Check, labelKey: "confirmed", className: "text-accent" },
   Unconfirmed: {
     icon: Clock,
-    label: "Unconfirmed",
+    labelKey: "unconfirmed",
     className: "text-text-tertiary",
   },
-  Declined: { icon: X, label: "Declined", className: "text-error" },
+  Declined: { icon: X, labelKey: "declined", className: "text-error" },
 };
 
 export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
+  const t = useTranslations("Plans");
   if (roster.length === 0) return null;
 
   return (
@@ -72,10 +74,10 @@ export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
                       />
                       <div className="min-w-0">
                         <p className="text-sm text-text-primary truncate">
-                          {member.name ?? "Unknown"}
+                          {member.name ?? t("unknown")}
                           {isCurrentUser && (
                             <span className="text-xs text-accent ml-1.5">
-                              (you)
+                              {t("youLabel")}
                             </span>
                           )}
                         </p>
@@ -94,7 +96,7 @@ export function PlanRoster({ roster, currentUserPcoId }: PlanRosterProps) {
                         className={`w-3.5 h-3.5 ${config.className}`}
                       />
                       <span className={`text-xs ${config.className}`}>
-                        {config.label}
+                        {t(config.labelKey)}
                       </span>
                     </div>
                   </div>

@@ -2,6 +2,7 @@
 
 import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useTranslations } from "next-intl";
 
 type YouTubeTrainingPlayerProps = {
   caption?: string;
@@ -100,6 +101,7 @@ export function YouTubeTrainingPlayer({
   title,
   videoId,
 }: YouTubeTrainingPlayerProps) {
+  const t = useTranslations("Training");
   const hostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
@@ -323,7 +325,7 @@ export function YouTubeTrainingPlayer({
           type="button"
           onClick={togglePlayback}
           className="absolute inset-0 z-10 cursor-pointer bg-transparent"
-          aria-label={isPlaying ? "Pause video" : "Play video"}
+          aria-label={isPlaying ? t("pauseVideo") : t("playVideo")}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 via-black/35 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
           <div className="pointer-events-auto flex items-center gap-3">
@@ -331,7 +333,7 @@ export function YouTubeTrainingPlayer({
               type="button"
               onClick={togglePlayback}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-bg-card text-text-primary shadow-[var(--shadow-card)] transition-transform hover:scale-105"
-              aria-label={isPlaying ? "Pause video" : "Play video"}
+              aria-label={isPlaying ? t("pauseVideo") : t("playVideo")}
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4" />
@@ -344,7 +346,7 @@ export function YouTubeTrainingPlayer({
                 ref={progressRef}
                 role="slider"
                 tabIndex={0}
-                aria-label="Video progress"
+                aria-label={t("videoProgress")}
                 aria-valuemin={0}
                 aria-valuemax={Math.floor(selectedDuration)}
                 aria-valuenow={Math.floor(selectedCurrentTime)}

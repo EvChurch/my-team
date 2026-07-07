@@ -21,7 +21,8 @@
     "role": "Role",
     "allRoles": "All Roles",
     "visibleToTeam": "Visible to team",
-    "noMatchSearch": "No guides match \"{search}\""
+    "noMatchSearch": "No guides match \"{search}\"",
+    "dismiss": "Dismiss"
   },
   "Navigation": {
     "myTeams": "My Teams",
@@ -42,7 +43,10 @@
     "dark": "Dark",
     "system": "System",
     "teamLead": "Team Lead",
-    "teamMember": "Team Member"
+    "teamMember": "Team Member",
+    "sourceIdentities": "Source identities",
+    "sourceIdentitiesDesc": "PCO and Rock records linked to this My Team profile.",
+    "noSourceIdentities": "No PCO or Rock records are linked yet."
   },
   "Teams": {
     "title": "Teams",
@@ -73,6 +77,18 @@
     "noMembers": "No Members",
     "noMembersDesc": "No members are assigned to this team.",
     "noMembersInRole": "No members in this role",
+    "noMembersInRoleDesc": "No one is currently assigned to this role.",
+    "unnamedRole": "Unnamed Role",
+    "description": "Description",
+    "currentGoals": "Current Goals",
+    "historicGoals": "Historic Goals",
+    "noCurrentGoals": "No Current Goals",
+    "noCurrentGoalsDesc": "No active goals for this role.",
+    "othersInThisRole": "Others in This Role",
+    "roleGuides": "Role Guides",
+    "noGuidesInRoleDesc": "No guides have been created for this role.",
+    "teamLoadFailed": "Couldn't load team",
+    "teamLoadFailedDesc": "We had trouble loading this team. Please try again.",
     "never": "Never",
     "callPerson": "Call {name}",
     "emailPerson": "Email {name}",
@@ -119,7 +135,15 @@
     "reasonPlaceholder": "Reason (optional)",
     "declining": "Declining...",
     "failedResponse": "Could not update this request. Please try again.",
-    "accept": "Accept"
+    "accept": "Accept",
+    "confirmed": "Confirmed",
+    "unconfirmed": "Unconfirmed",
+    "declined": "Declined",
+    "timeType": {
+      "service": "Service",
+      "rehearsal": "Rehearsal",
+      "other": "Other"
+    }
   },
   "Goals": {
     "title": "Goals & Feedback",
@@ -234,7 +258,45 @@
     "addYouTubeVideo": "Add YouTube Video",
     "youtubeUrlLabel": "YouTube URL",
     "invalidYouTubeUrl": "Paste a valid YouTube URL.",
-    "embedVideo": "Embed Video"
+    "embedVideo": "Embed Video",
+    "enterUrlPrompt": "Enter URL",
+    "enterImageUrlPrompt": "Enter image URL",
+    "toolbarBold": "Bold",
+    "toolbarItalic": "Italic",
+    "toolbarHeading1": "Heading 1",
+    "toolbarHeading2": "Heading 2",
+    "toolbarHeading3": "Heading 3",
+    "toolbarBulletList": "Bullet List",
+    "toolbarOrderedList": "Ordered List",
+    "toolbarAddLink": "Add Link",
+    "toolbarAddImage": "Add Image",
+    "toolbarUploadFile": "Upload File",
+    "unableToRenderContent": "Unable to render content.",
+    "guideNoContent": "This guide has no content yet.",
+    "removeResource": "Remove resource"
+  },
+  "Plans": {
+    "serviceOrder": "Service Order",
+    "times": "Times",
+    "teamRoster": "Team Roster",
+    "notesAndFiles": "Notes & Files",
+    "servicePlan": "Service Plan",
+    "series": "Series: {series}",
+    "viewInPco": "View in PCO",
+    "arrangement": "Arrangement: {name}",
+    "showChordChart": "Show chord chart",
+    "hideChordChart": "Hide chord chart",
+    "key": "Key: {key}",
+    "confirmed": "Confirmed",
+    "unconfirmed": "Unconfirmed",
+    "declined": "Declined",
+    "unknown": "Unknown",
+    "youLabel": "(you)",
+    "attachment": "Attachment",
+    "planNotAvailable": "Plan not available",
+    "planNotAvailableDesc": "This plan is no longer available. It may have been removed from Planning Center.",
+    "planLoadFailed": "Couldn't load plan",
+    "planLoadFailedDesc": "We had trouble loading this plan. Please try again."
   },
   "Review": {
     "title": "Review Goals",
@@ -310,7 +372,10 @@
     "quizSelectAnswer": "Select an answer before submitting.",
     "quizSelectAnswers": "Select at least one answer before submitting.",
     "quizPagePassed": "All required questions are correct. You can continue.",
-    "quizPageNeedsRetry": "Review the feedback and try again."
+    "quizPageNeedsRetry": "Review the feedback and try again.",
+    "playVideo": "Play video",
+    "pauseVideo": "Pause video",
+    "videoProgress": "Video progress"
   },
   "TrainingAdmin": {
     "backToTeam": "Back to team",
@@ -466,6 +531,8 @@
     "videoCaptionPlaceholder": "Optional note shown under the video",
     "noBlockSettings": "This block does not have custom settings yet.",
     "videoTrim": "Video trim",
+    "videoStartTime": "Video start time",
+    "videoEndTime": "Video end time",
     "videoTrimHint": "Choose the part of the video learners should watch.",
     "videoTrimLoading": "Duration appears after the YouTube preview loads.",
     "videoRequiresCompletion": "Require learner to complete video",

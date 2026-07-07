@@ -1,51 +1,24 @@
 "use client";
 
-import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Database, Globe, LogOut, Moon } from "lucide-react";
+import { Database, LogOut, Moon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SegmentControl } from "@/components/ui/segment-control";
 import { useTheme } from "@/components/theme-provider";
-import { locales, type Locale } from "@/i18n/config";
-
-const localeNames: Record<Locale, string> = {
-  en: "English",
-  "zh-CN": "中文(简体)",
-  "zh-TW": "中文(繁體)",
-  mi: "Te Reo Māori",
-  sm: "Gagana Samoa",
-  hi: "हिन्दी",
-  ko: "한국어",
-  to: "Lea Fakatonga",
-  tl: "Tagalog",
-  ja: "日本語",
-};
 
 export function ProfileContent() {
   const trpc = useTRPC();
   const t = useTranslations("Profile");
   const tAuth = useTranslations("Auth");
-  const currentLocale = useLocale();
-  const router = useRouter();
   const { data: profile } = useSuspenseQuery(
     trpc.people.myTeamProfile.queryOptions(),
   );
   const { theme, setTheme } = useTheme();
-
-  const setLocaleMutation = useMutation(
-    trpc.preferences.setLocale.mutationOptions(),
-  );
-
-  function handleLocaleChange(newLocale: Locale) {
-    document.cookie = `locale=${newLocale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
-    setLocaleMutation.mutate({ locale: newLocale });
-    router.refresh();
-  }
 
   const roleLabel = t("teamMember");
   const sourcePeople = profile.identities.filter((identity) => identity.person);
@@ -72,9 +45,9 @@ export function ProfileContent() {
         <div className="flex items-center gap-3 p-4">
           <Database className="w-5 h-5 text-text-secondary" />
           <div>
-            <p className="text-sm text-text-primary">Source identities</p>
+            <p className="text-sm text-text-primary">{t("sourceIdentities")}</p>
             <p className="text-xs text-text-tertiary">
-              PCO and Rock records linked to this My Team profile.
+              {t("sourceIdentitiesDesc")}
             </p>
           </div>
         </div>
@@ -100,7 +73,7 @@ export function ProfileContent() {
           ))
         ) : (
           <p className="px-4 py-3 text-sm text-text-tertiary">
-            No PCO or Rock records are linked yet.
+            {t("noSourceIdentities")}
           </p>
         )}
       </Card>
@@ -122,27 +95,6 @@ export function ProfileContent() {
             activeSegment={theme}
             onSegmentChange={setTheme}
           />
-        </div>
-
-        <div className="border-t border-border" />
-
-        {/* Language */}
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-text-secondary" />
-            <span className="text-sm text-text-primary">{t("language")}</span>
-          </div>
-          <select
-            value={currentLocale}
-            onChange={(e) => handleLocaleChange(e.target.value as Locale)}
-            className="rounded-[10px] border border-border bg-bg-card px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            {locales.map((loc) => (
-              <option key={loc} value={loc}>
-                {localeNames[loc]}
-              </option>
-            ))}
-          </select>
         </div>
       </Card>
 

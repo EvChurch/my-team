@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
@@ -16,6 +17,7 @@ type GuideContentRendererProps = {
  * Uses the static renderer (no editor instance needed).
  */
 export function GuideContentRenderer({ content }: GuideContentRendererProps) {
+  const t = useTranslations("Guides");
   const html = useMemo(() => {
     if (!content || typeof content !== "object") {
       return "";
@@ -42,14 +44,14 @@ export function GuideContentRenderer({ content }: GuideContentRendererProps) {
         content: content as any,
       });
     } catch {
-      return "<p>Unable to render content.</p>";
+      return `<p>${t("unableToRenderContent")}</p>`;
     }
-  }, [content]);
+  }, [content, t]);
 
   if (!html) {
     return (
       <p className="text-sm text-text-secondary italic">
-        This guide has no content yet.
+        {t("guideNoContent")}
       </p>
     );
   }

@@ -838,6 +838,7 @@ function DualRangeSlider({
   onChange: (startTime: number, endTime: number) => void;
   startTime: number;
 }) {
+  const t = useTranslations("TrainingAdmin");
   const safeDuration = Math.max(Math.floor(duration), 1);
   const safeStartTime = Math.min(Math.max(Math.floor(startTime), 0), safeDuration);
   const safeEndTime = Math.min(
@@ -975,7 +976,7 @@ function DualRangeSlider({
         <button
           type="button"
           role="slider"
-          aria-label="Video start time"
+          aria-label={t("videoStartTime")}
           aria-valuemin={0}
           aria-valuemax={draftEndTime - 1}
           aria-valuenow={draftStartTime}
@@ -1009,7 +1010,7 @@ function DualRangeSlider({
         <button
           type="button"
           role="slider"
-          aria-label="Video end time"
+          aria-label={t("videoEndTime")}
           aria-valuemin={draftStartTime + 1}
           aria-valuemax={safeDuration}
           aria-valuenow={draftEndTime}

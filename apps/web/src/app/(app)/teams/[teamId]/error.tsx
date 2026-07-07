@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function TeamError({
@@ -10,14 +11,16 @@ export default function TeamError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("Teams");
+
   useEffect(() => {
     console.error("Team error:", error);
   }, [error]);
 
   return (
     <ErrorState
-      title="Couldn't load team"
-      description="We had trouble loading this team. Please try again."
+      title={t("teamLoadFailed")}
+      description={t("teamLoadFailedDesc")}
       onRetry={reset}
     />
   );

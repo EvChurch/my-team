@@ -2,6 +2,7 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft, Target, BookOpen, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,8 @@ type RoleViewContentProps = {
 
 export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Teams");
+  const tGoals = useTranslations("Goals");
   const { data: position } = useSuspenseQuery(
     trpc.teams.getPosition.queryOptions({ teamId, positionId: roleId }),
   );
@@ -41,7 +44,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
           {position.team.name}
         </Link>
         <h1 className="text-2xl font-bold text-text-primary">
-          {position.name ?? "Unnamed Role"}
+          {position.name ?? t("unnamedRole")}
         </h1>
         <p className="text-sm text-text-secondary mt-0.5">
           {position.team.name}
@@ -52,7 +55,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
       {position.description && (
         <Card className="p-4">
           <h2 className="text-[15px] font-semibold text-text-primary mb-2">
-            Description
+            {t("description")}
           </h2>
           <p className="text-sm text-text-secondary leading-relaxed">
             {typeof position.description === "string"
@@ -65,7 +68,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
       {/* Current Goals */}
       <section>
         <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-          Current Goals
+          {t("currentGoals")}
         </h2>
         {currentGoals.length > 0 ? (
           <Card className="p-4 space-y-3">
@@ -97,8 +100,8 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
         ) : (
           <EmptyState
             icon={Target}
-            title="No Current Goals"
-            description="No active goals for this role."
+            title={t("noCurrentGoals")}
+            description={t("noCurrentGoalsDesc")}
             className="py-6"
           />
         )}
@@ -108,7 +111,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
       {historicGoals.length > 0 && (
         <section>
           <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-            Historic Goals
+            {t("historicGoals")}
           </h2>
           <Card className="p-4 space-y-3">
             {historicGoals.map((goal) => (
@@ -126,7 +129,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
                       {goal.title}
                     </p>
                   </div>
-                  <Badge variant="muted">completed</Badge>
+                  <Badge variant="muted">{tGoals("statusCompleted")}</Badge>
                 </div>
                 <ProgressBar value={100} className="ml-10" />
               </div>
@@ -138,7 +141,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
       {/* Others in This Role */}
       <section>
         <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-          Others in This Role
+          {t("othersInThisRole")}
         </h2>
         {position.assignments.length > 0 ? (
           <Card className="p-4 space-y-3">
@@ -158,8 +161,8 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
         ) : (
           <EmptyState
             icon={Users}
-            title="No Members"
-            description="No one is currently assigned to this role."
+            title={t("noMembers")}
+            description={t("noMembersInRoleDesc")}
             className="py-6"
           />
         )}
@@ -168,7 +171,7 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
       {/* Role Guides */}
       <section>
         <h2 className="text-[15px] font-semibold text-text-primary mb-3">
-          Role Guides
+          {t("roleGuides")}
         </h2>
         {position.guides.length > 0 ? (
           <div className="space-y-2">
@@ -188,8 +191,8 @@ export function RoleViewContent({ teamId, roleId }: RoleViewContentProps) {
         ) : (
           <EmptyState
             icon={BookOpen}
-            title="No Guides"
-            description="No guides have been created for this role."
+            title={t("noGuides")}
+            description={t("noGuidesInRoleDesc")}
             className="py-6"
           />
         )}

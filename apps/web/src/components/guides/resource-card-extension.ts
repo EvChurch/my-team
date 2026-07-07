@@ -1,6 +1,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import type { DOMOutputSpec } from "@tiptap/pm/model";
 import { Plugin } from "@tiptap/pm/state";
+import messages from "../../../messages/en.json";
 
 export type GuideResourceKind = "file" | "google_drive";
 
@@ -12,6 +13,8 @@ type ResourceCardAttributes = {
   mimeType: string | null;
   fileSize: number | null;
 };
+
+const removeResourceLabel = messages.Guides.removeResource;
 
 function formatBytes(bytes: number | null) {
   if (!bytes) return null;
@@ -124,7 +127,7 @@ function createResourceCardElement(
   removeButton.type = "button";
   removeButton.className = "guide-resource-card-remove";
   removeButton.dataset.resourceCardRemove = "true";
-  removeButton.setAttribute("aria-label", "Remove resource");
+  removeButton.setAttribute("aria-label", removeResourceLabel);
 
   card.append(body, removeButton);
   return card;
@@ -216,7 +219,7 @@ function renderResourceCard(attrs: ResourceCardAttributes): DOMOutputSpec {
         type: "button",
         class: "guide-resource-card-remove",
         "data-resource-card-remove": "true",
-        "aria-label": "Remove resource",
+        "aria-label": removeResourceLabel,
       },
     ],
   ];

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -10,10 +10,14 @@ const outfit = Outfit({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "My Team",
-  description: "Serving together, growing together",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Common");
+
+  return {
+    title: t("appName"),
+    description: t("appTagline"),
+  };
+}
 
 const themeScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`;
 

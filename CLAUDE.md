@@ -110,15 +110,18 @@ pnpm --filter worker dev        # Start only worker
 
 ## Internationalization (i18n)
 
-The app is fully localized using **next-intl 4.x** with cookie-based locale detection. **All UI strings MUST be translated** — never hardcode English strings in components.
+The app uses **next-intl 4.x** with cookie-based locale detection. During active
+product development, English is the only supported locale, but keep the existing
+internationalization architecture working. Do not hardcode ordinary UI copy in
+components when it can use the existing message system.
 
 ### i18n Rules (MANDATORY)
 - **Every new or modified UI string** must use translation keys from `apps/web/messages/en.json`
 - Server components: `const t = await getTranslations("Namespace")` from `next-intl/server`
 - Client components: `const t = useTranslations("Namespace")` from `next-intl`
-- Add new keys to `apps/web/messages/en.json` under the appropriate namespace, then add translations to all 9 other locale files (`zh-CN`, `zh-TW`, `mi`, `sm`, `hi`, `ko`, `to`, `tl`, `ja`)
+- Add new keys to `apps/web/messages/en.json` under the appropriate namespace. Do not add non-English locale files unless explicitly requested.
 - Use ICU MessageFormat for plurals: `{count, plural, one {# member} other {# members}}`
-- Toast messages, error messages, form labels, placeholders, empty states — ALL must use `t()` calls
+- Toast messages, error messages, form labels, placeholders, empty states — all need English message keys and should use `t()` calls
 - Navigation labels use translation keys resolved at render time (see `nav-items.ts`)
 - Error boundaries may hardcode English as a last-resort fallback
 
@@ -126,12 +129,12 @@ The app is fully localized using **next-intl 4.x** with cookie-based locale dete
 - Locale config: `apps/web/src/i18n/config.ts` (supported locales list)
 - Request handler: `apps/web/src/i18n/request.ts` (reads locale from cookie)
 - Middleware: `apps/web/src/middleware.ts` (Accept-Language detection on first visit)
-- Translation files: `apps/web/messages/{locale}.json` (one per locale, namespaced)
+- Translation file: `apps/web/messages/en.json` (namespaced)
 - Locale preference: `UserPreference.locale` field, `preferences.getLocale`/`setLocale` tRPC procedures
-- Language picker: Profile page with native script labels
+- Runtime locale: English (`en`)
 
-### Supported Locales
-`en`, `zh-CN`, `zh-TW`, `mi` (Te Reo Māori), `sm` (Samoan), `hi` (Hindi), `ko` (Korean), `to` (Tongan), `tl` (Tagalog), `ja` (Japanese)
+### Supported Locale
+`en`
 
 ## Environment Variables
 

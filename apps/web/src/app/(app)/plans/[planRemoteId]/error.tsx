@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function PlanError({
@@ -10,6 +11,8 @@ export default function PlanError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("Plans");
+
   useEffect(() => {
     console.error("Plan error:", error);
   }, [error]);
@@ -21,16 +24,16 @@ export default function PlanError({
   if (isNotFound) {
     return (
       <ErrorState
-        title="Plan not available"
-        description="This plan is no longer available. It may have been removed from Planning Center."
+        title={t("planNotAvailable")}
+        description={t("planNotAvailableDesc")}
       />
     );
   }
 
   return (
     <ErrorState
-      title="Couldn't load plan"
-      description="We had trouble loading this plan. Please try again."
+      title={t("planLoadFailed")}
+      description={t("planLoadFailedDesc")}
       onRetry={reset}
     />
   );

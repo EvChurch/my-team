@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@mt/api/client";
+import { useTranslations } from "next-intl";
 import { PlanHeader } from "@/components/plans/plan-header";
 import { PlanTimes } from "@/components/plans/plan-times";
 import { ServiceOrder } from "@/components/plans/service-order";
@@ -16,15 +17,16 @@ type PlanDetailsContentProps = {
 
 type Tab = "order" | "times" | "roster" | "notes";
 
-const tabs: { value: Tab; label: string }[] = [
-  { value: "order", label: "Service Order" },
-  { value: "times", label: "Times" },
-  { value: "roster", label: "Team Roster" },
-  { value: "notes", label: "Notes & Files" },
+const tabs: { value: Tab; labelKey: string }[] = [
+  { value: "order", labelKey: "serviceOrder" },
+  { value: "times", labelKey: "times" },
+  { value: "roster", labelKey: "teamRoster" },
+  { value: "notes", labelKey: "notesAndFiles" },
 ];
 
 export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
   const trpc = useTRPC();
+  const t = useTranslations("Plans");
   const { data } = useSuspenseQuery(
     trpc.plans.get.queryOptions({ planRemoteId }),
   );
@@ -110,7 +112,7 @@ export function PlanDetailsContent({ planRemoteId }: PlanDetailsContentProps) {
               }`}
               onClick={() => setActiveTab(tab.value)}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>

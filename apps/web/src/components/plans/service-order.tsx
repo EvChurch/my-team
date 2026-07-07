@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Music,
   Video,
@@ -70,6 +71,7 @@ function formatDuration(seconds: number): string {
 }
 
 function SongItem({ item }: { item: ServiceOrderItem }) {
+  const t = useTranslations("Plans");
   const [showChordChart, setShowChordChart] = useState(false);
   const hasChordChart = item.arrangement?.chordChart;
 
@@ -97,7 +99,7 @@ function SongItem({ item }: { item: ServiceOrderItem }) {
           </div>
           {item.arrangement?.name && (
             <p className="text-xs text-text-secondary mt-0.5">
-              Arrangement: {item.arrangement.name}
+              {t("arrangement", { name: item.arrangement.name })}
               {item.arrangement.bpm
                 ? ` \u00b7 ${item.arrangement.bpm} BPM`
                 : ""}
@@ -138,7 +140,7 @@ function SongItem({ item }: { item: ServiceOrderItem }) {
                 className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-dark transition-colors"
               >
                 <FileText className="w-3 h-3" />
-                {showChordChart ? "Hide" : "Show"} chord chart
+                {showChordChart ? t("hideChordChart") : t("showChordChart")}
                 {showChordChart ? (
                   <ChevronUp className="w-3 h-3" />
                 ) : (
@@ -153,7 +155,7 @@ function SongItem({ item }: { item: ServiceOrderItem }) {
         <div className="ml-11 mt-2 p-3 bg-bg-muted rounded-lg overflow-x-auto">
           {item.arrangement.chordChartKey && (
             <p className="text-xs text-text-secondary mb-2">
-              Key: {item.arrangement.chordChartKey}
+              {t("key", { key: item.arrangement.chordChartKey })}
             </p>
           )}
           <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap break-all leading-relaxed">
