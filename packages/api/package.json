@@ -16,6 +16,7 @@
     "./client": "./src/trpc/client.tsx",
     "./pco": "./src/lib/pco.ts",
     "./storage": "./src/lib/storage.ts",
+    "./ministry-hierarchy": "./src/lib/ministry-hierarchy.ts",
     "./training/course-content": "./src/lib/training/course-content.ts"
   },
   "dependencies": {

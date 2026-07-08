@@ -7,6 +7,7 @@ import {
   personDisplaySelect,
   profileDisplaySelect,
 } from "../lib/display-identity";
+import { getTeamMinistryLineage } from "../lib/ministry-team-queries";
 import { feedbackRecipientVisibilityWhere } from "./feedback-visibility";
 
 export const teamsRouter = createTRPCRouter({
@@ -197,6 +198,7 @@ export const teamsRouter = createTRPCRouter({
         guideSections,
         schedules,
         scheduleCount,
+        ministryLineage,
       ] = await Promise.all([
           prisma.team.findUniqueOrThrow({
             where: { id: input.teamId },
@@ -291,6 +293,7 @@ export const teamsRouter = createTRPCRouter({
           prisma.schedule.count({
             where: { teamId: input.teamId },
           }),
+          getTeamMinistryLineage(input.teamId),
         ]);
 
       const teamGuides = guides;
@@ -453,6 +456,7 @@ export const teamsRouter = createTRPCRouter({
         hasScheduleHistory: scheduleCount > 0 || team.serviceTypeId !== null,
         teamSchedules,
         lastServedByPerson,
+        ministryLineage,
       };
     }),
 

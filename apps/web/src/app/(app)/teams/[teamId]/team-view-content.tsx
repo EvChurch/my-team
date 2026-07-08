@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
+  ChevronRight,
   Check,
   Clock,
   Users,
@@ -29,6 +30,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { UpcomingServing } from "@/components/teams/upcoming-serving";
 import { LeaderBar } from "@/components/teams/leader-bar";
 import { Avatar } from "@/components/ui/avatar";
+import { MinistryLineageCard } from "@/components/teams/ministry-lineage-card";
 import { TeamGuideSections } from "@/components/guides/team-guide-sections";
 import { TeamTrainingCompliance } from "@/components/training/team-training-compliance";
 import { TeamTrainingOverview } from "@/components/training/team-training-overview";
@@ -48,6 +50,7 @@ type Tab =
   | "guides"
   | "training"
   | "feedback"
+  | "structure"
   | "about";
 
 const tabs = [
@@ -57,6 +60,7 @@ const tabs = [
   "guides",
   "training",
   "feedback",
+  "structure",
   "about",
 ] as const;
 
@@ -315,6 +319,11 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
   const { data: team } = useSuspenseQuery(
     trpc.teams.get.queryOptions({ teamId }),
   );
+  const ministryBreadcrumb = team.ministryLineage
+    .filter(
+      (scope) => scope.kind !== "CHURCH" && scope.kind !== "SERVING_TEAM",
+    )
+    .map((scope) => scope.name);
 
   // Derive roles with their members
   const roleGroups = team.positions.map((pos) => ({
@@ -365,11 +374,14 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
       { value: "guides", label: t("guidesTab") },
       { value: "training", label: t("trainingTab") },
       { value: "feedback", label: t("feedbackTab") },
+      ...(team.ministryLineage.length > 0
+        ? [{ value: "structure" as Tab, label: t("structureTab") }]
+        : []),
       ...(team.description
         ? [{ value: "about" as Tab, label: t("aboutTab") }]
         : []),
     ],
-    [hasServingTab, t, team.description],
+    [hasServingTab, t, team.description, team.ministryLineage.length],
   );
 
   const requestedTab = searchParams.get("tab");
@@ -435,11 +447,21 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             <h1 className="text-2xl font-bold text-text-primary">
               {team.name}
             </h1>
-            {team.serviceType && (
-              <p className="text-sm text-text-secondary mt-0.5">
-                {team.serviceType.name}
-              </p>
-            )}
+            {ministryBreadcrumb.length > 0 ? (
+              <div className="mt-1 flex flex-wrap items-center gap-1 text-sm text-text-secondary">
+                {ministryBreadcrumb.map((scopeName, index) => (
+                  <span
+                    key={`${scopeName}-${index}`}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {index > 0 && (
+                      <ChevronRight className="h-3.5 w-3.5 text-text-tertiary" />
+                    )}
+                    <span>{scopeName}</span>
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
           {team.isCurrentUserLeader && (
             <Badge variant="accent">{t("teamLead")}</Badge>
@@ -743,6 +765,10 @@ export function TeamViewContent({ teamId }: TeamViewContentProps) {
             </Card>
           )}
         </div>
+      )}
+
+      {selectedTab === "structure" && (
+        <MinistryLineageCard lineage={team.ministryLineage} />
       )}
 
       {selectedTab === "about" && team.description && (
