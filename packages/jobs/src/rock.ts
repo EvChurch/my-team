@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+import {
+  buildMinistryTeamCandidates,
+  ROCK_GROUP_TYPES,
+  ministryTeamSlug,
+  type MinistryTeamCandidate,
+} from "@mt/api/ministry-hierarchy"
 import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
 
 const ROCK_PAGE_SIZE = 100
@@ -23,6 +29,9 @@ const rockGroupSchema = z
     Name: z.string(),
     Description: z.string().nullable().optional(),
     GroupTypeId: z.number().nullable().optional(),
+    ParentGroupId: z.number().nullable().optional(),
+    Order: z.number().nullable().optional(),
+    IsActive: z.boolean().nullable().optional(),
   })
   .passthrough()
 
@@ -181,6 +190,23 @@ export type RockTeamsSnapshot = {
   positions: Prisma.PositionUpsertArgs[]
   assignments: Prisma.AssignmentUpsertArgs[]
   leaders: Prisma.LeaderUpsertArgs[]
+  hierarchy: RockMinistryHierarchySnapshot
+}
+
+export type RockMinistryTeamData = MinistryTeamCandidate & {
+  slug: string
+}
+
+export type RockMinistryTeamLeaderData = {
+  teamRemoteId: string
+  personRemoteId: string
+  remoteId: string
+  roleName: string | null
+}
+
+export type RockMinistryHierarchySnapshot = {
+  teams: RockMinistryTeamData[]
+  teamLeaders: RockMinistryTeamLeaderData[]
 }
 
 type RockPlanTimeData = {
@@ -275,13 +301,13 @@ function configuredGroupTypeIds(): number[] {
     .filter((value) => Number.isInteger(value))
 }
 
-async function fetchPcoMarkedGroupIds(): Promise<Set<number>> {
+async function fetchPcoMarkerValues(): Promise<Map<number, string>> {
   const attributes = await fetchRockPages(
     "/api/Attributes?$filter=Key eq 'PCOMarker'&$select=Id,Key,Name",
     rockAttributesPayloadSchema
   )
   const pcoMarkerAttributeIds = attributes.map((attribute) => attribute.Id)
-  if (pcoMarkerAttributeIds.length === 0) return new Set()
+  if (pcoMarkerAttributeIds.length === 0) return new Map()
 
   const values = await Promise.all(
     pcoMarkerAttributeIds.map((attributeId) =>
@@ -292,12 +318,16 @@ async function fetchPcoMarkedGroupIds(): Promise<Set<number>> {
     )
   )
 
-  return new Set(
+  return new Map(
     values
       .flat()
       .filter((value) => value.Value?.trim())
-      .map((value) => value.EntityId)
+      .map((value) => [value.EntityId, value.Value?.trim() ?? "true"])
   )
+}
+
+async function fetchPcoMarkedGroupIds(): Promise<Set<number>> {
+  return new Set((await fetchPcoMarkerValues()).keys())
 }
 
 function rockName(person: RockPerson): {
@@ -560,6 +590,39 @@ function teamUpsert(group: RockGroup): Prisma.TeamUpsertArgs {
   }
 }
 
+function hierarchyTeamUpsert(team: RockMinistryTeamData): Prisma.TeamUpsertArgs {
+  return {
+    where: {
+      remoteId_provider: {
+        remoteId: team.remoteId,
+        provider: "ROCK",
+      },
+    },
+    create: {
+      remoteId: team.remoteId,
+      provider: "ROCK",
+      name: team.name,
+      kind: team.kind,
+      sortOrder: team.sortOrder,
+      isActive: true,
+      description: {
+        groupTypeId: team.sourceGroupTypeId,
+        teamKind: team.kind,
+      },
+    },
+    update: {
+      name: team.name,
+      kind: team.kind,
+      sortOrder: team.sortOrder,
+      isActive: true,
+      description: {
+        groupTypeId: team.sourceGroupTypeId,
+        teamKind: team.kind,
+      },
+    },
+  }
+}
+
 function positionRemoteId(member: RockGroupMember): string {
   return `${member.GroupId}:${member.GroupRoleId ?? "member"}`
 }
@@ -735,6 +798,95 @@ async function fetchTeamGroups(): Promise<RockGroup[]> {
   return excludePcoMarked([...groups.values()])
 }
 
+async function fetchHierarchyGroups(): Promise<RockGroup[]> {
+  const pcoMarkers = await fetchPcoMarkerValues()
+  const groupTypeIds = [
+    ROCK_GROUP_TYPES.department,
+    ROCK_GROUP_TYPES.locale,
+    ROCK_GROUP_TYPES.area,
+    ROCK_GROUP_TYPES.servingTeam,
+  ]
+  const grouped = await Promise.all(
+    groupTypeIds.map((id) =>
+      fetchRockPages(
+        `/api/Groups?$filter=IsActive eq true and GroupTypeId eq ${id}&$select=Id,Name,Description,GroupTypeId,ParentGroupId,Order,IsActive`,
+        rockGroupsPayloadSchema
+      )
+    )
+  )
+  const groups = new Map<number, RockGroup>()
+  for (const group of grouped.flat()) {
+    groups.set(group.Id, group)
+  }
+
+  return [...groups.values()].map((group) => ({
+    ...group,
+    PCOMarker: pcoMarkers.get(group.Id),
+  }))
+}
+
+function ministryTeamData(group: MinistryTeamCandidate): RockMinistryTeamData {
+  return {
+    ...group,
+    slug: ministryTeamSlug(group.kind, group.remoteId),
+  }
+}
+
+async function fetchRockMinistryHierarchySnapshot(
+  phoneCache: Map<number, Promise<string | null>>,
+  people: Map<string, Prisma.PersonUpsertArgs>
+): Promise<RockMinistryHierarchySnapshot> {
+  const groups = await fetchHierarchyGroups()
+  const pcoMarkers = new Map(
+    groups.map((group) => [
+      group.Id,
+      typeof group.PCOMarker === "string" ? group.PCOMarker : null,
+    ])
+  )
+  const teams = buildMinistryTeamCandidates(
+    groups.map((group) => ({
+      id: group.Id,
+      name: group.Name,
+      groupTypeId: group.GroupTypeId ?? null,
+      parentGroupId: group.ParentGroupId ?? null,
+      order: group.Order ?? null,
+      description: group.Description ?? null,
+      pcoMarker: pcoMarkers.get(group.Id) ?? null,
+    }))
+  ).map(ministryTeamData)
+  const visibleTeamIds = new Set(teams.map((team) => Number(team.remoteId)))
+  const teamLeaders = new Map<string, RockMinistryTeamLeaderData>()
+
+  for (const group of groups) {
+    if (!visibleTeamIds.has(group.Id)) continue
+
+    const members = await fetchGroupMembers(group.Id)
+    for (const member of members) {
+      if (!member.GroupRole?.IsLeader) continue
+
+      const person = member.Person
+      const personId = person?.Id ?? member.PersonId
+      if (!personId || !person) continue
+
+      people.set(
+        String(personId),
+        personUpsert(person, await getRockPersonPhone(personId, phoneCache))
+      )
+      teamLeaders.set(String(member.Id), {
+        teamRemoteId: String(group.Id),
+        personRemoteId: String(personId),
+        remoteId: `group-member:${member.Id}`,
+        roleName: member.GroupRole.Name ?? null,
+      })
+    }
+  }
+
+  return {
+    teams,
+    teamLeaders: [...teamLeaders.values()],
+  }
+}
+
 async function fetchGroupMembers(groupId: number): Promise<RockGroupMember[]> {
   return fetchRockPages(
     `/api/GroupMembers?$filter=GroupId eq ${groupId}&$expand=Person,GroupRole`,
@@ -837,13 +989,13 @@ export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
   const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
   const leaders = new Map<string, Prisma.LeaderUpsertArgs>()
   const phoneCache = new Map<number, Promise<string | null>>()
+  const processedMemberGroupIds = new Set<number>()
 
-  const groups = await fetchTeamGroups()
+  const processGroupMembers = async (groupId: number) => {
+    if (processedMemberGroupIds.has(groupId)) return
+    processedMemberGroupIds.add(groupId)
 
-  for (const group of groups) {
-    teams.set(String(group.Id), teamUpsert(group))
-
-    const members = await fetchGroupMembers(group.Id)
+    const members = await fetchGroupMembers(groupId)
     for (const member of members) {
       const person = member.Person
       const personId = person?.Id ?? member.PersonId
@@ -862,12 +1014,29 @@ export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
     }
   }
 
+  const groups = await fetchTeamGroups()
+
+  for (const group of groups) {
+    teams.set(String(group.Id), teamUpsert(group))
+    await processGroupMembers(group.Id)
+  }
+
+  const hierarchy = await fetchRockMinistryHierarchySnapshot(phoneCache, people)
+  for (const team of hierarchy.teams) {
+    const groupId = Number(team.remoteId)
+    if (!Number.isInteger(groupId)) continue
+
+    teams.set(team.remoteId, hierarchyTeamUpsert(team))
+    await processGroupMembers(groupId)
+  }
+
   return {
     teams: [...teams.values()],
     people: [...people.values()],
     positions: [...positions.values()],
     assignments: [...assignments.values()],
     leaders: [...leaders.values()],
+    hierarchy,
   }
 }
 

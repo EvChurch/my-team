@@ -21,6 +21,9 @@ export default async function AppLayout({
 
   const queryClient = getQueryClient();
   const profile = await queryClient.fetchQuery(trpc.people.myTeamProfile.queryOptions()).catch(() => null);
+  const showAdminLink = await queryClient
+    .fetchQuery(trpc.ministryHierarchy.adminAccess.queryOptions())
+    .catch(() => false);
 
   const cookieStore = await cookies();
   const serverTimezone = cookieStore.get("tz")?.value ?? "UTC";
@@ -37,6 +40,7 @@ export default async function AppLayout({
           <Sidebar
             userName={profile?.displayName ?? session.user.name}
             userImage={profile?.image ?? session.user.image}
+            showAdminLink={showAdminLink}
           />
           <main className="flex-1 overflow-y-auto pb-24 md:pb-0 md:px-12 md:py-10 px-4 py-6">
             {children}

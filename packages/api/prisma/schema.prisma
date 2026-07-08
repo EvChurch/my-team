@@ -88,6 +88,14 @@ enum TrainingExpiryBehavior {
   NON_BLOCKING
 }
 
+enum TeamKind {
+  CHURCH
+  PURPOSE
+  CAMPUS
+  AREA
+  SERVING_TEAM
+}
+
 // --- PCO-synced models (read-only from app perspective) ---
 
 model Person {
@@ -107,7 +115,6 @@ model Person {
   assignments Assignment[]
 
   schedules Schedule[]
-
   profileIdentities ProfileIdentity[]
 
   @@unique([remoteId, provider])
@@ -137,6 +144,7 @@ model Profile {
   trainingCompletions     TrainingCompletion[]
   trainingQuizAttempts    TrainingQuizAttempt[]
   trainingScopeOwnerships TrainingScopeOwner[]
+  ministryAdmin           MinistryAdmin?
   preferences             UserPreference?
 }
 
@@ -214,10 +222,17 @@ model Team {
   name          String
   description   Json?
   serviceTypeId String?
+  parentTeamId  String?
+  kind          TeamKind @default(SERVING_TEAM)
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   serviceType          ServiceType?          @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
+  parentTeam           Team?                 @relation("TeamHierarchy", fields: [parentTeamId], references: [id], onDelete: SetNull)
+  childTeams           Team[]                @relation("TeamHierarchy")
+  sources              TeamSource[]
   leaders              Leader[]
   positions            Position[]
   goals                Goal[]
@@ -229,6 +244,39 @@ model Team {
   schedules            Schedule[]
 
   @@unique([remoteId, provider])
+  @@index([kind])
+  @@index([parentTeamId])
+  @@index([isActive])
+}
+
+model TeamSource {
+  id                String   @id @default(cuid())
+  teamId            String
+  provider          Provider
+  remoteId          String
+  parentRemoteId    String?
+  sourceGroupTypeId Int?
+  sourceName        String
+  sourceSnapshot    Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, remoteId])
+  @@index([teamId])
+  @@index([parentRemoteId])
+  @@index([sourceGroupTypeId])
+}
+
+model MinistryAdmin {
+  id        String   @id @default(cuid())
+  profileId String   @unique
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 }
 
 model Position {

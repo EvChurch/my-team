@@ -6,7 +6,7 @@ import { fetchRockSchedulesSnapshot, fetchRockTeamsSnapshot } from "../rock.js"
 export async function SyncRockJob(): Promise<void> {
   console.log("Fetching Rock data...")
 
-  const { people, teams, positions, assignments, leaders } =
+  const { people, teams, positions, assignments, leaders, hierarchy } =
     await fetchRockTeamsSnapshot()
 
   const syncedPeople = new Set(
@@ -64,6 +64,119 @@ export async function SyncRockJob(): Promise<void> {
       }
       throw error
     }
+  }
+
+  console.log(`Updating ${hierarchy.teams.length} Rock hierarchy teams`)
+  const churchTeam = await prisma.team.upsert({
+    where: {
+      remoteId_provider: {
+        remoteId: "church",
+        provider: "ROCK",
+      },
+    },
+    create: {
+      remoteId: "church",
+      provider: "ROCK",
+      kind: "CHURCH",
+      name: "Church",
+      sortOrder: 0,
+      isActive: true,
+    },
+    update: {
+      kind: "CHURCH",
+      name: "Church",
+      isActive: true,
+    },
+    select: { id: true },
+  })
+  syncedTeams.push("church")
+
+  const teamIdsByRemoteId = new Map<string, string>()
+  const syncedPcoTeamSources = new Set<string>()
+  for (const hierarchyTeam of hierarchy.teams) {
+    const record = await prisma.team.findUnique({
+      where: {
+        remoteId_provider: {
+          remoteId: hierarchyTeam.remoteId,
+          provider: "ROCK",
+        },
+      },
+      select: { id: true },
+    })
+    if (!record) continue
+    teamIdsByRemoteId.set(hierarchyTeam.remoteId, record.id)
+
+    await prisma.teamSource.upsert({
+      where: {
+        provider_remoteId: {
+          provider: "ROCK",
+          remoteId: hierarchyTeam.remoteId,
+        },
+      },
+      create: {
+        teamId: record.id,
+        provider: "ROCK",
+        remoteId: hierarchyTeam.remoteId,
+        parentRemoteId: hierarchyTeam.parentRemoteId,
+        sourceGroupTypeId: hierarchyTeam.sourceGroupTypeId,
+        sourceName: hierarchyTeam.name,
+        sourceSnapshot: hierarchyTeam.sourceSnapshot,
+      },
+      update: {
+        teamId: record.id,
+        parentRemoteId: hierarchyTeam.parentRemoteId,
+        sourceGroupTypeId: hierarchyTeam.sourceGroupTypeId,
+        sourceName: hierarchyTeam.name,
+        sourceSnapshot: hierarchyTeam.sourceSnapshot,
+      },
+    })
+
+    for (const pcoTeamRemoteId of hierarchyTeam.linkedPcoTeamRemoteIds) {
+      syncedPcoTeamSources.add(pcoTeamRemoteId)
+      await prisma.teamSource.upsert({
+        where: {
+          provider_remoteId: {
+            provider: "PCO",
+            remoteId: pcoTeamRemoteId,
+          },
+        },
+        create: {
+          teamId: record.id,
+          provider: "PCO",
+          remoteId: pcoTeamRemoteId,
+          parentRemoteId: null,
+          sourceGroupTypeId: null,
+          sourceName: hierarchyTeam.name,
+          sourceSnapshot: {
+            linkedFromRockRemoteId: hierarchyTeam.remoteId,
+          },
+        },
+        update: {
+          teamId: record.id,
+          parentRemoteId: null,
+          sourceGroupTypeId: null,
+          sourceName: hierarchyTeam.name,
+          sourceSnapshot: {
+            linkedFromRockRemoteId: hierarchyTeam.remoteId,
+          },
+        },
+      })
+    }
+  }
+
+  for (const hierarchyTeam of hierarchy.teams) {
+    const teamId = teamIdsByRemoteId.get(hierarchyTeam.remoteId)
+    if (!teamId) continue
+
+    await prisma.team.update({
+      where: { id: teamId },
+      data: {
+        parentTeamId: hierarchyTeam.parentRemoteId
+          ? (teamIdsByRemoteId.get(hierarchyTeam.parentRemoteId) ??
+            churchTeam.id)
+          : churchTeam.id,
+      },
+    })
   }
 
   console.log("Fetching Rock schedules...")
@@ -162,6 +275,26 @@ export async function SyncRockJob(): Promise<void> {
   })
   await prisma.person.deleteMany({
     where: { provider: "ROCK", remoteId: { notIn: [...syncedPeople] } },
+  })
+  await prisma.teamSource.deleteMany({
+    where: {
+      provider: "ROCK",
+      remoteId: { notIn: hierarchy.teams.map((team) => team.remoteId) },
+    },
+  })
+  await prisma.teamSource.deleteMany({
+    where: {
+      provider: "PCO",
+      remoteId: { notIn: [...syncedPcoTeamSources] },
+    },
+  })
+  await prisma.team.updateMany({
+    where: {
+      provider: "ROCK",
+      kind: { not: "CHURCH" },
+      remoteId: { notIn: hierarchy.teams.map((team) => team.remoteId) },
+    },
+    data: { isActive: false, parentTeamId: null },
   })
 
   console.log("Rock data synced successfully")

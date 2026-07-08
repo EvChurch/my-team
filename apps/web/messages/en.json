@@ -29,7 +29,8 @@
     "goals": "Goals",
     "guides": "Guides",
     "profile": "Profile",
-    "training": "Training"
+    "training": "Training",
+    "admin": "Admin"
   },
   "Auth": {
     "signIn": "Sign in",
@@ -64,6 +65,7 @@
     "goalsTab": "Goals",
     "guidesTab": "Guides",
     "feedbackTab": "Feedback",
+    "structureTab": "Structure",
     "aboutTab": "About",
     "mySchedule": "My Schedule",
     "noUpcomingSchedules": "No Upcoming Schedules",
@@ -123,7 +125,49 @@
     "writeFeedback": "Write Feedback",
     "manageTraining": "Manage Training",
     "trainingTab": "Training",
-    "doneEditingTraining": "Done editing"
+    "doneEditingTraining": "Done editing",
+    "lineageTitle": "Team lineage",
+    "scopeKind": {
+      "CHURCH": "Church",
+      "PURPOSE": "Purpose",
+      "CAMPUS": "Campus",
+      "AREA": "Area",
+      "SERVING_TEAM": "Team"
+    }
+  },
+  "AdminMinistry": {
+    "admin": "Admin",
+    "title": "Ministry Structure",
+    "forbiddenTitle": "Ministry admin access required",
+    "forbiddenDescription": "This structure is managed by the Ministry team.",
+    "loadFailedTitle": "Couldn't load ministry structure",
+    "loadFailedDescription": "Something went wrong while loading the ministry tree. Please try again.",
+    "emptyTitle": "No ministry structure yet",
+    "emptyDescription": "Run the Rock sync to populate the ministry tree.",
+    "noLeaders": "No leaders recorded",
+    "sourceBadge": "{provider}",
+    "myTeamSource": "My Team",
+    "rockGroupType": "Rock group type {id}",
+    "remoteId": "Remote ID {id}",
+    "managedInMyTeam": "Managed in My Team",
+    "toggleScope": "Toggle {name}",
+    "searchPlaceholder": "Search teams or leaders...",
+    "noSearchResults": "No matching teams",
+    "noSearchResultsDescription": "Try a different team or leader name.",
+    "descendants": "descendants",
+    "source": "Source",
+    "children": "Children",
+    "directChildren": "{count, plural, one {# direct child} other {# direct children}}",
+    "leaders": "Leaders",
+    "members": "Members",
+    "noMembers": "No members recorded",
+    "scopeKind": {
+      "CHURCH": "Church",
+      "PURPOSE": "Purpose",
+      "CAMPUS": "Campus",
+      "AREA": "Area",
+      "SERVING_TEAM": "Team"
+    }
   },
   "Schedules": {
     "upcomingServing": "Upcoming Serving",

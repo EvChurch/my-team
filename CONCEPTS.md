@@ -1,5 +1,41 @@
 # Concepts
 
+## Ministry Structure
+
+### Ministry Team
+A canonical team in the church structure where app-native work can attach.
+Examples include church, purpose, campus purpose driver, area, and serving-team contexts.
+
+### Purpose
+A ministry-wide category of church activity that may span campuses and teams.
+
+### Campus Purpose Driver
+A leader or leadership team for a specific purpose at a specific campus.
+Teams may report directly to this team or through an optional area layer.
+
+### Area
+An optional leadership layer between a campus purpose driver and teams.
+
+## OKRs
+
+### Initiative
+A top-level organisational strategic push at church, purpose, or campus purpose driver level.
+Initiatives are not tasks or lower-level project actions.
+
+### Strategic Objective
+An objective that contributes to an Initiative and must explicitly link to one.
+
+### Development Objective
+An objective for growing capability in a team, role, or person-in-role.
+Development Objectives do not require an Initiative.
+
+### Key Result
+A metric attached to an Objective, with baseline, current value, target value, unit, and direction.
+
+### Task
+Concrete work attached to a Key Result.
+Tasks exist only inside the OKR system and are not a general task manager.
+
 ## Training
 
 ### Training Module

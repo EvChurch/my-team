@@ -3,16 +3,17 @@
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Church, ChevronRight } from "lucide-react";
+import { Church, ChevronRight, ShieldCheck } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import { navItems } from "./nav-items";
 
 type SidebarProps = {
   userName?: string | null;
   userImage?: string | null;
+  showAdminLink?: boolean;
 };
 
-export function Sidebar({ userName, userImage }: SidebarProps) {
+export function Sidebar({ userName, userImage, showAdminLink = false }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("Navigation");
   const tCommon = useTranslations("Common");
@@ -47,6 +48,20 @@ export function Sidebar({ userName, userImage }: SidebarProps) {
             </Link>
           );
         })}
+        {showAdminLink && (
+          <Link
+            href="/admin/ministry"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              pathname === "/admin/ministry" ||
+              pathname.startsWith("/admin/ministry/")
+                ? "bg-accent text-text-on-accent"
+                : "text-text-secondary hover:bg-bg-muted"
+            }`}
+          >
+            <ShieldCheck className="w-5 h-5" />
+            {t("admin")}
+          </Link>
+        )}
       </nav>
 
       {/* Profile / Settings button */}
