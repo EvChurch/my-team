@@ -14,12 +14,6 @@ enum Provider {
   ROCK
 }
 
-enum ProfileMergeCandidateStatus {
-  PENDING
-  APPROVED
-  DECLINED
-}
-
 enum GoalStatus {
   PENDING
   APPROVED
@@ -96,111 +90,90 @@ enum TeamKind {
   SERVING_TEAM
 }
 
-// --- PCO-synced models (read-only from app perspective) ---
-
-model Person {
-  id        String   @id @default(cuid())
-  remoteId  String
-  provider  Provider
-  email     String?
-  phone     String?
-  fullName  String
-  firstName String
-  lastName  String
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  leaders     Leader[]
-  assignments Assignment[]
-
-  schedules Schedule[]
-  profileIdentities ProfileIdentity[]
-
-  @@unique([remoteId, provider])
+enum MembershipSource {
+  SYNCED
+  MY_TEAM
 }
 
-model Profile {
-  id          String   @id @default(cuid())
+// --- My Team-owned identity models ---
+
+model Person {
+  id          String    @id @default(cuid())
   displayName String
   fullName    String
   firstName   String
   lastName    String
   email       String?
+  phone       String?
   image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+  archivedAt  DateTime?
 
   authAccounts            AuthAccount[]
-  identities              ProfileIdentity[]
-  mergeCandidates         ProfileMergeCandidate[] @relation("MergeCandidateProfile")
-  duplicateMatches        ProfileMergeCandidate[] @relation("MergeCandidateDuplicate")
-  goalsOwned              Goal[]                  @relation("GoalOwner")
-  goalsReviewed           Goal[]                  @relation("GoalReviewer")
-  feedbackAuthored        Feedback[]              @relation("FeedbackAuthor")
-  feedbackReceived        Feedback[]              @relation("FeedbackRecipient")
+  sourcePeople            SourcePerson[]
+  leaders                 Leader[]
+  assignments             Assignment[]
+  schedules               Schedule[]
+  goalsOwned              Goal[]                @relation("GoalOwner")
+  goalsReviewed           Goal[]                @relation("GoalReviewer")
+  feedbackAuthored        Feedback[]            @relation("FeedbackAuthor")
+  feedbackReceived        Feedback[]            @relation("FeedbackRecipient")
   guidesAuthored          Guide[]
-  trainingModulesAuthored TrainingModule[]        @relation("TrainingModuleAuthor")
+  trainingModulesAuthored TrainingModule[]      @relation("TrainingModuleAuthor")
   trainingCompletions     TrainingCompletion[]
   trainingQuizAttempts    TrainingQuizAttempt[]
   trainingScopeOwnerships TrainingScopeOwner[]
   ministryAdmin           MinistryAdmin?
   preferences             UserPreference?
+
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
 }
 
 model AuthAccount {
   id                String   @id @default(cuid())
-  profileId         String
+  personId          String
   provider          String
   providerAccountId String
   email             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-  @@index([profileId])
-}
-
-model ProfileIdentity {
-  id        String   @id @default(cuid())
-  profileId String
-  personId  String?
-  provider  Provider
-  remoteId  String
-  email     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  person  Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
-
-  @@unique([provider, remoteId])
-  @@index([profileId])
   @@index([personId])
 }
 
-model ProfileMergeCandidate {
-  id                 String                      @id @default(cuid())
-  profileId          String
-  duplicateProfileId String?
-  provider           Provider?
-  remoteId           String?
-  confidence         Int
-  reason             String
-  status             ProfileMergeCandidateStatus @default(PENDING)
-  sourceSnapshot     Json?
-  createdAt          DateTime                    @default(now())
-  updatedAt          DateTime                    @updatedAt
+model SourcePerson {
+  id             String   @id @default(cuid())
+  personId       String
+  provider       Provider
+  remoteId       String
+  email          String?
+  phone          String?
+  fullName       String
+  firstName      String
+  lastName       String
+  image          String?
+  isActive       Boolean  @default(true)
+  sourceSnapshot Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  profile          Profile  @relation("MergeCandidateProfile", fields: [profileId], references: [id], onDelete: Cascade)
-  duplicateProfile Profile? @relation("MergeCandidateDuplicate", fields: [duplicateProfileId], references: [id], onDelete: SetNull)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 
-  @@index([profileId])
-  @@index([duplicateProfileId])
-  @@index([status])
+  @@unique([provider, remoteId])
+  @@index([personId])
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
 }
+
+// --- Synced structure models and My Team relationships ---
 
 model ServiceType {
   id        String   @id @default(cuid())
@@ -271,23 +244,24 @@ model TeamSource {
 
 model MinistryAdmin {
   id        String   @id @default(cuid())
-  profileId String   @unique
+  personId  String   @unique
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 }
 
 model Position {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   remoteId    String
   provider    Provider
   teamId      String
   name        String?
   description Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  source      MembershipSource @default(SYNCED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   team                 Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
   assignments          Assignment[]
@@ -300,35 +274,37 @@ model Position {
 }
 
 model Leader {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   remoteId  String
   provider  Provider
   personId  String
   teamId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  source    MembershipSource @default(SYNCED)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  @@unique([personId, teamId])
+  @@unique([personId, teamId, source])
   @@unique([remoteId, provider])
   @@index([teamId])
 }
 
 model Assignment {
-  id         String   @id @default(cuid())
+  id         String           @id @default(cuid())
   remoteId   String
   provider   Provider
   personId   String
   positionId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  source     MembershipSource @default(SYNCED)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   person   Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
   position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
-  @@unique([personId, positionId])
+  @@unique([personId, positionId, source])
   @@unique([remoteId, provider])
   @@index([positionId])
 }
@@ -395,9 +371,9 @@ model Goal {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  person   Profile? @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
-  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  reviewer Profile? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  person   Person? @relation("GoalOwner", fields: [personId], references: [id], onDelete: SetNull)
+  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reviewer Person? @relation("GoalReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
   @@index([personId])
   @@index([teamId])
@@ -416,9 +392,9 @@ model Feedback {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  author    Profile? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  recipient Profile? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  author    Person? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  recipient Person? @relation("FeedbackRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@index([recipientId])
@@ -442,7 +418,7 @@ model Guide {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  author          Profile?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  author          Person?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
   team            Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role            Position?        @relation("GuideRole", fields: [roleId], references: [id], onDelete: SetNull)
   section         GuideSection?    @relation(fields: [sectionId], references: [id], onDelete: SetNull)
@@ -498,14 +474,14 @@ model TrainingScope {
 model TrainingScopeOwner {
   id        String   @id @default(cuid())
   scopeId   String
-  profileId String
+  personId  String
   createdAt DateTime @default(now())
 
-  scope   TrainingScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
-  profile Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  scope  TrainingScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  person Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
 
-  @@unique([scopeId, profileId])
-  @@index([profileId])
+  @@unique([scopeId, personId])
+  @@index([personId])
 }
 
 model TrainingModule {
@@ -528,7 +504,7 @@ model TrainingModule {
 
   scope        TrainingScope?        @relation(fields: [scopeId], references: [id], onDelete: SetNull)
   guide        Guide?                @relation(fields: [guideId], references: [id], onDelete: SetNull)
-  author       Profile?              @relation("TrainingModuleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  author       Person?               @relation("TrainingModuleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   requirements TrainingRequirement[]
   completions  TrainingCompletion[]
   quizAttempts TrainingQuizAttempt[]
@@ -564,7 +540,7 @@ model TrainingRequirement {
 
 model TrainingCompletion {
   id             String    @id @default(cuid())
-  profileId      String
+  personId       String
   moduleId       String
   moduleVersion  Int
   completedAt    DateTime  @default(now())
@@ -573,17 +549,17 @@ model TrainingCompletion {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  module  TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  person Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  module TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
-  @@unique([profileId, moduleId])
+  @@unique([personId, moduleId])
   @@index([moduleId])
   @@index([expiresAt])
 }
 
 model TrainingQuizAttempt {
   id            String   @id @default(cuid())
-  profileId     String
+  personId      String
   moduleId      String
   moduleVersion Int
   answers       Json
@@ -591,10 +567,10 @@ model TrainingQuizAttempt {
   passed        Boolean?
   attemptedAt   DateTime @default(now())
 
-  profile Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  module  TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  person Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  module TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
-  @@index([profileId, moduleId])
+  @@index([personId, moduleId])
   @@index([moduleId])
   @@index([attemptedAt])
 }
@@ -607,5 +583,5 @@ model UserPreference {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  person Profile @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 }

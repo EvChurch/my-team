@@ -482,14 +482,8 @@ export const teamsRouter = createTRPCRouter({
           where: {
             teamId: input.teamId,
             person: {
-              identities: {
-                some: {
-                  person: {
-                    assignments: {
-                      some: { positionId: input.positionId },
-                    },
-                  },
-                },
+              assignments: {
+                some: { positionId: input.positionId },
               },
             },
           },

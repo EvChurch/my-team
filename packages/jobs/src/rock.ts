@@ -9,6 +9,7 @@ import {
 import type { Prisma, ScheduleStatus } from "@mt/api/prisma"
 
 const ROCK_PAGE_SIZE = 100
+const ROCK_ACTIVE_RECORD_STATUS_VALUE_ID = 3
 
 const rockPersonSchema = z
   .object({
@@ -20,6 +21,8 @@ const rockPersonSchema = z
     Email: z.string().nullable().optional(),
     PhotoId: z.number().nullable().optional(),
     PhotoUrl: z.string().nullable().optional(),
+    IsDeceased: z.boolean().nullable().optional(),
+    RecordStatusValueId: z.number().nullable().optional(),
   })
   .passthrough()
 
@@ -186,11 +189,36 @@ type RockPersonAlias = z.infer<typeof rockPersonAliasSchema>
 
 export type RockTeamsSnapshot = {
   teams: Prisma.TeamUpsertArgs[]
-  people: Prisma.PersonUpsertArgs[]
+  people: SourcePersonSnapshot[]
   positions: Prisma.PositionUpsertArgs[]
-  assignments: Prisma.AssignmentUpsertArgs[]
-  leaders: Prisma.LeaderUpsertArgs[]
+  assignments: SourceAssignmentSnapshot[]
+  leaders: SourceLeaderSnapshot[]
   hierarchy: RockMinistryHierarchySnapshot
+}
+
+export type SourcePersonSnapshot = {
+  remoteId: string
+  provider: "ROCK"
+  email: string | null
+  phone: string | null
+  fullName: string
+  firstName: string
+  lastName: string
+  image: string | null
+}
+
+export type SourceLeaderSnapshot = {
+  remoteId: string
+  provider: "ROCK"
+  personRemoteId: string
+  teamRemoteId: string
+}
+
+export type SourceAssignmentSnapshot = {
+  remoteId: string
+  provider: "ROCK"
+  personRemoteId: string
+  positionRemoteId: string
 }
 
 export type RockMinistryTeamData = MinistryTeamCandidate & {
@@ -223,7 +251,7 @@ export type RockScheduleData = {
 }
 
 export type RockSchedulesSnapshot = {
-  people: Prisma.PersonUpsertArgs[]
+  people: SourcePersonSnapshot[]
   schedules: RockScheduleData[]
 }
 
@@ -352,36 +380,37 @@ function rockName(person: RockPerson): {
 function personUpsert(
   person: RockPerson,
   phone: string | null = null
-): Prisma.PersonUpsertArgs {
+): SourcePersonSnapshot {
   const remoteId = String(person.Id)
   const name = rockName(person)
   const image = rockPersonImage(person)
 
   return {
-    where: {
-      remoteId_provider: {
-        remoteId,
-        provider: "ROCK",
-      },
-    },
-    create: {
-      remoteId,
-      provider: "ROCK",
-      email: person.Email ?? null,
-      phone,
-      fullName: name.fullName,
-      firstName: name.firstName,
-      lastName: name.lastName,
-      image,
-    },
-    update: {
-      email: person.Email ?? null,
-      phone,
-      fullName: name.fullName,
-      firstName: name.firstName,
-      lastName: name.lastName,
-      image,
-    },
+    remoteId,
+    provider: "ROCK",
+    email: person.Email ?? null,
+    phone,
+    fullName: name.fullName,
+    firstName: name.firstName,
+    lastName: name.lastName,
+    image,
+  }
+}
+
+function directoryPersonUpsert(person: RockPerson): SourcePersonSnapshot {
+  const remoteId = String(person.Id)
+  const name = rockName(person)
+  const image = rockPersonImage(person)
+
+  return {
+    remoteId,
+    provider: "ROCK",
+    email: person.Email ?? null,
+    phone: null,
+    fullName: name.fullName,
+    firstName: name.firstName,
+    lastName: name.lastName,
+    image,
   }
 }
 
@@ -664,103 +693,23 @@ function positionUpsert(member: RockGroupMember): Prisma.PositionUpsertArgs {
   }
 }
 
-function assignmentUpsert(member: RockGroupMember): Prisma.AssignmentUpsertArgs {
+function assignmentUpsert(member: RockGroupMember): SourceAssignmentSnapshot {
   return {
-    where: {
-      remoteId_provider: {
-        remoteId: String(member.Id),
-        provider: "ROCK",
-      },
-    },
-    create: {
-      remoteId: String(member.Id),
-      provider: "ROCK",
-      person: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.Person?.Id ?? member.PersonId),
-            provider: "ROCK",
-          },
-        },
-      },
-      position: {
-        connect: {
-          remoteId_provider: {
-            remoteId: positionRemoteId(member),
-            provider: "ROCK",
-          },
-        },
-      },
-    },
-    update: {
-      person: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.Person?.Id ?? member.PersonId),
-            provider: "ROCK",
-          },
-        },
-      },
-      position: {
-        connect: {
-          remoteId_provider: {
-            remoteId: positionRemoteId(member),
-            provider: "ROCK",
-          },
-        },
-      },
-    },
+    remoteId: String(member.Id),
+    provider: "ROCK",
+    personRemoteId: String(member.Person?.Id ?? member.PersonId),
+    positionRemoteId: positionRemoteId(member),
   }
 }
 
-function leaderUpsert(member: RockGroupMember): Prisma.LeaderUpsertArgs {
+function leaderUpsert(member: RockGroupMember): SourceLeaderSnapshot {
   const remoteId = `group-member:${member.Id}`
 
   return {
-    where: {
-      remoteId_provider: {
-        remoteId,
-        provider: "ROCK",
-      },
-    },
-    create: {
-      remoteId,
-      provider: "ROCK",
-      person: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.Person?.Id ?? member.PersonId),
-            provider: "ROCK",
-          },
-        },
-      },
-      team: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.GroupId),
-            provider: "ROCK",
-          },
-        },
-      },
-    },
-    update: {
-      person: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.Person?.Id ?? member.PersonId),
-            provider: "ROCK",
-          },
-        },
-      },
-      team: {
-        connect: {
-          remoteId_provider: {
-            remoteId: String(member.GroupId),
-            provider: "ROCK",
-          },
-        },
-      },
-    },
+    remoteId,
+    provider: "ROCK",
+    personRemoteId: String(member.Person?.Id ?? member.PersonId),
+    teamRemoteId: String(member.GroupId),
   }
 }
 
@@ -834,7 +783,7 @@ function ministryTeamData(group: MinistryTeamCandidate): RockMinistryTeamData {
 
 async function fetchRockMinistryHierarchySnapshot(
   phoneCache: Map<number, Promise<string | null>>,
-  people: Map<string, Prisma.PersonUpsertArgs>
+  people: Map<string, SourcePersonSnapshot>
 ): Promise<RockMinistryHierarchySnapshot> {
   const groups = await fetchHierarchyGroups()
   const pcoMarkers = new Map(
@@ -891,6 +840,13 @@ async function fetchGroupMembers(groupId: number): Promise<RockGroupMember[]> {
   return fetchRockPages(
     `/api/GroupMembers?$filter=GroupId eq ${groupId}&$expand=Person,GroupRole`,
     rockGroupMembersPayloadSchema
+  )
+}
+
+async function fetchActiveRockPeople(): Promise<RockPerson[]> {
+  return fetchRockPages(
+    `/api/People?$filter=RecordStatusValueId eq ${ROCK_ACTIVE_RECORD_STATUS_VALUE_ID} and IsDeceased eq false&$select=Id,FirstName,NickName,LastName,Email,PhotoId,IsDeceased,RecordStatusValueId`,
+    rockPeoplePayloadSchema
   )
 }
 
@@ -984,12 +940,17 @@ async function fetchPersonAlias(aliasId: number): Promise<RockPersonAlias | null
 
 export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
   const teams = new Map<string, Prisma.TeamUpsertArgs>()
-  const people = new Map<string, Prisma.PersonUpsertArgs>()
+  const people = new Map<string, SourcePersonSnapshot>()
   const positions = new Map<string, Prisma.PositionUpsertArgs>()
-  const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
-  const leaders = new Map<string, Prisma.LeaderUpsertArgs>()
+  const assignments = new Map<string, SourceAssignmentSnapshot>()
+  const leaders = new Map<string, SourceLeaderSnapshot>()
   const phoneCache = new Map<number, Promise<string | null>>()
   const processedMemberGroupIds = new Set<number>()
+
+  const activePeople = await fetchActiveRockPeople()
+  for (const person of activePeople) {
+    people.set(String(person.Id), directoryPersonUpsert(person))
+  }
 
   const processGroupMembers = async (groupId: number) => {
     if (processedMemberGroupIds.has(groupId)) return
@@ -1043,7 +1004,7 @@ export async function fetchRockTeamsSnapshot(): Promise<RockTeamsSnapshot> {
 export async function fetchRockSchedulesSnapshot(
   teamRemoteIds: string[]
 ): Promise<RockSchedulesSnapshot> {
-  const people = new Map<string, Prisma.PersonUpsertArgs>()
+  const people = new Map<string, SourcePersonSnapshot>()
   const schedules = new Map<string, RockScheduleData>()
   const personAliases = new Map<number, RockPersonAlias | null>()
   const rockSchedules = new Map<number, RockSchedule | null>()

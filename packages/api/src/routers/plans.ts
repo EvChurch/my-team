@@ -200,8 +200,8 @@ export const plansRouter = createTRPCRouter({
       const timeout = AbortSignal.timeout(8000);
 
       // 2. Get current user's PCO remote ID for roster highlighting
-      const person = await prisma.person.findFirst({
-        where: { id: { in: ctx.personIds }, provider: "PCO" },
+      const person = await prisma.sourcePerson.findFirst({
+        where: { personId: { in: ctx.personIds }, provider: "PCO" },
         select: { remoteId: true },
       });
       const currentUserPcoId = person?.remoteId ?? null;
@@ -266,19 +266,23 @@ export const plansRouter = createTRPCRouter({
       ];
       const localRosterPeople =
         memberPcoIds.length > 0
-          ? await prisma.person.findMany({
+          ? await prisma.sourcePerson.findMany({
               where: {
                 provider: "PCO",
                 remoteId: { in: memberPcoIds },
               },
-              select: personDisplaySelect,
+              select: {
+                remoteId: true,
+                person: { select: personDisplaySelect },
+              },
             })
           : [];
-      const rosterDisplayMap = await getPersonDisplayMap(localRosterPeople);
+      const rosterPeople = localRosterPeople.map((item) => item.person);
+      const rosterDisplayMap = await getPersonDisplayMap(rosterPeople);
       const displayPeopleByPcoId = new Map(
-        localRosterPeople.map((person) => [
-          person.remoteId,
-          rosterDisplayMap.get(person.id) ?? person,
+        localRosterPeople.map((sourcePerson) => [
+          sourcePerson.remoteId,
+          rosterDisplayMap.get(sourcePerson.person.id) ?? sourcePerson.person,
         ]),
       );
 
