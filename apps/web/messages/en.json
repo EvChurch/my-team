@@ -30,7 +30,11 @@
     "guides": "Guides",
     "profile": "Profile",
     "training": "Training",
-    "admin": "Admin"
+    "admin": "Admin",
+    "adminDashboard": "Dashboard",
+    "adminStructure": "Structure",
+    "adminUsers": "Users",
+    "backToMyTeam": "Back to My Team"
   },
   "Auth": {
     "signIn": "Sign in",
@@ -161,6 +165,16 @@
     "leaders": "Leaders",
     "members": "Members",
     "noMembers": "No members recorded",
+    "addPerson": "Add person",
+    "addLeader": "Add leader",
+    "addMember": "Add member",
+    "cancelAdd": "Cancel",
+    "personSearchPlaceholder": "Search people...",
+    "noPeopleResults": "No matching people",
+    "selectPerson": "Select a person",
+    "roles": "Roles",
+    "leaderRole": "Leader",
+    "removePerson": "Remove {name}",
     "scopeKind": {
       "CHURCH": "Church",
       "PURPOSE": "Purpose",
@@ -168,6 +182,23 @@
       "AREA": "Area",
       "SERVING_TEAM": "Team"
     }
+  },
+  "AdminUsers": {
+    "admin": "Admin",
+    "title": "Users",
+    "forbiddenTitle": "Admin access required",
+    "forbiddenDescription": "Admin membership is managed by existing administrators.",
+    "loadFailedTitle": "Couldn't load admin users",
+    "loadFailedDescription": "Something went wrong while loading admin membership. Please try again.",
+    "currentAdmins": "Current admins",
+    "adminCount": "{count, plural, one {# admin} other {# admins}}",
+    "addAdmin": "Add admin",
+    "cancelAdd": "Cancel",
+    "searchPlaceholder": "Search users...",
+    "noResults": "No matching users",
+    "alreadyAdmin": "Admin",
+    "removeAdmin": "Remove {name}",
+    "clearSelectedProfile": "Clear {name}"
   },
   "Schedules": {
     "upcomingServing": "Upcoming Serving",

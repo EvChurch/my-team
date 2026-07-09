@@ -21,6 +21,10 @@ function splitName(name: string): { firstName: string; lastName: string } {
  */
 export interface TRPCContext {
   session: Session | null;
+  /**
+   * @deprecated Use personId. Kept as a compatibility alias while older
+   * routers are moved off the former Profile model.
+   */
   profileId: string | null;
   personId: string | null;
   personIds: string[];
@@ -28,38 +32,16 @@ export interface TRPCContext {
   headers: Headers;
 }
 
-async function linkPeopleByEmail(profileId: string, email: string | null) {
-  if (!email) return [];
+async function findCanonicalPersonByEmail(email: string | null) {
+  if (!email) return null;
 
   const people = await prisma.person.findMany({
     where: { email },
-    select: { id: true, provider: true, remoteId: true, email: true },
+    select: { id: true },
+    take: 2,
   });
 
-  for (const person of people) {
-    await prisma.profileIdentity.upsert({
-      where: {
-        provider_remoteId: {
-          provider: person.provider,
-          remoteId: person.remoteId,
-        },
-      },
-      create: {
-        profileId,
-        personId: person.id,
-        provider: person.provider,
-        remoteId: person.remoteId,
-        email: person.email,
-      },
-      update: {
-        profileId,
-        personId: person.id,
-        email: person.email,
-      },
-    });
-  }
-
-  return people;
+  return people.length === 1 ? people[0]! : null;
 }
 
 /**
@@ -70,9 +52,7 @@ export const createTRPCContext = cache(
   async (opts?: { headers?: Headers }): Promise<TRPCContext> => {
     const session = await auth();
 
-    let profileId: string | null = null;
     let personId: string | null = null;
-    let personIds: string[] = [];
 
     if (session?.user?.auth0Id) {
       const authAccount = await prisma.authAccount.findUnique({
@@ -83,113 +63,35 @@ export const createTRPCContext = cache(
           },
         },
         select: {
-          profileId: true,
-          profile: {
-            select: {
-              identities: {
-                select: { personId: true },
-              },
-            },
-          },
+          personId: true,
         },
       });
 
       if (authAccount) {
-        profileId = authAccount.profileId;
-        await linkPeopleByEmail(profileId, session.user.email ?? null);
-        const identities = await prisma.profileIdentity.findMany({
-          where: { profileId, personId: { not: null } },
-          select: { personId: true },
-        });
-        personIds = identities
-          .map((identity) => identity.personId)
-          .filter((id): id is string => Boolean(id));
-        personId = personIds[0] ?? null;
+        personId = authAccount.personId;
       } else {
         const email = session.user.email ?? null;
-        const people = email
-          ? await prisma.person.findMany({
-              where: { email },
-              select: { id: true, provider: true, remoteId: true, email: true },
-            })
-          : [];
-        const existingIdentity = people.length
-          ? await prisma.profileIdentity.findFirst({
-              where: {
-                OR: people.map((person) => ({
-                  provider: person.provider,
-                  remoteId: person.remoteId,
-                })),
-              },
-              select: { profileId: true },
-            })
-          : null;
+        const person = await findCanonicalPersonByEmail(email);
 
-        const displayName =
-          session.user.name ?? session.user.email ?? "My Team User";
-        const { firstName, lastName } = splitName(displayName);
-
-        const profile = existingIdentity
-          ? await prisma.profile.update({
-              where: { id: existingIdentity.profileId },
-              data: {
-                displayName,
-                fullName: displayName,
-                firstName,
-                lastName,
-                email,
-                image: session.user.image ?? null,
-                authAccounts: {
-                  create: {
-                    provider: "auth0",
-                    providerAccountId: session.user.auth0Id,
-                    email,
-                  },
-                },
-              },
-              select: { id: true },
-            })
-          : await prisma.profile.create({
-              data: {
-                displayName,
-                fullName: displayName,
-                firstName,
-                lastName,
-                email,
-                image: session.user.image ?? null,
-                authAccounts: {
-                  create: {
-                    provider: "auth0",
-                    providerAccountId: session.user.auth0Id,
-                    email,
-                  },
-                },
-                identities: people.length
-                  ? {
-                      create: people.map((person) => ({
-                        provider: person.provider,
-                        remoteId: person.remoteId,
-                        personId: person.id,
-                        email: person.email,
-                      })),
-                    }
-                  : undefined,
-              },
-              select: { id: true },
-            });
-
-        profileId = profile.id;
-        await linkPeopleByEmail(profileId, email);
-        personIds = people.map((person) => person.id);
-        personId = personIds[0] ?? null;
+        if (person) {
+          await prisma.authAccount.create({
+            data: {
+              personId: person.id,
+              provider: "auth0",
+              providerAccountId: session.user.auth0Id,
+              email,
+            },
+          });
+          personId = person.id;
+        }
       }
     }
 
     return {
       session,
-      profileId,
+      profileId: personId,
       personId,
-      personIds,
+      personIds: personId ? [personId] : [],
       accessToken: null,
       headers: opts?.headers ?? new Headers(),
     };
@@ -220,7 +122,7 @@ export const protectedProcedure = t.procedure.use(
     if (!ctx.profileId) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Profile record not found.",
+        message: "Person record not found.",
       });
     }
     return opts.next({

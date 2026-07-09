@@ -10,27 +10,11 @@ import { feedbackRecipientVisibilityWhere } from "./feedback-visibility";
 
 const feedbackTypeEnum = z.enum(["ENCOURAGEMENT", "GROWTH_AREA", "GENERAL"]);
 
-async function resolveRecipientProfileId(recipientId: string) {
-  const profile = await prisma.profile.findUnique({
+async function resolveRecipientPersonId(recipientId: string) {
+  const person = await prisma.person.findUnique({
     where: { id: recipientId },
     select: { id: true },
   });
-  if (profile) return profile.id;
-
-  const person = await prisma.person.findUnique({
-    where: { id: recipientId },
-    select: {
-      id: true,
-      provider: true,
-      remoteId: true,
-      email: true,
-      fullName: true,
-      firstName: true,
-      lastName: true,
-      image: true,
-    },
-  });
-
   if (!person) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -38,47 +22,7 @@ async function resolveRecipientProfileId(recipientId: string) {
     });
   }
 
-  const existingIdentity = await prisma.profileIdentity.findUnique({
-    where: {
-      provider_remoteId: {
-        provider: person.provider,
-        remoteId: person.remoteId,
-      },
-    },
-    select: { id: true, profileId: true, personId: true },
-  });
-  if (existingIdentity) {
-    if (!existingIdentity.personId) {
-      await prisma.profileIdentity.update({
-        where: { id: existingIdentity.id },
-        data: { personId: person.id, email: person.email },
-      });
-    }
-
-    return existingIdentity.profileId;
-  }
-
-  const createdProfile = await prisma.profile.create({
-    data: {
-      displayName: person.fullName,
-      fullName: person.fullName,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      email: person.email,
-      image: person.image,
-      identities: {
-        create: {
-          provider: person.provider,
-          remoteId: person.remoteId,
-          personId: person.id,
-          email: person.email,
-        },
-      },
-    },
-    select: { id: true },
-  });
-
-  return createdProfile.id;
+  return person.id;
 }
 
 export const feedbackRouter = createTRPCRouter({
@@ -156,7 +100,7 @@ export const feedbackRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const recipientProfileId = await resolveRecipientProfileId(
+      const recipientPersonId = await resolveRecipientPersonId(
         input.recipientId,
       );
 
@@ -165,7 +109,7 @@ export const feedbackRouter = createTRPCRouter({
           content: input.content,
           type: input.type,
           authorId: ctx.profileId,
-          recipientId: recipientProfileId,
+          recipientId: recipientPersonId,
           teamId: input.teamId,
           isShared: input.isShared,
         },

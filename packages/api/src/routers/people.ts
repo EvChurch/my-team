@@ -1,50 +1,39 @@
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { prisma } from "../db";
-import {
-  getPersonDisplayMap,
-  getProfileDisplayMap,
-} from "../lib/display-identity";
+import { getPersonDisplayMap } from "../lib/display-identity";
 
 export const peopleRouter = createTRPCRouter({
   /**
    * Get the current user's canonical My Team profile and linked source records.
    */
   myTeamProfile: protectedProcedure.query(async ({ ctx }) => {
-    const profile = await prisma.profile.findUniqueOrThrow({
+    const person = await prisma.person.findUniqueOrThrow({
       where: { id: ctx.profileId },
       include: {
         authAccounts: true,
-        identities: {
-          include: {
-            person: {
-              select: {
-                id: true,
-                provider: true,
-                remoteId: true,
-                email: true,
-                fullName: true,
-                firstName: true,
-                lastName: true,
-                image: true,
-              },
-            },
-          },
+        sourcePeople: {
           orderBy: [{ provider: "asc" }, { createdAt: "asc" }],
         },
       },
     });
 
-    const displayProfile =
-      (await getProfileDisplayMap([profile])).get(profile.id) ?? profile;
+    const displayPerson =
+      (await getPersonDisplayMap([person])).get(person.id) ?? person;
 
     return {
-      ...profile,
-      displayName: displayProfile.displayName,
-      fullName: displayProfile.fullName,
-      firstName: displayProfile.firstName,
-      lastName: displayProfile.lastName,
-      email: displayProfile.email,
-      image: displayProfile.image,
+      ...person,
+      identities: person.sourcePeople.map((sourcePerson) => ({
+        id: sourcePerson.id,
+        provider: sourcePerson.provider,
+        remoteId: sourcePerson.remoteId,
+        person: sourcePerson,
+      })),
+      displayName: displayPerson.displayName,
+      fullName: displayPerson.fullName,
+      firstName: displayPerson.firstName,
+      lastName: displayPerson.lastName,
+      email: displayPerson.email,
+      image: displayPerson.image,
     };
   }),
 

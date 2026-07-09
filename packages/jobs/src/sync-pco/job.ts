@@ -6,6 +6,7 @@ import {
   fetchSchedulesSnapshot,
   pcoScheduleHistoryCutoff,
 } from "../pco.js"
+import { archivePeopleWithoutActiveSources, upsertPcoSourcePerson } from "../person-sync.js"
 
 export async function SyncPcoJob(): Promise<void> {
   console.log("Fetching PCO data...")
@@ -13,23 +14,25 @@ export async function SyncPcoJob(): Promise<void> {
   const { people, serviceTypes, teams, leaders, positions, assignments } =
     await fetchTeamsSnapshot()
 
-  const syncedPeople = people.map((p) => p.where.remoteId_provider!.remoteId)
+  const syncedPeople = people.map((p) => p.remoteId)
   const syncedServiceTypes = serviceTypes.map(
     (s) => s.where.remoteId_provider!.remoteId
   )
   const syncedTeams = teams.map((t) => t.where.remoteId_provider!.remoteId)
-  const syncedLeaders = leaders.map((l) => l.where.remoteId_provider!.remoteId)
+  const syncedLeaders = leaders.map((l) => l.remoteId)
   const syncedPositions = positions.map(
     (p) => p.where.remoteId_provider!.remoteId
   )
-  const syncedAssignments = assignments.map(
-    (a) => a.where.remoteId_provider!.remoteId
-  )
+  const syncedAssignments = assignments.map((a) => a.remoteId)
 
   console.log("Updating People")
 
+  const personIdsByRemoteId = new Map<string, string>()
   for (const person of people) {
-    await prisma.person.upsert(person)
+    const canonicalPerson = await upsertPcoSourcePerson(person)
+    if (canonicalPerson) {
+      personIdsByRemoteId.set(person.remoteId, canonicalPerson.id)
+    }
   }
 
   console.log("Updating Service Types")
@@ -53,8 +56,41 @@ export async function SyncPcoJob(): Promise<void> {
   console.log("Updating Team Leaders")
 
   for (const leader of leaders) {
+    const personId = personIdsByRemoteId.get(leader.personRemoteId)
+    if (!personId) continue
     try {
-      await prisma.leader.upsert(leader)
+      await prisma.leader.upsert({
+        where: {
+          remoteId_provider: {
+            remoteId: leader.remoteId,
+            provider: "PCO",
+          },
+        },
+        create: {
+          remoteId: leader.remoteId,
+          provider: "PCO",
+          person: { connect: { id: personId } },
+          team: {
+            connect: {
+              remoteId_provider: {
+                remoteId: leader.teamRemoteId,
+                provider: "PCO",
+              },
+            },
+          },
+        },
+        update: {
+          person: { connect: { id: personId } },
+          team: {
+            connect: {
+              remoteId_provider: {
+                remoteId: leader.teamRemoteId,
+                provider: "PCO",
+              },
+            },
+          },
+        },
+      })
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -64,7 +100,7 @@ export async function SyncPcoJob(): Promise<void> {
         )
       ) {
         console.error(
-          `Leader ${leader.where.remoteId_provider?.remoteId} is missing a person or team`
+          `Leader ${leader.remoteId} is missing a person or team`
         )
         continue
       } else {
@@ -76,8 +112,41 @@ export async function SyncPcoJob(): Promise<void> {
   console.log("Updating Person Team Position Assignments")
 
   for (const assignment of assignments) {
+    const personId = personIdsByRemoteId.get(assignment.personRemoteId)
+    if (!personId) continue
     try {
-      await prisma.assignment.upsert(assignment)
+      await prisma.assignment.upsert({
+        where: {
+          remoteId_provider: {
+            remoteId: assignment.remoteId,
+            provider: "PCO",
+          },
+        },
+        create: {
+          remoteId: assignment.remoteId,
+          provider: "PCO",
+          person: { connect: { id: personId } },
+          position: {
+            connect: {
+              remoteId_provider: {
+                remoteId: assignment.positionRemoteId,
+                provider: "PCO",
+              },
+            },
+          },
+        },
+        update: {
+          person: { connect: { id: personId } },
+          position: {
+            connect: {
+              remoteId_provider: {
+                remoteId: assignment.positionRemoteId,
+                provider: "PCO",
+              },
+            },
+          },
+        },
+      })
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -108,16 +177,44 @@ export async function SyncPcoJob(): Promise<void> {
     console.log(`Updating ${schedules.length} Schedules`)
 
     for (const { upsert, planTimes } of schedules) {
+      const remotePersonId = (
+        upsert.create as {
+          person?: {
+            connect?: {
+              remoteId_provider?: { remoteId?: string }
+            }
+          }
+        }
+      ).person?.connect?.remoteId_provider?.remoteId
+      const personId = remotePersonId
+        ? personIdsByRemoteId.get(remotePersonId)
+        : null
+      if (!personId) continue
+      const { person: _createPerson, ...createWithoutSourcePerson } =
+        upsert.create
+      const { person: _updatePerson, ...updateWithoutSourcePerson } =
+        upsert.update
+      const scheduleUpsert = {
+        ...upsert,
+        create: {
+          ...createWithoutSourcePerson,
+          person: { connect: { id: personId } },
+        },
+        update: {
+          ...updateWithoutSourcePerson,
+          person: { connect: { id: personId } },
+        },
+      }
       let scheduleRecord: { id: string }
       try {
-        scheduleRecord = await prisma.schedule.upsert(upsert)
+        scheduleRecord = await prisma.schedule.upsert(scheduleUpsert)
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === "P2025"
         ) {
           console.error(
-            `Schedule ${upsert.where.remoteId_provider?.remoteId} is missing a person or team`
+            `Schedule ${scheduleUpsert.where.remoteId_provider?.remoteId} is missing a person or team`
           )
           continue
         } else {
@@ -187,18 +284,30 @@ export async function SyncPcoJob(): Promise<void> {
   console.log("Pruning PCO records no longer in upstream")
 
   const delAssignments = await prisma.assignment.deleteMany({
-    where: { remoteId: { notIn: syncedAssignments }, provider: "PCO" },
+    where: {
+      remoteId: { notIn: syncedAssignments },
+      provider: "PCO",
+      source: "SYNCED",
+    },
   })
   if (delAssignments.count)
     console.log(`Deleted ${delAssignments.count} assignments`)
 
   const delLeaders = await prisma.leader.deleteMany({
-    where: { remoteId: { notIn: syncedLeaders }, provider: "PCO" },
+    where: {
+      remoteId: { notIn: syncedLeaders },
+      provider: "PCO",
+      source: "SYNCED",
+    },
   })
   if (delLeaders.count) console.log(`Deleted ${delLeaders.count} leaders`)
 
   const delPositions = await prisma.position.deleteMany({
-    where: { remoteId: { notIn: syncedPositions }, provider: "PCO" },
+    where: {
+      remoteId: { notIn: syncedPositions },
+      provider: "PCO",
+      source: "SYNCED",
+    },
   })
   if (delPositions.count) console.log(`Deleted ${delPositions.count} positions`)
 
@@ -213,10 +322,13 @@ export async function SyncPcoJob(): Promise<void> {
   if (delServiceTypes.count)
     console.log(`Deleted ${delServiceTypes.count} service types`)
 
-  const delPeople = await prisma.person.deleteMany({
+  const delPeople = await prisma.sourcePerson.updateMany({
     where: { remoteId: { notIn: syncedPeople }, provider: "PCO" },
+    data: { isActive: false },
   })
   if (delPeople.count) console.log(`Deleted ${delPeople.count} people`)
+
+  await archivePeopleWithoutActiveSources()
 
   console.log("PCO data synced successfully")
 }

@@ -86,10 +86,35 @@ const teamsPayloadSchema = z.array(teamSchema)
 export type TeamsSnapshot = {
   serviceTypes: Prisma.ServiceTypeUpsertArgs[]
   teams: Prisma.TeamUpsertArgs[]
-  people: Prisma.PersonUpsertArgs[]
-  leaders: Prisma.LeaderUpsertArgs[]
+  people: SourcePersonSnapshot[]
+  leaders: SourceLeaderSnapshot[]
   positions: Prisma.PositionUpsertArgs[]
-  assignments: Prisma.AssignmentUpsertArgs[]
+  assignments: SourceAssignmentSnapshot[]
+}
+
+export type SourcePersonSnapshot = {
+  remoteId: string
+  provider: "PCO"
+  email: string | null
+  phone: string | null
+  fullName: string
+  firstName: string
+  lastName: string
+  image: string | null
+}
+
+export type SourceLeaderSnapshot = {
+  remoteId: string
+  provider: "PCO"
+  personRemoteId: string
+  teamRemoteId: string
+}
+
+export type SourceAssignmentSnapshot = {
+  remoteId: string
+  provider: "PCO"
+  personRemoteId: string
+  positionRemoteId: string
 }
 
 async function fetchPrimaryEmail(personId: string): Promise<string | null> {
@@ -147,10 +172,10 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
     "people,person_team_position_assignments,service_types,team_leaders,team_positions"
   const serviceTypes = new Map<string, Prisma.ServiceTypeUpsertArgs>()
   const teams = new Map<string, Prisma.TeamUpsertArgs>()
-  const people = new Map<string, Prisma.PersonUpsertArgs>()
-  const leaders = new Map<string, Prisma.LeaderUpsertArgs>()
+  const people = new Map<string, SourcePersonSnapshot>()
+  const leaders = new Map<string, SourceLeaderSnapshot>()
   const positions = new Map<string, Prisma.PositionUpsertArgs>()
-  const assignments = new Map<string, Prisma.AssignmentUpsertArgs>()
+  const assignments = new Map<string, SourceAssignmentSnapshot>()
   const personEmails = new Map<string, string | null>()
   const personPhones = new Map<string, string | null>()
   let offset = 0
@@ -243,27 +268,14 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
         const phone = personPhones.get(person.id) ?? null
 
         people.set(person.id, {
-          where: {
-            remoteId_provider: { remoteId: person.id, provider: "PCO" },
-          },
-          create: {
-            remoteId: person.id,
-            provider: "PCO",
-            email,
-            phone,
-            fullName: person.full_name,
-            firstName: person.first_name,
-            lastName: person.last_name,
-            image: person.photo_thumbnail_url ?? null,
-          },
-          update: {
-            email,
-            phone,
-            fullName: person.full_name,
-            firstName: person.first_name,
-            lastName: person.last_name,
-            image: person.photo_thumbnail_url ?? null,
-          },
+          remoteId: person.id,
+          provider: "PCO",
+          email,
+          phone,
+          fullName: person.full_name,
+          firstName: person.first_name,
+          lastName: person.last_name,
+          image: person.photo_thumbnail_url ?? null,
         })
       }
 
@@ -301,99 +313,19 @@ export async function fetchTeamsSnapshot(): Promise<TeamsSnapshot> {
 
       for (const leader of team.team_leaders) {
         leaders.set(leader.id, {
-          where: {
-            remoteId_provider: {
-              remoteId: leader.id,
-              provider: "PCO",
-            },
-          },
-          create: {
-            remoteId: leader.id,
-            provider: "PCO",
-            person: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: leader.person.id,
-                  provider: "PCO",
-                },
-              },
-            },
-            team: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: leader.team.id,
-                  provider: "PCO",
-                },
-              },
-            },
-          },
-          update: {
-            team: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: leader.team.id,
-                  provider: "PCO",
-                },
-              },
-            },
-            person: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: leader.person.id,
-                  provider: "PCO",
-                },
-              },
-            },
-          },
+          remoteId: leader.id,
+          provider: "PCO",
+          personRemoteId: leader.person.id,
+          teamRemoteId: leader.team.id,
         })
       }
 
       for (const assignment of team.person_team_position_assignments) {
         assignments.set(assignment.id, {
-          where: {
-            remoteId_provider: {
-              remoteId: assignment.id,
-              provider: "PCO",
-            },
-          },
-          create: {
-            remoteId: assignment.id,
-            provider: "PCO",
-            person: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: assignment.person.id,
-                  provider: "PCO",
-                },
-              },
-            },
-            position: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: assignment.team_position.id,
-                  provider: "PCO",
-                },
-              },
-            },
-          },
-          update: {
-            person: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: assignment.person.id,
-                  provider: "PCO",
-                },
-              },
-            },
-            position: {
-              connect: {
-                remoteId_provider: {
-                  remoteId: assignment.team_position.id,
-                  provider: "PCO",
-                },
-              },
-            },
-          },
+          remoteId: assignment.id,
+          provider: "PCO",
+          personRemoteId: assignment.person.id,
+          positionRemoteId: assignment.team_position.id,
         })
       }
     }

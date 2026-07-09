@@ -83,8 +83,8 @@ export const schedulesRouter = createTRPCRouter({
         });
       }
 
-      const person = await prisma.person.findUnique({
-        where: { id: schedule.personId },
+      const person = await prisma.sourcePerson.findFirst({
+        where: { personId: schedule.personId, provider: "PCO" },
         select: { remoteId: true },
       });
 

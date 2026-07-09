@@ -137,46 +137,30 @@ export const trainingRouter = createTRPCRouter({
         positionName: position.name,
       })),
     );
-    const identities =
-      assignmentPeople.length > 0
-        ? await prisma.profileIdentity.findMany({
-            where: {
-              personId: {
-                in: [...new Set(assignmentPeople.map((item) => item.personId))],
-              },
-            },
-            select: { personId: true, profileId: true },
-          })
-        : [];
-    const profileIdByPersonId = new Map(
-      identities
-        .filter((identity) => identity.personId)
-        .map((identity) => [identity.personId!, identity.profileId]),
-    );
+    const personIds = [...new Set(assignmentPeople.map((item) => item.personId))];
     const completions =
-      identities.length > 0 && moduleIds.length > 0
+      personIds.length > 0 && moduleIds.length > 0
         ? await prisma.trainingCompletion.findMany({
             where: {
-              profileId: {
-                in: [...new Set(identities.map((identity) => identity.profileId))],
+              personId: {
+                in: personIds,
               },
               moduleId: { in: moduleIds },
             },
           })
         : [];
-    const completionsByProfileId = new Map<
+    const completionsByPersonId = new Map<
       string,
       typeof completions
     >();
     for (const completion of completions) {
-      const profileCompletions =
-        completionsByProfileId.get(completion.profileId) ?? [];
-      profileCompletions.push(completion);
-      completionsByProfileId.set(completion.profileId, profileCompletions);
+      const personCompletions =
+        completionsByPersonId.get(completion.personId) ?? [];
+      personCompletions.push(completion);
+      completionsByPersonId.set(completion.personId, personCompletions);
     }
 
     const complianceRows = assignmentPeople.map((assignment) => {
-      const profileId = profileIdByPersonId.get(assignment.personId);
       const resolved = resolveTraining({
         assignments: [
           {
@@ -188,9 +172,7 @@ export const trainingRouter = createTRPCRouter({
           },
         ],
         requirements,
-        completions: profileId
-          ? (completionsByProfileId.get(profileId) ?? [])
-          : [],
+        completions: completionsByPersonId.get(assignment.personId) ?? [],
       });
       const resolvedAssignment = resolved.assignments[0];
       const blockingTitles = resolved.modules
@@ -206,7 +188,7 @@ export const trainingRouter = createTRPCRouter({
         personImage: assignment.personImage,
         positionId: assignment.positionId,
         positionName: assignment.positionName,
-        profileId: profileId ?? null,
+        profileId: assignment.personId,
         isReady: resolvedAssignment?.isReady ?? true,
         moduleCount: resolvedAssignment?.moduleIds.length ?? 0,
         blockingCount: resolvedAssignment?.blockingModuleIds.length ?? 0,
@@ -311,7 +293,7 @@ export const trainingRouter = createTRPCRouter({
         moduleIds.length > 0
           ? await prisma.trainingCompletion.findMany({
               where: {
-                profileId: ctx.profileId,
+                personId: ctx.profileId,
                 moduleId: { in: moduleIds },
               },
             })
@@ -355,7 +337,7 @@ export const trainingRouter = createTRPCRouter({
         include: {
           guide: { select: { id: true, title: true, teamId: true } },
           completions: {
-            where: { profileId: ctx.profileId },
+            where: { personId: ctx.profileId },
             take: 1,
           },
         },
@@ -454,7 +436,7 @@ export const trainingRouter = createTRPCRouter({
         const passed = selectedAnswer.correct;
         await prisma.trainingQuizAttempt.create({
           data: {
-            profileId: ctx.profileId,
+            personId: ctx.profileId,
             moduleId: module.id,
             moduleVersion: module.version,
             answers: { answerId: selectedAnswer.id },
@@ -476,13 +458,13 @@ export const trainingRouter = createTRPCRouter({
 
       return prisma.trainingCompletion.upsert({
         where: {
-          profileId_moduleId: {
-            profileId: ctx.profileId,
+          personId_moduleId: {
+            personId: ctx.profileId,
             moduleId: module.id,
           },
         },
         create: {
-          profileId: ctx.profileId,
+          personId: ctx.profileId,
           moduleId: module.id,
           moduleVersion: module.version,
           completedAt,
