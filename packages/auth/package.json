@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@mt/typescript-config": "workspace:*",
-    "next": "16.2.0",
+    "next": "16.3.6",
     "typescript": "^5"
   }
 }
