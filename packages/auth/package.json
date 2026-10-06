@@ -7,8 +7,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@auth/core": "^0.41",
-    "next-auth": "beta"
+    "@auth/core": "^0.41.3",
+    "next-auth": "5.0.0-beta.32"
   },
   "devDependencies": {
     "@mt/typescript-config": "workspace:*",
