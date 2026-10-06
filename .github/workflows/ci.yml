@@ -1,0 +1,25 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mt/api db:generate
+      - run: pnpm test --force --cache-dir=.turbo/ci
+      - run: pnpm type-check --force --cache-dir=.turbo/ci
+      - run: pnpm lint --force --cache-dir=.turbo/ci
+      - run: pnpm --filter worker build
+      - run: pnpm --filter @mt/web build
