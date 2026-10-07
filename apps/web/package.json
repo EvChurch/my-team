@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@blocknote/core": "0.51.4",
+    "@blocknote/core": "0.55.0",
     "@blocknote/react": "0.51.4",
     "@blocknote/shadcn": "0.51.4",
     "@dnd-kit/core": "6.3.1",
