@@ -539,7 +539,7 @@ const QuestionBlockSpec = createReactBlockSpec(
     },
     render: QuestionBlock,
   },
-  [QuestionBlockArrowNavigation()],
+  [QuestionBlockArrowNavigation({})],
 );
 
 const courseBlockNoteSchema = BlockNoteSchema.create({
@@ -756,7 +756,6 @@ const BlockNoteCourseEditorInner = forwardRef<
         formattingToolbar={false}
         filePanel={false}
         slashMenu={false}
-        portalElements={{ filePanel: null }}
         className="min-h-[520px]"
       >
         <SuggestionMenuController
