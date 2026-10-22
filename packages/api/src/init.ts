@@ -33,10 +33,19 @@ export interface TRPCContext {
 }
 
 async function findCanonicalPersonByEmail(email: string | null) {
-  if (!email) return null;
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+
+  const emailFilter = { equals: normalizedEmail, mode: "insensitive" as const };
 
   const people = await prisma.person.findMany({
-    where: { email },
+    where: {
+      isActive: true,
+      OR: [
+        { email: emailFilter },
+        { sourcePeople: { some: { email: emailFilter } } },
+      ],
+    },
     select: { id: true },
     take: 2,
   });
