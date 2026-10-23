@@ -54,3 +54,10 @@ jobs:
             --env DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test \
             --env IDENTITY_TEST_DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test \
             myteam-ci sh -ec 'pnpm --filter @mt/api exec prisma migrate deploy; pnpm test --force --cache-dir=/tmp/myteam-ci-cache'
+      - name: Verify authenticated production HTTP access and source revocation with an isolated identity
+        run: >-
+          docker run --rm --network host
+          --env DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test
+          --env IDENTITY_TEST_DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test
+          --volume "$PWD/tests:/app/tests:ro"
+          myteam-ci pnpm --filter worker exec tsx ../../tests/security-authenticated-web-fixture.mts
