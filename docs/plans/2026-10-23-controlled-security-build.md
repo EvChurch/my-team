@@ -19,3 +19,21 @@ guarded disposable test database. Retain the normal PR checks and merge/release
 flow; independently map and probe every serving replica after autodeployment.
 Authentication and guarded worker fixtures remain separate completion evidence;
 do not invoke real PCO/Rock syncs or other production jobs for this change.
+
+## Docker startup follow-up
+
+The first worker image passed live verification, but the web replacement failed
+health while its previous replica remained active. Ranked explanations were Docker
+exec-form handling of shell operators, listener binding and missing runtime files.
+The old multi-command start override fails when executed directly; Railway's
+[documented Docker start behavior](https://docs.railway.com/deployments/start-command)
+confirms that these overrides do not imply a shell.
+
+Move the existing asset-copy/start sequence into an explicit shell script, bind
+Next's standalone listener to all interfaces, and exec Node for normal shutdown
+signals. Use the same script in the image CMD and service override. Image CI must
+boot this actual entrypoint with an initially unresolvable hostname and disposable
+configuration, then pass health, root/teams anonymous guards, login and a static
+asset. The local built-artifact smoke passes. No migration, auth, sync or domain
+behavior changes; keep normal PR checks and autodeployment. Revalidate both shared
+image services after release, even though the worker start command is unchanged.
