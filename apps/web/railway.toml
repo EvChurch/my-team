@@ -1,6 +1,6 @@
 [build]
-builder = "railpack"
-buildCommand = "pnpm turbo build --filter=@mt/web..."
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 watchPatterns = [
   "/apps/web/**",
   "/packages/api/**",
@@ -9,6 +9,9 @@ watchPatterns = [
   "/package.json",
   "/.nvmrc",
   "/railpack.json",
+  "/Dockerfile",
+  "/.dockerignore",
+  "/pnpm-workspace.yaml",
   "/scripts/update-security-ca.sh",
   "/pnpm-lock.yaml",
   "/turbo.json",

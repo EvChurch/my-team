@@ -1,0 +1,20 @@
+# Only reproducible source inputs; no credentials, generated output or Git history.
+**
+!Dockerfile
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!turbo.json
+!apps/
+!apps/**
+!packages/
+!packages/**
+!scripts/
+!scripts/update-security-ca.sh
+**/.env*
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/generated
+**/*.tsbuildinfo

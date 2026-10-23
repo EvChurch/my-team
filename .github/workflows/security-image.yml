@@ -1,0 +1,40 @@
+name: Production image verification
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-fixture
+          POSTGRES_DB: myteam_image_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build both production services without production credentials
+        run: docker build --tag myteam-ci .
+      - name: Verify exact runtime and certificate trust in the image
+        run: >-
+          docker run --rm --volume "$PWD/tests:/app/tests:ro"
+          myteam-ci node tests/security-image.mjs
+      - name: Verify the built worker identity reader without external requests
+        run: docker run --rm myteam-ci node apps/worker/dist/identity-check.js --self-test
+      - name: Run existing API and worker tests against an isolated database
+        run: |
+          docker run --rm --network host \
+            --env DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test \
+            --env IDENTITY_TEST_DATABASE_URL=postgresql://postgres:disposable-ci-fixture@127.0.0.1:5432/myteam_image_test \
+            myteam-ci sh -ec 'pnpm --filter @mt/api exec prisma migrate deploy; pnpm test --force --cache-dir=/tmp/myteam-ci-cache'

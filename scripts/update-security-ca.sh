@@ -1,6 +1,10 @@
 #!/bin/sh
 # Keep OpenSSL clients and build tools on the refreshed, distrusted CA store.
 set -eu
+if [ -f /etc/ca-certificates.conf ]; then
+  sed -i -e 's|^mozilla/emSign_ECC_Root_CA_-_G3.crt|!&|' -e 's|^mozilla/Comodo_AAA_Services_root.crt|!&|' /etc/ca-certificates.conf
+  update-ca-certificates --fresh
+fi
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates
 sed -i -e 's|^mozilla/emSign_ECC_Root_CA_-_G3.crt|!&|' -e 's|^mozilla/Comodo_AAA_Services_root.crt|!&|' /etc/ca-certificates.conf
