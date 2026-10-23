@@ -37,4 +37,5 @@ jobs:
       - run: pnpm type-check --force --cache-dir=.turbo/ci
       - run: pnpm lint --force --cache-dir=.turbo/ci
       - run: pnpm --filter worker build
+      - run: node apps/worker/dist/identity-check.js --self-test
       - run: pnpm --filter @mt/web build
