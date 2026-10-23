@@ -7,7 +7,8 @@
     "./boss": "./src/boss.ts",
     "./sync": "./src/sync.ts",
     "./workers": "./src/workers.ts",
-    "./identity-repair-plan": "./src/identity-repair-plan.ts"
+    "./identity-repair-plan": "./src/identity-repair-plan.ts",
+    "./rock-person-links": "./src/rock-person-links.ts"
   },
   "dependencies": {
     "@mt/api": "workspace:*",

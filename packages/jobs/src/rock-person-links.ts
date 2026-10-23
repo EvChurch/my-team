@@ -61,7 +61,7 @@ export async function fetchPersonLinks(): Promise<PersonLinks> {
     if (!response.ok) throw new Error(`Rock identity API returned ${response.status}`)
     return response.json()
   }
-  const accounts = z.record(z.string()).parse(await request("/api/com_9embers/pcov2"))
+  const accounts = z.record(z.string(), z.string()).parse(await request("/api/com_9embers/pcov2"))
   const organization = z.object({ id: z.string() }).parse(await fetchPCO("/people/v2", AbortSignal.timeout(30000)))
   if (!Object.hasOwn(accounts, accountId) || organization.id !== organizationId) throw new Error("PCO identity account scope changed")
   const maps: PluginMap[] = []
