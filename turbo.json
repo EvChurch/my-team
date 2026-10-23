@@ -16,7 +16,10 @@
       "persistent": true
     },
     "lint": {},
-    "test": {},
+    "test": {
+      "cache": false,
+      "env": ["DATABASE_URL", "IDENTITY_TEST_DATABASE_URL"]
+    },
     "type-check": {
       "dependsOn": ["^db:generate"]
     }

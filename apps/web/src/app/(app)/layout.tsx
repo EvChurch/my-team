@@ -1,3 +1,4 @@
+import { createTRPCContext } from "@mt/api/init";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -18,6 +19,8 @@ export default async function AppLayout({
   if (!session?.user) {
     redirect("/login");
   }
+
+  if (!(await createTRPCContext()).personId) redirect("/connect-account");
 
   const queryClient = getQueryClient();
   const profile = await queryClient.fetchQuery(trpc.people.myTeamProfile.queryOptions()).catch(() => null);
