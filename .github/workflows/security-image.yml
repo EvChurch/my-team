@@ -30,6 +30,8 @@ jobs:
         run: >-
           docker run --rm --volume "$PWD/tests:/app/tests:ro"
           myteam-ci node tests/security-image.mjs
+      - name: Verify the built worker identity reader without external requests
+        run: docker run --rm myteam-ci node apps/worker/dist/identity-check.js --self-test
       - name: Run existing API and worker tests against an isolated database
         run: |
           docker run --rm --network host \
