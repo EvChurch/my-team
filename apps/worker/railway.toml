@@ -6,6 +6,9 @@ watchPatterns = [
   "/packages/api/**",
   "/packages/jobs/**",
   "/package.json",
+  "/.nvmrc",
+  "/railpack.json",
+  "/scripts/update-security-ca.sh",
   "/pnpm-lock.yaml",
   "/turbo.json",
 ]
