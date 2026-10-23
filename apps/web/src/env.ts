@@ -9,8 +9,6 @@ export const env = createEnv({
     AUTH0_CLIENT_ID: z.string().optional(),
     AUTH0_CLIENT_SECRET: z.string().optional(),
     APP_BASE_URL: z.string().url().optional(),
-    PCO_OAUTH_CLIENT_ID: z.string().optional(),
-    PCO_OAUTH_CLIENT_SECRET: z.string().optional(),
     PCO_API_ID: z.string().min(1),
     PCO_API_SECRET: z.string().min(1),
     ROCK_BASE_URL: z.string().url().optional(),

@@ -1,6 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 import { readIdentityRepairPlan } from "./identity-repair-plan"
-import { linkVerifiedPcoAccount } from "@mt/api/account-link"
 import { prisma } from "@mt/api/db"
 import { upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
 
@@ -93,25 +92,6 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     expect((await prisma.person.findUniqueOrThrow({ where: { id: pco.id } })).fullName).toBe(person.fullName)
   })
 
-  it("uses a proved PCO source ID for shared-email recovery and refuses reassignment", async () => {
-    const parent = await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco-parent" })
-    const child = await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco-child", firstName: "Owen", fullName: "Owen Green" })
-    expect(await linkVerifiedPcoAccount("auth0|child", "test-pco-child", person.email)).toBe(child.id)
-    await expect(linkVerifiedPcoAccount("auth0|child", "test-pco-parent", person.email)).rejects.toThrow("already linked")
-    expect((await prisma.authAccount.findFirstOrThrow()).personId).toBe(child.id)
-    expect(parent.id).not.toBe(child.id)
-  })
-
-  it("refuses recovery onto inactive or historically conflated sources", async () => {
-    const parent = await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco" })
-    await prisma.sourcePerson.updateMany({ data: { isActive: false } })
-    await expect(linkVerifiedPcoAccount("auth0|new", "test-pco", person.email)).rejects.toThrow("unavailable")
-    await prisma.sourcePerson.updateMany({ data: { isActive: true } })
-    await prisma.sourcePerson.create({ data: { ...person, remoteId: "test-rock", personId: parent.id, firstName: "Owen", fullName: "Owen Green" } })
-    await expect(linkVerifiedPcoAccount("auth0|new", "test-pco", person.email)).rejects.toThrow("unavailable")
-    expect(await prisma.authAccount.count()).toBe(0)
-  })
-
   it("reads a repair plan without changing database records", async () => {
     const parent = await upsertRockPerson(person)
     await prisma.sourcePerson.create({ data: { ...person, remoteId: "test-child", personId: parent.id, firstName: "Owen", fullName: "Owen Green" } })
@@ -120,11 +100,6 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     expect(plan.summary.groups).toBe(1)
     expect(plan.summary.newPeople).toBe(1)
     expect(await prisma.person.findMany({ include: { sourcePeople: true } })).toEqual(before)
-  })
-
-  it("accepts a proved standalone PCO identity without requiring a surname", async () => {
-    const pco = await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco", lastName: "" })
-    expect(await linkVerifiedPcoAccount("auth0|new", "test-pco", person.email)).toBe(pco.id)
   })
 
 })

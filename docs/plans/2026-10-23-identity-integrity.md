@@ -1,4 +1,4 @@
-# Source identity integrity and account recovery
+# Source identity integrity and Rock login verification
 
 Distinct upstream person IDs must not collapse because relatives share contact details. Previously the sync looked for a canonical Person by email or phone even when importing another Rock ID. Matching fields could overwrite the first person's directory details and attach another person's memberships. The original source links survive, so a source-based repair can be planned.
 
@@ -8,26 +8,20 @@ Distinct upstream person IDs must not collapse because relatives share contact d
 - New IDs never join another source from the same provider. New cross-provider links require compatible given/family names plus a real email or normalized phone match, with no conflicting known phones and exactly one candidate.
 - New cross-provider links exclude already conflated source groups. Missing or placeholder contact information cannot prove identity. Unmatched PCO people get their own record instead of being dropped.
 - Person creation and source linking happen in one transaction, serialized across workers with PostgreSQL advisory lock `724193821`.
-- Existing AuthAccount links remain authoritative. New email-based login links require an Auth0-verified email, exactly one active canonical person, and an unambiguous active source group. Inactive source aliases cannot establish a new link. Concurrent account creation preserves the winner.
-- Signed-in users without a person link see `/connect-account`. A PCO identity-only connection proves the organization and source person ID. Recovery refuses inactive or conflated source groups and never changes an existing account's owner.
+- Every authenticated request verifies the exact `AUTH0_` + Auth0 subject username in Rock UserLogins, restricted to the Auth0 authentication provider and confirmed logins. Exactly one association must exist, pointing to an active, living Rock person.
+- Access resolves through the active ROCK SourcePerson for that remote person ID. PCO is optional; matching names, email addresses, or a PCO-only identity cannot substitute for a Rock login association.
+- A canonical Person with multiple active Rock sources is blocked. Inactive historical sources do not prevent access. A conflicting existing AuthAccount is blocked rather than reassigned; concurrent first-login creation is also checked.
+- Missing Rock associations or synced identities block both page access and protected API calls. `/connect-account` explains the requirement and provides retry/sign-out. An upstream outage displays a temporary verification message and denies access without exposing upstream errors.
 
-The recovery flow uses `openid-client` with authorization code flow, PKCE, state, nonce and ID-token validation. Short-lived flow data is encrypted with Auth.js, bound to the current Auth0 subject, stored in an HTTP-only cookie, and cleared on callback. UserInfo's subject must match the ID token. The organization must match the server's PAT organization. PCO tokens stay in memory for this request and are never logged or saved.
+## Configuration and verified upstream contract
 
-## One-time developer configuration
+The web service uses its existing `ROCK_BASE_URL` and `ROCK_API_KEY` to read UserLogins and People. No extra OAuth application or ongoing administrator matching step is required. Requests have an eight-second timeout per upstream read, do not cache results, and reject redirects. Each request checks Rock even when an AuthAccount already exists, so an old local link cannot bypass a removed or inactive Rock association.
 
-Locate the former Planning Center OAuth application, or create an OAuth application in the church's Planning Center developer account. The existing `PCO_API_ID` / `PCO_API_SECRET` values are a personal access token and cannot substitute for OAuth credentials.
+Read-only production verification on 23 October 2026 checked all six existing My Team accounts. Each had exactly one confirmed Rock Auth0 login. Four had complete plugin-to-PCO links, verified against active PCO People and Services records; the other two had no plugin PCO mapping and no local PCO source. All existing accounts satisfy the required Rock association.
 
-Set these **web-service** variables privately in Railway:
+The plugin's person links live in custom `IdentifierMap` and `AbstractIdentifier` entities, readable with the authenticated Rock Lava entity commands. Its `RockRMS` map uses a **person-alias ID**, which must be resolved to the current PersonId before linking sources. Its PCO map uses the PCO person ID. Group `PCOMarker` attributes are separate and share the PCO account/translator identifier. Do not treat alias IDs as person IDs or infer person links from contacts when using these stored mappings.
 
-- `PCO_OAUTH_CLIENT_ID`
-- `PCO_OAUTH_CLIENT_SECRET`
-- `APP_BASE_URL` (the existing public origin)
-
-Register `${APP_BASE_URL}/api/account-link/pco/callback` as the OAuth redirect URI. For local development the callback is `http://localhost:7500/api/account-link/pco/callback`. Only the `openid` scope is requested; volunteers do not need People administration permissions. Do not paste credentials into chat or commit them. Retain the PAT variables for the independent data sync and organization check.
-
-Until configured, the connection page displays an unavailable message. Do not deploy the stricter first-login behavior as a finished recovery solution before testing a real OAuth connection. The external end-to-end flow cannot be confirmed without this application. There is no recurring church-admin matching queue or management UI.
-
-References: [Planning Center authentication](https://api.planningcenteronline.com/docs/overview/authentication), [Planning Center identity-only access announcement](https://www.planningcenter.com/changelog/integrations-api/new-openid-connect-for-privacy-conscious-authentication), [openid-client OIDC example](https://github.com/panva/openid-client/blob/main/examples/oidc.ts).
+This access change does not import or repair plugin person mappings. The sync and repair planner below still use conservative contact-based cross-provider matching; adopting the verified plugin links is follow-up work. No production source/reference repair has been applied.
 
 ## Read-only repair proposal
 
@@ -57,12 +51,12 @@ A repair application is still required. Before applying it:
 1. Resolve every listed Assignment, Leader and Schedule remote ID to the original upstream person ID from fresh Rock/PCO reads. These rows do not retain that source person ID locally; current display names and contact details cannot reconstruct ownership safely.
 2. Review missing upstream references explicitly. Do not silently delete or assign them to the retained partition. Re-run the native-ownership and account checks immediately before mutation.
 3. Take a database backup, pause sync for the repair, verify the reviewed source/reference snapshot, and use the same advisory lock while applying an atomic source/reference move. Abort if the snapshot or native ownership changed.
-4. Re-sync to rebuild memberships previously suppressed by canonical uniqueness constraints. Verify each source/reference mapping, source counts, existing login links and shared-email sign-in recovery before resuming normal sync.
+4. Re-sync to rebuild memberships previously suppressed by canonical uniqueness constraints. Verify each source/reference mapping, source counts, existing login links and Rock-based sign-in before resuming normal sync.
 
 No production records were changed by the report. The sync safeguards prevent new conflation; they intentionally preserve established links until the repair is applied.
 
 ## Validation
 
-Regression coverage includes shared emails, identical names with distinct Rock IDs, placeholder contacts, international NZ phones, conflicting phone/middle-name evidence, stable source links, concurrent imports, PCO-only people, recovery ownership, inactive/conflated sources, single-name people, cookie expiry/tampering, session switching, OIDC validation inputs, cross-church rejection, and repair planning without writes.
+Regression coverage includes required exact Rock login association, optional PCO/email, missing or ambiguous logins, inactive/deceased people, upstream failure, conflicting local account ownership, direct API rejection, shared-contact sync isolation, stable source links, concurrent imports, and repair planning without writes.
 
 CI provisions disposable PostgreSQL 18 and runs the integration tests with matching `DATABASE_URL` / `IDENTITY_TEST_DATABASE_URL` values. The integration suite additionally requires a database name ending `_test`; it deletes fixture people only in that designated database. Turbo passes both variables through and does not cache database tests.
