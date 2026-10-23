@@ -2,7 +2,6 @@ import { prisma } from "@mt/api/db"
 import {
   normalizeIdentityEmail,
   normalizeIdentityPhone,
-  uniqueIdentityMatch,
 } from "@mt/api/person-identity"
 
 export type SourcePersonInput = {
@@ -29,26 +28,6 @@ async function syncPerson(input: SourcePersonInput) {
     })
 
     let personId = existingSource?.personId
-    if (!personId) {
-      // Never merge two IDs from the same provider. Only an opposite-provider
-      // source with corroborating identity evidence can be linked automatically.
-      const candidates = await tx.sourcePerson.findMany({
-        where: {
-          provider: input.provider === "ROCK" ? "PCO" : "ROCK",
-          isActive: true,
-          person: {
-            isActive: true,
-            sourcePeople: { none: { provider: input.provider } },
-          },
-        },
-        select: { personId: true, firstName: true, lastName: true, email: true, phone: true,
-          person: { select: { sourcePeople: { where: { isActive: true }, select: { provider: true } } } },
-        },
-      })
-      personId = uniqueIdentityMatch(input, candidates.filter((candidate) =>
-        candidate.person.sourcePeople.filter((source) => source.provider !== input.provider).length === 1
-      )) ?? undefined
-    }
 
     const data = {
       displayName: input.fullName,
