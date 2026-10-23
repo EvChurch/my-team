@@ -1,5 +1,7 @@
 import { prisma } from "@mt/api/db";
-import { compatiblePersonNames, uniqueIdentityMatch, type PersonIdentity } from "@mt/api/person-identity";
+import type { PersonIdentity } from "@mt/api/person-identity";
+import { fetchPersonLinks, type PersonLinks } from "./rock-person-links.js";
+import { identityKey } from "./person-reconciliation.js";
 
 export type RepairSource = PersonIdentity & { id: string; provider: string; remoteId: string; fullName: string; isActive: boolean };
 export type RepairPerson = {
@@ -9,24 +11,18 @@ export type RepairPerson = {
 };
 
 /** A proposal only: source IDs are the partition keys; names never merge Rock IDs. */
-export function planIdentityRepair(people: RepairPerson[]) {
+export function planIdentityRepair(people: RepairPerson[], links: PersonLinks = { pcoToRock: new Map(), conflicts: 0 }) {
+  const rockIds = new Set(people.flatMap(p => p.sourcePeople.filter(s => s.provider === "ROCK").map(s => s.remoteId)));
   const groups = people.flatMap((person) => {
-    const active = person.sourcePeople.filter((source) => source.isActive);
-    const sameProvider = new Set(active.map((source) => source.provider)).size !== active.length;
-    const conflictingNames = active.slice(1).some((source) => !compatiblePersonNames(active[0]!, source));
-    if (!sameProvider && !conflictingNames) return [];
-
-    const rock = person.sourcePeople.filter((source) => source.provider === "ROCK");
-    const partitions = rock.map((source) => ({ key: source.id, sources: [source] }));
-    for (const source of person.sourcePeople.filter((source) => source.provider !== "ROCK")) {
-      const key = uniqueIdentityMatch(source, rock.map((candidate) => ({ ...candidate, personId: candidate.id })));
-      // One ID per provider per partition. Historical duplicate PCO IDs stay separate.
-      const target = partitions.find((partition) => partition.key === key && !partition.sources.some((candidate) => candidate.provider === source.provider));
-      if (target) target.sources.push(source);
-      else partitions.push({ key: source.id, sources: [source] });
+    const partitionMap = new Map<string, RepairSource[]>();
+    for (const source of person.sourcePeople) {
+      const key = identityKey(source.provider, source.remoteId, links, rockIds);
+      partitionMap.set(key, [...(partitionMap.get(key) ?? []), source]);
     }
-    const ownerCandidates = partitions.filter((partition) => partition.sources.some((source) => source.fullName.trim().toLowerCase() === person.fullName.trim().toLowerCase()));
-    const retainedPartition = ownerCandidates.length === 1 ? ownerCandidates[0]!.key : null;
+    if (partitionMap.size <= 1) return [];
+    const partitions = [...partitionMap].map(([key, sources]) => ({ key, sources }));
+    // A directory ID can be reused, but app-native ownership needs separate proof.
+    const retainedPartition = [...partitionMap.keys()].sort()[0] ?? null;
     const hasNative = Object.values(person.nativeReferences).some((count) => count > 0);
     return [{
       personId: person.id, currentName: person.fullName,
@@ -55,7 +51,8 @@ export function planIdentityRepair(people: RepairPerson[]) {
   };
 }
 
-export async function readIdentityRepairPlan() {
+export async function readIdentityRepairPlan(links?: PersonLinks) {
+  const authoritativeLinks = links ?? await fetchPersonLinks();
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SET TRANSACTION READ ONLY`;
     await tx.$executeRaw`SET LOCAL statement_timeout = '30s'`;
@@ -86,6 +83,6 @@ export async function readIdentityRepairPlan() {
         ...person.leaders.filter((row) => row.source === "SYNCED").map((row) => ({ ...row, kind: "Leader" })),
         ...person.schedules.map((row) => ({ ...row, kind: "Schedule" })),
       ],
-    })));
+    })), authoritativeLinks);
   }, { isolationLevel: "RepeatableRead", timeout: 60000, maxWait: 30000 });
 }

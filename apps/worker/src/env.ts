@@ -8,6 +8,8 @@ export const env = createEnv({
     PCO_API_SECRET: z.string().min(1),
     ROCK_BASE_URL: z.string().url().optional(),
     ROCK_API_KEY: z.string().optional(),
+    ROCK_PCO_ACCOUNT_ID: z.string().optional(),
+    PCO_ORGANIZATION_ID: z.string().optional(),
     ROCK_TEAM_GROUP_TYPE_IDS: z.string().optional(),
   },
   runtimeEnv: process.env,

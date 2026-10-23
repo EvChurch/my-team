@@ -1,7 +1,13 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { reconcilePersonLinks } from "./person-reconciliation"
 import { readIdentityRepairPlan } from "./identity-repair-plan"
 import { prisma } from "@mt/api/db"
-import { upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
+import { backfillMembershipProvenance, findSourcePersonId, upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
+
+const verifiedAccounts = vi.hoisted(() => new Map<string, string | null>())
+vi.mock("@mt/api/rock-login", () => ({ findRockLoginPerson: async (subject: string) => verifiedAccounts.get(subject) ?? null }))
+const noLinks = { pcoToRock: new Map<string, string>(), conflicts: 0 }
+const linked = { pcoToRock: new Map([["test-pco", "test-parent"]]), conflicts: 0 }
 
 // Integration tests only run against an explicitly designated disposable DB.
 const enabled = Boolean(process.env.IDENTITY_TEST_DATABASE_URL)
@@ -14,7 +20,7 @@ const person: SourcePersonInput = {
 }
 
 describe.skipIf(!enabled)("source person sync integration", () => {
-  beforeEach(async () => { await prisma.person.deleteMany() })
+  beforeEach(async () => { await prisma.person.deleteMany(); verifiedAccounts.clear() })
   afterAll(async () => { await prisma.$disconnect() })
 
   it("keeps two Rock IDs separate when a family shares an email", async () => {
@@ -38,10 +44,10 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     expect(await prisma.person.count()).toBe(1)
   })
 
-  it("links PCO with corroborating names and normalized phone evidence", async () => {
+  it("never links PCO through identical names or normalized contact details", async () => {
     const rock = await upsertRockPerson(person)
     const pco = await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco", phone: "+640226568306" })
-    expect(pco.id).toBe(rock.id)
+    expect(pco.id).not.toBe(rock.id)
   })
 
   it("does not join a family member to the parent's PCO identity", async () => {
@@ -71,9 +77,9 @@ describe.skipIf(!enabled)("source person sync integration", () => {
       upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco" }),
       upsertRockPerson(person),
     ])
-    expect(rock.id).toBe(pco.id)
+    expect(rock.id).not.toBe(pco.id)
     expect(repeated.id).toBe(rock.id)
-    expect(await prisma.person.count()).toBe(1)
+    expect(await prisma.person.count()).toBe(2)
     expect(await prisma.sourcePerson.count()).toBe(2)
   })
   it("does not attach a new PCO account to a historically conflated person", async () => {
@@ -88,18 +94,90 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco", fullName: "Ryan Updated" })
     expect((await prisma.person.findUniqueOrThrow({ where: { id: pco.id } })).fullName).toBe("Ryan Updated")
     await upsertRockPerson(person)
+    await reconcilePersonLinks(linked)
     await upsertPcoSourcePerson({ ...person, provider: "PCO", remoteId: "test-pco", fullName: "PCO Display" })
-    expect((await prisma.person.findUniqueOrThrow({ where: { id: pco.id } })).fullName).toBe(person.fullName)
+    expect((await prisma.person.findUniqueOrThrow({ where: { id: (await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "ROCK", remoteId: "test-parent" } } })).personId } })).fullName).toBe(person.fullName)
   })
 
   it("reads a repair plan without changing database records", async () => {
     const parent = await upsertRockPerson(person)
     await prisma.sourcePerson.create({ data: { ...person, remoteId: "test-child", personId: parent.id, firstName: "Owen", fullName: "Owen Green" } })
     const before = await prisma.person.findMany({ include: { sourcePeople: true } })
-    const plan = await readIdentityRepairPlan()
+    const plan = await readIdentityRepairPlan(noLinks)
     expect(plan.summary.groups).toBe(1)
     expect(plan.summary.newPeople).toBe(1)
     expect(await prisma.person.findMany({ include: { sourcePeople: true } })).toEqual(before)
+  })
+
+  it("joins existing separate sources solely from the plugin and is idempotent", async () => {
+    await upsertRockPerson(person)
+    await upsertPcoSourcePerson({ ...person, remoteId: "test-pco", firstName: "Different", email: null, phone: null })
+    expect((await reconcilePersonLinks(linked)).movedSources).toBe(1)
+    expect(new Set((await prisma.sourcePerson.findMany()).map(s => s.personId)).size).toBe(1)
+    expect((await reconcilePersonLinks(linked)).movedSources).toBe(0)
+    // Removing the upstream link separates the providers automatically.
+    expect((await reconcilePersonLinks(noLinks)).movedSources).toBe(1)
+    expect(new Set((await prisma.sourcePerson.findMany()).map(s => s.personId)).size).toBe(2)
+  })
+
+  it("keeps the account with their verified Rock owner during a split", async () => {
+    const owner = await upsertRockPerson(person)
+    await prisma.sourcePerson.create({ data: { ...person, personId: owner.id, remoteId: "test-other" } })
+    await prisma.authAccount.create({ data: { personId: owner.id, provider: "auth0", providerAccountId: "subject" } })
+    verifiedAccounts.set("subject", "test-parent")
+    await reconcilePersonLinks(noLinks)
+    const sources = await prisma.sourcePerson.findMany()
+    expect(sources.find(s => s.remoteId === "test-parent")?.personId).toBe(owner.id)
+    expect(sources.find(s => s.remoteId === "test-other")?.personId).not.toBe(owner.id)
+    expect((await prisma.authAccount.findFirstOrThrow()).personId).toBe(owner.id)
+  })
+
+  it("aborts atomically if native ownership cannot be proven", async () => {
+    const owner = await upsertRockPerson(person)
+    await prisma.sourcePerson.create({ data: { ...person, personId: owner.id, remoteId: "test-other" } })
+    await prisma.authAccount.create({ data: { personId: owner.id, provider: "auth0", providerAccountId: "subject" } })
+    const before = await prisma.sourcePerson.findMany()
+    await expect(reconcilePersonLinks(noLinks)).rejects.toThrow("Native person ownership")
+    expect(await prisma.sourcePerson.findMany()).toEqual(before)
+  })
+
+  it("waits for provenance, then repairs memberships and schedules by upstream identity", async () => {
+    const parent = await upsertRockPerson(person)
+    await prisma.authAccount.create({ data: { personId: parent.id, provider: "auth0", providerAccountId: "subject" } })
+    verifiedAccounts.set("subject", "test-parent")
+    await prisma.sourcePerson.create({ data: { ...person, personId: parent.id, remoteId: "test-child", fullName: "Same Name" } })
+    const team = await prisma.team.upsert({ where: { remoteId_provider: { remoteId: "fixture-team", provider: "ROCK" } }, create: { remoteId: "fixture-team", provider: "ROCK", name: "Fixture" }, update: {} })
+    const position = await prisma.position.upsert({ where: { remoteId_provider: { remoteId: "fixture-role", provider: "ROCK" } }, create: { remoteId: "fixture-role", provider: "ROCK", teamId: team.id }, update: {} })
+    const assignment = await prisma.assignment.create({ data: { remoteId: "fixture-assignment", provider: "ROCK", personId: parent.id, positionId: position.id } })
+    const schedule = await prisma.schedule.create({ data: { remoteId: "fixture-schedule", provider: "ROCK", personId: parent.id, personRemoteId: "test-child", teamId: team.id, serviceTypeName: "Fixture", status: "CONFIRMED", sortDate: new Date(), dates: "date", planRemoteId: "plan" } })
+    expect((await reconcilePersonLinks(noLinks)).pendingReferences).toBe(1)
+    expect(new Set((await prisma.sourcePerson.findMany()).map(s => s.personId)).size).toBe(1)
+    await backfillMembershipProvenance("ROCK", { assignments: [{ remoteId: assignment.remoteId, personRemoteId: "test-child" }], leaders: [] })
+    expect((await reconcilePersonLinks(noLinks)).movedReferences).toBe(2)
+    const child = await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "ROCK", remoteId: "test-child" } } })
+    expect((await prisma.assignment.findUniqueOrThrow({ where: { id: assignment.id } })).personId).toBe(child.personId)
+    expect((await prisma.schedule.findUniqueOrThrow({ where: { id: schedule.id } })).personId).toBe(child.personId)
+    expect((await reconcilePersonLinks(noLinks)).movedReferences).toBe(0)
+  })
+
+  it("preserves a Rock login owner when its PCO mapping is removed", async () => {
+    const rock = await upsertRockPerson(person)
+    await prisma.authAccount.create({ data: { personId: rock.id, provider: "auth0", providerAccountId: "subject" } })
+    verifiedAccounts.set("subject", "test-parent")
+    await upsertPcoSourcePerson({ ...person, remoteId: "test-pco" })
+    await reconcilePersonLinks(linked)
+    await reconcilePersonLinks(noLinks)
+    expect((await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "ROCK", remoteId: "test-parent" } } })).personId).toBe(rock.id)
+    expect((await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "PCO", remoteId: "test-pco" } } })).personId).not.toBe(rock.id)
+  })
+
+  it("backfills historical schedules through exact source IDs without reactivating former members", async () => {
+    const original = await upsertPcoSourcePerson({ ...person, remoteId: "test-pco" })
+    await prisma.sourcePerson.updateMany({ data: { isActive: false } })
+    const imported = new Map<string, string>()
+    expect(await findSourcePersonId("PCO", "test-pco", imported)).toBe(original.id)
+    expect(await findSourcePersonId("ROCK", "test-pco", new Map())).toBeNull()
+    expect((await prisma.sourcePerson.findFirstOrThrow()).isActive).toBe(false)
   })
 
 })

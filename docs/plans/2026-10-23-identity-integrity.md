@@ -1,62 +1,29 @@
-# Source identity integrity and Rock login verification
+# Authoritative person identities
 
-Distinct upstream person IDs must not collapse because relatives share contact details. Previously the sync looked for a canonical Person by email or phone even when importing another Rock ID. Matching fields could overwrite the first person's directory details and attach another person's memberships. The original source links survive, so a source-based repair can be planned.
+My Team uses the association created by Auth0's Rock post-login hook: the exact `AUTH0_` subject username, a confirmed login using Rock's Auth0 authentication provider, and an active, living Rock person. Each authenticated request verifies that chain. A missing or ambiguous Rock association blocks pages and protected APIs. PCO is optional.
 
-## Implemented behavior
+## Background sync
 
-- An established `(provider, remoteId)` always retains its canonical Person.
-- New IDs never join another source from the same provider. New cross-provider links require compatible given/family names plus a real email or normalized phone match, with no conflicting known phones and exactly one candidate.
-- New cross-provider links exclude already conflated source groups. Missing or placeholder contact information cannot prove identity. Unmatched PCO people get their own record instead of being dropped.
-- Person creation and source linking happen in one transaction, serialized across workers with PostgreSQL advisory lock `724193821`.
-- Every authenticated request verifies the exact `AUTH0_` + Auth0 subject username in Rock UserLogins, restricted to the Auth0 authentication provider and confirmed logins. Exactly one association must exist, pointing to an active, living Rock person.
-- Access resolves through the active ROCK SourcePerson for that remote person ID. PCO is optional; matching names, email addresses, or a PCO-only identity cannot substitute for a Rock login association.
-- A canonical Person with multiple active Rock sources is blocked. Inactive historical sources do not prevent access. A conflicting existing AuthAccount is blocked rather than reassigned; concurrent first-login creation is also checked.
-- Missing Rock associations or synced identities block both page access and protected API calls. `/connect-account` explains the requirement and provides retry/sign-out. An upstream outage displays a temporary verification message and denies access without exposing upstream errors.
+Names, email addresses and phone numbers never establish identity. Contact normalization is only directory formatting. A new `(provider, remoteId)` initially receives its own directory identity. After each provider sync, reconciliation uses the existing Rock plugin links to join or separate sources and their synced references.
 
-## Configuration and verified upstream contract
+The 9Embers plugin stores `IdentifierMap` records grouped by `AbstractIdentifierId`. `TranslatorId=RockRMS` uses a **PersonAlias.Id**, not a Person.Id. Resolve each alias to its current PersonId before checking uniqueness. The configured PCO translator uses a PCO person ID. Multiple historical aliases of the same Rock person are acceptable. Conflicting Rock/PCO targets, missing aliases, and absent links leave PCO identities separate; no contacts provide a fallback.
 
-The web service uses its existing `ROCK_BASE_URL` and `ROCK_API_KEY` to read UserLogins and People. No extra OAuth application or ongoing administrator matching step is required. Requests have an eight-second timeout per upstream read, do not cache results, and reject redirects. Each request checks Rock even when an AuthAccount already exists, so an old local link cannot bypass a removed or inactive Rock association.
+Read these entities using the authenticated `/api/Lava/RenderTemplate` endpoint and its enabled entity commands. SQL commands and additional OAuth applications are unnecessary. Maps are paginated in strictly increasing ID order with validated payloads and bounded page counts. Alias reads are validated and batched within Rock's filter limits. Failed reads abort reconciliation without replacing existing links with an empty result.
 
-Read-only production verification on 23 October 2026 checked all six existing My Team accounts. Each had exactly one confirmed Rock Auth0 login. Four had complete plugin-to-PCO links, verified against active PCO People and Services records; the other two had no plugin PCO mapping and no local PCO source. All existing accounts satisfy the required Rock association.
+The worker requires `ROCK_PCO_ACCOUNT_ID` and `PCO_ORGANIZATION_ID` alongside its existing credentials when Rock is enabled. Verify and pin these non-secret IDs against the plugin account and the PCO PAT organization. Every reconciliation rechecks the account exists and the PAT organization still matches. Group PCOMarker attributes are independently restricted to `Rock.Model.Group`; they cannot collide with numeric person IDs.
 
-The plugin's person links live in custom `IdentifierMap` and `AbstractIdentifier` entities, readable with the authenticated Rock Lava entity commands. Its `RockRMS` map uses a **person-alias ID**, which must be resolved to the current PersonId before linking sources. Its PCO map uses the PCO person ID. Group `PCOMarker` attributes are separate and share the PCO account/translator identifier. Do not treat alias IDs as person IDs or infer person links from contacts when using these stored mappings.
+## Automatic repair and ownership
 
-This access change does not import or repair plugin person mappings. The sync and repair planner below still use conservative contact-based cross-provider matching; adopting the verified plugin links is follow-up work. No production source/reference repair has been applied.
+Assignment, Leader and Schedule records retain `personRemoteId`, identifying their original upstream owner independently of the canonical Person. Existing rows receive this provenance from fresh upstream snapshots during ordinary sync. Reconciliation waits if a person being split or merged still has unresolved references. Normal provider pruning removes rows no longer present upstream; the repair never invents their owner.
 
-## Read-only repair proposal
+The complete Rock and PCO syncs share a dedicated PostgreSQL session advisory lock (`724193822`), including all reference writes and reconciliation. The atomic reconciliation transaction also takes the same person-link lock as request-time account linking (`724193821`) and uses serializable isolation. Splits/merges update source links, synced memberships and schedules together. Membership moves avoid transient uniqueness collisions; duplicate synced memberships are collapsed only within the same provider and proven destination. Schedules retain their IDs and PlanTime rows.
 
-Run with the intended database in `DATABASE_URL`:
+Existing app-native content and account ownership stay on their Person IDs. A person with only one authoritative partition retains that ownership. Splitting a person with native content requires verified account-to-Rock evidence; conflicting native owners abort rather than guessing. Unowned directory IDs may be reused deterministically, without inspecting display names. Empty former directory identities are archived, not deleted. Removing a plugin mapping separates PCO again while retaining a verified Rock login's Person ID.
 
-```bash
-pnpm --filter worker exec tsx src/identity-repair-plan.ts /absolute/private/path/identity-plan.json
-```
+Before a production repair, save a private PostgreSQL backup and rehearse the full sync and reconciliation on an isolated restored database. Deploy the additive provenance migration before starting the updated worker. Let both provider snapshots backfill provenance, then reconcile and sync again to restore memberships previously suppressed by canonical uniqueness. The worker build also includes `node apps/worker/dist/sync-once.js` for an explicit additional pass; it uses the same complete-sync lock as scheduled jobs. Verify zero pending references, source grouping against the plugin, exact reference ownership, unchanged account/native ownership, and idempotence on the final pass.
 
-This command opens a repeatable-read, read-only transaction. It creates a new mode-0600 report file exclusively, refuses existing paths, and prints only aggregate counts. It has no apply mode. Reports include personal information and must stay outside Git.
+## Diagnostics and validation
 
-The reviewed production scan on 23 October 2026 proposed:
+`pnpm --filter worker exec tsx src/identity-repair-plan.ts /absolute/private/path/identity-plan.json` writes a read-only diagnostic report, exclusively creating a mode-0600 file. The planner partitions sources using the plugin map rather than contacts. It does not apply changes; the ordinary sync performs the guarded reconciliation, including merges across previous directory IDs. Keep reports and backups outside Git.
 
-| Result | Count |
-| --- | ---: |
-| Canonical profiles with conflicting active source identities | 84 |
-| New person records proposed, including inactive historical source partitions | 199 |
-| Groups with app-native ownership or account links requiring evidence | 0 |
-| Existing synced assignments, leaders and schedules requiring upstream resolution | 741 |
-
-The earlier different-name Rock audit identified 65 profiles. This stricter report also includes same-name distinct IDs and conflicting cross-provider identities. A single source without a surname is not a collision. Counts can change as background sync runs.
-
-Each Rock source ID receives its own partition. PCO sources join a partition only on unique corroborating evidence; ambiguous PCO records get independent partitions. The original Person ID is retained only when exactly one partition matches its current full name. Otherwise the original record must remain available for historical ownership, and every source partition gets a new Person.
-
-A repair application is still required. Before applying it:
-
-1. Resolve every listed Assignment, Leader and Schedule remote ID to the original upstream person ID from fresh Rock/PCO reads. These rows do not retain that source person ID locally; current display names and contact details cannot reconstruct ownership safely.
-2. Review missing upstream references explicitly. Do not silently delete or assign them to the retained partition. Re-run the native-ownership and account checks immediately before mutation.
-3. Take a database backup, pause sync for the repair, verify the reviewed source/reference snapshot, and use the same advisory lock while applying an atomic source/reference move. Abort if the snapshot or native ownership changed.
-4. Re-sync to rebuild memberships previously suppressed by canonical uniqueness constraints. Verify each source/reference mapping, source counts, existing login links and Rock-based sign-in before resuming normal sync.
-
-No production records were changed by the report. The sync safeguards prevent new conflation; they intentionally preserve established links until the repair is applied.
-
-## Validation
-
-Regression coverage includes required exact Rock login association, optional PCO/email, missing or ambiguous logins, inactive/deceased people, upstream failure, conflicting local account ownership, direct API rejection, shared-contact sync isolation, stable source links, concurrent imports, and repair planning without writes.
-
-CI provisions disposable PostgreSQL 18 and runs the integration tests with matching `DATABASE_URL` / `IDENTITY_TEST_DATABASE_URL` values. The integration suite additionally requires a database name ending `_test`; it deletes fixture people only in that designated database. Turbo passes both variables through and does not cache database tests.
+Regression tests cover exact Rock login access, optional PCO, shared contacts, concurrent source creation, alias resolution and conflicts, account scoping, link removal, native ownership protection, provenance backfill, atomic source/reference repair, and repeated reconciliation. Integration tests require matching `DATABASE_URL` and `IDENTITY_TEST_DATABASE_URL` values naming a disposable database ending `_test`.

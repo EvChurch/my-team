@@ -289,6 +289,9 @@ model Leader {
   @@unique([personId, teamId, source])
   @@unique([remoteId, provider])
   @@index([teamId])
+  // Upstream person identity; never infer ownership from canonical contact details.
+  personRemoteId String?
+
 }
 
 model Assignment {
@@ -307,6 +310,9 @@ model Assignment {
   @@unique([personId, positionId, source])
   @@unique([remoteId, provider])
   @@index([positionId])
+  // Upstream person identity; never infer ownership from canonical contact details.
+  personRemoteId String?
+
 }
 
 model Schedule {
@@ -336,6 +342,9 @@ model Schedule {
   @@index([personId, teamId])
   @@index([sortDate])
   @@index([planRemoteId, personId])
+  // Upstream person identity; never infer ownership from canonical contact details.
+  personRemoteId String?
+
 }
 
 model PlanTime {

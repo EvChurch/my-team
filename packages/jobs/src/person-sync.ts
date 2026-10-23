@@ -2,7 +2,6 @@ import { prisma } from "@mt/api/db"
 import {
   normalizeIdentityEmail,
   normalizeIdentityPhone,
-  uniqueIdentityMatch,
 } from "@mt/api/person-identity"
 
 export type SourcePersonInput = {
@@ -29,26 +28,6 @@ async function syncPerson(input: SourcePersonInput) {
     })
 
     let personId = existingSource?.personId
-    if (!personId) {
-      // Never merge two IDs from the same provider. Only an opposite-provider
-      // source with corroborating identity evidence can be linked automatically.
-      const candidates = await tx.sourcePerson.findMany({
-        where: {
-          provider: input.provider === "ROCK" ? "PCO" : "ROCK",
-          isActive: true,
-          person: {
-            isActive: true,
-            sourcePeople: { none: { provider: input.provider } },
-          },
-        },
-        select: { personId: true, firstName: true, lastName: true, email: true, phone: true,
-          person: { select: { sourcePeople: { where: { isActive: true }, select: { provider: true } } } },
-        },
-      })
-      personId = uniqueIdentityMatch(input, candidates.filter((candidate) =>
-        candidate.person.sourcePeople.filter((source) => source.provider !== input.provider).length === 1
-      )) ?? undefined
-    }
 
     const data = {
       displayName: input.fullName,
@@ -105,4 +84,25 @@ export async function archivePeopleWithoutActiveSources() {
     },
     data: { isActive: false, archivedAt: new Date() },
   })
+}
+
+/** Historical schedules may belong to someone no longer in the current team snapshot. */
+export async function findSourcePersonId(provider: "PCO" | "ROCK", remoteId: string | undefined, imported: Map<string, string>) {
+  if (!remoteId) return null
+  const current = imported.get(remoteId)
+  if (current) return current
+  const source = await prisma.sourcePerson.findUnique({ where: { provider_remoteId: { provider, remoteId } }, select: { personId: true } })
+  if (source) imported.set(remoteId, source.personId)
+  return source?.personId ?? null
+}
+
+/** Save fresh upstream ownership even when a conflated canonical membership cannot be upserted yet. */
+export async function backfillMembershipProvenance(
+  provider: "PCO" | "ROCK",
+  snapshot: { leaders: Array<{ remoteId: string; personRemoteId: string }>; assignments: Array<{ remoteId: string; personRemoteId: string }> },
+) {
+  const leaders = JSON.stringify(snapshot.leaders.map(({ remoteId, personRemoteId }) => ({ remoteId, personRemoteId })))
+  const assignments = JSON.stringify(snapshot.assignments.map(({ remoteId, personRemoteId }) => ({ remoteId, personRemoteId })))
+  await prisma.$executeRaw`UPDATE "Leader" r SET "personRemoteId" = e->>'personRemoteId' FROM jsonb_array_elements(${leaders}::jsonb) e WHERE r.provider::text = ${provider} AND r.source = 'SYNCED' AND r."remoteId" = e->>'remoteId'`
+  await prisma.$executeRaw`UPDATE "Assignment" r SET "personRemoteId" = e->>'personRemoteId' FROM jsonb_array_elements(${assignments}::jsonb) e WHERE r.provider::text = ${provider} AND r.source = 'SYNCED' AND r."remoteId" = e->>'remoteId'`
 }
