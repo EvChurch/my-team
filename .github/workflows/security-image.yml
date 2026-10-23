@@ -32,6 +32,22 @@ jobs:
           myteam-ci node tests/security-image.mjs
       - name: Verify the built worker identity reader without external requests
         run: docker run --rm myteam-ci node apps/worker/dist/identity-check.js --self-test
+      - name: Boot the real web entrypoint with disposable configuration
+        run: >-
+          docker run --detach --name myteam-web-ci
+          --publish 127.0.0.1:3000:3000
+          --env PORT=3000 --env HOSTNAME=unresolvable.fixture.invalid
+          --env DATABASE_URL=postgresql://unused:unused@127.0.0.1:1/unused_test
+          --env AUTH_SECRET=disposable-ci-secret-not-production
+          --env AUTH0_DOMAIN=example.us.auth0.com
+          --env AUTH0_CLIENT_ID=ci-placeholder --env AUTH0_CLIENT_SECRET=ci-placeholder
+          --env PCO_API_ID=ci-placeholder --env PCO_API_SECRET=ci-placeholder
+          myteam-ci sh apps/web/scripts/start-production.sh
+      - name: Verify web health, access guard, login and static asset
+        run: node tests/security-web-smoke.mjs
+      - name: Stop the isolated web container
+        if: always()
+        run: docker rm --force myteam-web-ci 2>/dev/null || true
       - name: Run existing API and worker tests against an isolated database
         run: |
           docker run --rm --network host \

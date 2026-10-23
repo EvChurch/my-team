@@ -19,4 +19,4 @@ RUN DATABASE_URL=postgresql://build:build@127.0.0.1:1/build pnpm --filter @mt/we
 
 ENV NODE_ENV=production
 # Each service retains its own Railway start command and deployment lifecycle.
-CMD ["node", "apps/web/.next/standalone/apps/web/server.js"]
+CMD ["sh", "apps/web/scripts/start-production.sh"]
