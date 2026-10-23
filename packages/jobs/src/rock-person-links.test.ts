@@ -29,6 +29,15 @@ describe("authoritative plugin person links", () => {
     const result = resolvePersonLinks([map(1, "RockRMS", "90"), map(1, "account", "123"), map(2, "RockRMS", "92"), map(2, "account", "123")], aliases, "account")
     expect(result.pcoToRock.size).toBe(0)
   })
+  it("quarantines valid-looking links connected to an invalid identifier", () => {
+    const result = resolvePersonLinks([
+      map(1, "RockRMS", "90"), map(1, "account", "123"), map(1, "account", "124"),
+      map(2, "RockRMS", "91"), map(2, "account", "125"),
+    ], aliases, "account")
+    expect(result.pcoToRock.size).toBe(0)
+    expect(result.conflicts).toBe(3)
+  })
+
 })
 
 describe("plugin API snapshot validation", () => {

@@ -15,12 +15,14 @@ export function resolvePersonLinks(maps: PluginMap[], aliases: PersonAlias[], ac
   for (const map of maps) identifiers.set(map.identifierId, [...(identifiers.get(map.identifierId) ?? []), map])
   const pairs: Array<[string, string]> = []
   const badPco = new Set<string>()
+  const badRock = new Set<string>()
   for (const rows of identifiers.values()) {
     const rockRows = rows.filter(m => m.translatorId === "RockRMS")
     const rock = new Set(rockRows.map(m => aliasPeople.get(m.actualId)).filter((id): id is string => Boolean(id)))
     const pco = new Set(rows.filter(m => m.translatorId === accountId).map(m => m.actualId))
     if (rock.size > 1 || pco.size > 1 || rockRows.some(m => !aliasPeople.has(m.actualId))) {
       for (const id of pco) badPco.add(id)
+      for (const id of rock) badRock.add(id)
     } else if (rock.size === 1 && pco.size === 1) pairs.push([[...pco][0]!, [...rock][0]!])
   }
   const pcoRocks = new Map<string, Set<string>>()
@@ -30,6 +32,17 @@ export function resolvePersonLinks(maps: PluginMap[], aliases: PersonAlias[], ac
     rockPcos.set(rock, new Set([...(rockPcos.get(rock) ?? []), pco]))
   }
   for (const [pco, rock] of pairs) if (pcoRocks.get(pco)!.size !== 1 || rockPcos.get(rock)!.size !== 1) badPco.add(pco)
+  // Quarantine every connected target of a contradictory identifier, including
+  // otherwise valid-looking links on a different AbstractIdentifier.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const [pco, rock] of pairs) if (badPco.has(pco) || badRock.has(rock)) {
+      if (!badPco.has(pco) || !badRock.has(rock)) changed = true
+      badPco.add(pco)
+      badRock.add(rock)
+    }
+  }
   return { pcoToRock: new Map(pairs.filter(([pco]) => !badPco.has(pco))), conflicts: badPco.size }
 }
 
