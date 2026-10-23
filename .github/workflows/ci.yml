@@ -9,6 +9,20 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: myteam_identity_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/myteam_identity_test
+      IDENTITY_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/myteam_identity_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -18,6 +32,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mt/api db:generate
+      - run: pnpm --filter @mt/api exec prisma migrate deploy
       - run: pnpm test --force --cache-dir=.turbo/ci
       - run: pnpm type-check --force --cache-dir=.turbo/ci
       - run: pnpm lint --force --cache-dir=.turbo/ci

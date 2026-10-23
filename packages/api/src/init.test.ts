@@ -11,7 +11,7 @@ vi.mock("@mt/auth", () => ({ auth: mocks.auth }));
 vi.mock("react", () => ({ cache: (fn: unknown) => fn }));
 vi.mock("./db", () => ({
   prisma: {
-    authAccount: { findUnique: mocks.findAccount, create: mocks.createAccount },
+    authAccount: { findUnique: mocks.findAccount, upsert: mocks.createAccount },
     person: { findMany: mocks.findPeople },
   },
 }));
@@ -22,7 +22,7 @@ type Person = {
   id: string;
   email: string;
   isActive: boolean;
-  sourcePeople: Array<{ email: string }>;
+  sourcePeople: Array<{ email: string; provider?: string; firstName?: string; lastName?: string; phone?: string | null; isActive?: boolean }>;
 };
 
 type Lookup = {
@@ -33,7 +33,7 @@ type Lookup = {
 };
 
 // Evaluate the actual lookup against a small production-shaped directory.
-function matches(person: { email: string; isActive?: boolean; sourcePeople?: Array<{ email: string }> }, where: Lookup): boolean {
+function matches(person: { email: string; isActive?: boolean; sourcePeople?: Array<{ email: string; provider?: string; firstName?: string; lastName?: string; phone?: string | null; isActive?: boolean }> }, where: Lookup): boolean {
   if (where.isActive !== undefined && person.isActive !== where.isActive) return false;
   if (where.email !== undefined) {
     const filter = where.email;
@@ -53,16 +53,16 @@ const router = createTRPCRouter({ teams: protectedProcedure.query(({ ctx }) => c
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", email: "rowan@ev.church" } });
+  mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", auth0EmailVerified: true, email: "rowan@ev.church" } });
   mocks.findAccount.mockResolvedValue(null);
-  mocks.createAccount.mockResolvedValue({});
+  mocks.createAccount.mockResolvedValue({ personId: "canonical" });
   people = [
-    { id: "canonical", email: "rowan@ev.church", isActive: true, sourcePeople: [{ email: "rowan@aucklandev.co.nz" }] },
+    { id: "canonical", email: "rowan@ev.church", isActive: true, sourcePeople: [{ email: "rowan@aucklandev.co.nz", isActive: true }] },
     { id: "archived", email: "rowan@ev.church", isActive: false, sourcePeople: [] },
     { id: "archived-alias", email: "rowan@aucklandev.co.nz", isActive: false, sourcePeople: [] },
   ];
   mocks.findPeople.mockImplementation(async ({ where, take }) =>
-    people.filter((person) => matches(person, where)).slice(0, take).map(({ id }) => ({ id })),
+    people.filter((person) => matches(person, where)).slice(0, take).map((person) => ({ ...person, sourcePeople: person.sourcePeople.map((source) => ({ provider: "ROCK", firstName: "Rowan", lastName: "Smith", phone: null, ...source })) })),
   );
 });
 
@@ -70,19 +70,21 @@ describe("first sign-in person resolution", () => {
   it("loads protected data when an archived duplicate shares the login email", async () => {
     const ctx = await createTRPCContext();
     await expect(router.createCaller(ctx).teams()).resolves.toEqual(["canonical"]);
-    expect(mocks.createAccount).toHaveBeenCalledWith({ data: {
+    expect(mocks.createAccount).toHaveBeenCalledWith({
+      where: { provider_providerAccountId: { provider: "auth0", providerAccountId: "auth0|rowan" } },
+      update: {}, create: {
       personId: "canonical", provider: "auth0", providerAccountId: "auth0|rowan", email: "rowan@ev.church",
     } });
   });
 
   it("resolves a source email alias to the active canonical person", async () => {
-    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", email: "rowan@aucklandev.co.nz" } });
+    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", auth0EmailVerified: true, email: "rowan@aucklandev.co.nz" } });
     const ctx = await createTRPCContext();
     await expect(router.createCaller(ctx).teams()).resolves.toEqual(["canonical"]);
   });
 
   it("normalizes whitespace and email casing", async () => {
-    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", email: " ROWAN@EV.CHURCH " } });
+    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|rowan", auth0EmailVerified: true, email: " ROWAN@EV.CHURCH " } });
     expect((await createTRPCContext()).personId).toBe("canonical");
   });
 
@@ -109,4 +111,34 @@ describe("first sign-in person resolution", () => {
     expect((await createTRPCContext()).personId).toBeNull();
     expect(mocks.findPeople).not.toHaveBeenCalled();
   });
+  it("does not treat placeholder email as proof of identity", async () => {
+    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|new", auth0EmailVerified: true, email: "na@na.com" } });
+    expect((await createTRPCContext()).personId).toBeNull();
+    expect(mocks.findPeople).not.toHaveBeenCalled();
+  });
+
+  it("does not create a new login link into a conflated source group", async () => {
+    people[0]!.sourcePeople.push({ email: "other@example.com", firstName: "Other", lastName: "Smith", isActive: true });
+    expect((await createTRPCContext()).personId).toBeNull();
+    expect(mocks.createAccount).not.toHaveBeenCalled();
+  });
+
+  it("honors the winner if a concurrent request already created the account link", async () => {
+    mocks.createAccount.mockResolvedValue({ personId: "concurrent-winner" });
+    expect((await createTRPCContext()).personId).toBe("concurrent-winner");
+  });
+
+  it("does not use an inactive source email alias for a new link", async () => {
+    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|new", auth0EmailVerified: true, email: "rowan@aucklandev.co.nz" } });
+    people[0]!.sourcePeople[0]!.isActive = false;
+    expect((await createTRPCContext()).personId).toBeNull();
+  });
+
+  it("requires a verified login email before creating an automatic link", async () => {
+    mocks.auth.mockResolvedValue({ user: { auth0Id: "auth0|new", email: "rowan@ev.church", auth0EmailVerified: false } });
+    expect((await createTRPCContext()).personId).toBeNull();
+    expect(mocks.findPeople).not.toHaveBeenCalled();
+    expect(mocks.createAccount).not.toHaveBeenCalled();
+  });
+
 });

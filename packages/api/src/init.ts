@@ -5,6 +5,8 @@ import { cache } from "react";
 import type { Session } from "next-auth";
 import { auth } from "@mt/auth";
 import { prisma } from "./db";
+import { normalizeIdentityEmail } from "./lib/person-identity";
+import { unambiguousSourceGroup } from "./lib/account-link";
 
 function splitName(name: string): { firstName: string; lastName: string } {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -33,7 +35,7 @@ export interface TRPCContext {
 }
 
 async function findCanonicalPersonByEmail(email: string | null) {
-  const normalizedEmail = email?.trim().toLowerCase();
+  const normalizedEmail = normalizeIdentityEmail(email);
   if (!normalizedEmail) return null;
 
   const emailFilter = { equals: normalizedEmail, mode: "insensitive" as const };
@@ -43,19 +45,19 @@ async function findCanonicalPersonByEmail(email: string | null) {
       isActive: true,
       OR: [
         { email: emailFilter },
-        { sourcePeople: { some: { email: emailFilter } } },
+        { sourcePeople: { some: { email: emailFilter, isActive: true } } },
       ],
     },
-    select: { id: true },
+    select: { id: true, sourcePeople: { where: { isActive: true }, select: { provider: true, firstName: true, lastName: true, email: true, phone: true } } },
     take: 2,
   });
 
-  return people.length === 1 ? people[0]! : null;
+  return people.length === 1 && unambiguousSourceGroup(people[0]!.sourcePeople) ? people[0]! : null;
 }
 
 /**
  * Creates the tRPC context for each request.
- * Looks up the Person record by PCO remoteId from session.
+ * Preserves established account links; first sign-in requires an unambiguous email.
  */
 export const createTRPCContext = cache(
   async (opts?: { headers?: Headers }): Promise<TRPCContext> => {
@@ -80,18 +82,20 @@ export const createTRPCContext = cache(
         personId = authAccount.personId;
       } else {
         const email = session.user.email ?? null;
-        const person = await findCanonicalPersonByEmail(email);
+        const person = session.user.auth0EmailVerified === true ? await findCanonicalPersonByEmail(email) : null;
 
         if (person) {
-          await prisma.authAccount.create({
-            data: {
+          const account = await prisma.authAccount.upsert({
+            where: { provider_providerAccountId: { provider: "auth0", providerAccountId: session.user.auth0Id } },
+            update: {},
+            create: {
               personId: person.id,
               provider: "auth0",
               providerAccountId: session.user.auth0Id,
               email,
             },
           });
-          personId = person.id;
+          personId = account.personId;
         }
       }
     }

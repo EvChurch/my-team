@@ -6,7 +6,8 @@
   "exports": {
     "./boss": "./src/boss.ts",
     "./sync": "./src/sync.ts",
-    "./workers": "./src/workers.ts"
+    "./workers": "./src/workers.ts",
+    "./identity-repair-plan": "./src/identity-repair-plan.ts"
   },
   "dependencies": {
     "@mt/api": "workspace:*",
@@ -15,6 +16,10 @@
   },
   "devDependencies": {
     "@mt/typescript-config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
+  },
+  "scripts": {
+    "test": "vitest run"
   }
 }

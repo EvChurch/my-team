@@ -17,7 +17,9 @@
     "./pco": "./src/lib/pco.ts",
     "./storage": "./src/lib/storage.ts",
     "./ministry-hierarchy": "./src/lib/ministry-hierarchy.ts",
-    "./training/course-content": "./src/lib/training/course-content.ts"
+    "./training/course-content": "./src/lib/training/course-content.ts",
+    "./person-identity": "./src/lib/person-identity.ts",
+    "./account-link": "./src/lib/account-link.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1147.0",

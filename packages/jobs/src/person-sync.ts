@@ -1,4 +1,9 @@
 import { prisma } from "@mt/api/db"
+import {
+  normalizeIdentityEmail,
+  normalizeIdentityPhone,
+  uniqueIdentityMatch,
+} from "@mt/api/person-identity"
 
 export type SourcePersonInput = {
   remoteId: string
@@ -11,189 +16,93 @@ export type SourcePersonInput = {
   image: string | null
 }
 
-function normalizeEmail(email: string | null): string | null {
-  const normalized = email?.trim().toLowerCase()
-  return normalized || null
-}
+async function syncPerson(input: SourcePersonInput) {
+  return prisma.$transaction(async (tx) => {
+    // Serialize person creation + source linking across workers.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(724193821)::text`
+    const email = normalizeIdentityEmail(input.email)
+    const phone = normalizeIdentityPhone(input.phone)
+    const sourceKey = { provider: input.provider, remoteId: input.remoteId }
+    const existingSource = await tx.sourcePerson.findUnique({
+      where: { provider_remoteId: sourceKey },
+      select: { personId: true },
+    })
 
-function normalizePhone(phone: string | null): string | null {
-  const normalized = phone?.replace(/[^\d+]/g, "")
-  return normalized || null
-}
+    let personId = existingSource?.personId
+    if (!personId) {
+      // Never merge two IDs from the same provider. Only an opposite-provider
+      // source with corroborating identity evidence can be linked automatically.
+      const candidates = await tx.sourcePerson.findMany({
+        where: {
+          provider: input.provider === "ROCK" ? "PCO" : "ROCK",
+          isActive: true,
+          person: {
+            isActive: true,
+            sourcePeople: { none: { provider: input.provider } },
+          },
+        },
+        select: { personId: true, firstName: true, lastName: true, email: true, phone: true,
+          person: { select: { sourcePeople: { where: { isActive: true }, select: { provider: true } } } },
+        },
+      })
+      personId = uniqueIdentityMatch(input, candidates.filter((candidate) =>
+        candidate.person.sourcePeople.filter((source) => source.provider !== input.provider).length === 1
+      )) ?? undefined
+    }
 
-async function findUniquePersonByIdentity(input: SourcePersonInput) {
-  const email = normalizeEmail(input.email)
-  const phone = normalizePhone(input.phone)
-  if (!email && !phone) return null
+    const data = {
+      displayName: input.fullName,
+      fullName: input.fullName,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email,
+      phone,
+      image: input.image,
+      isActive: true,
+      archivedAt: null,
+    }
+    if (!personId) {
+      personId = (await tx.person.create({ data, select: { id: true } })).id
+    } else if (input.provider === "ROCK" || !await tx.sourcePerson.findFirst({ where: { personId, provider: "ROCK", isActive: true } })) {
+      await tx.person.update({ where: { id: personId }, data })
+    } else {
+      // Rock owns the directory display. PCO still reactivates a person when it
+      // is their only active source, without replacing Rock contact details.
+      await tx.person.update({ where: { id: personId }, data: { isActive: true, archivedAt: null } })
+    }
 
-  const people = await prisma.person.findMany({
-    where: {
-      OR: [
-        ...(email ? [{ email }] : []),
-        ...(phone ? [{ phone }] : []),
-      ],
-    },
-    select: { id: true },
-    take: 2,
+    const sourceData = {
+      personId,
+      email,
+      phone,
+      fullName: input.fullName,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      image: input.image,
+      isActive: true,
+    }
+    await tx.sourcePerson.upsert({
+      where: { provider_remoteId: sourceKey },
+      create: { ...sourceKey, ...sourceData },
+      update: sourceData,
+    })
+    return { id: personId }
   })
-
-  return people.length === 1 ? people[0]! : null
 }
 
 export async function upsertRockPerson(input: SourcePersonInput) {
-  const email = normalizeEmail(input.email)
-  const phone = normalizePhone(input.phone)
-  const existingSource = await prisma.sourcePerson.findUnique({
-    where: {
-      provider_remoteId: {
-        provider: input.provider,
-        remoteId: input.remoteId,
-      },
-    },
-    select: { personId: true },
-  })
-  const identityMatch = await findUniquePersonByIdentity(input)
-  const matchedPerson = existingSource
-    ? { id: existingSource.personId }
-    : identityMatch
-
-  const person = matchedPerson
-    ? await prisma.person.update({
-        where: { id: matchedPerson.id },
-        data: {
-          displayName: input.fullName,
-          fullName: input.fullName,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          email,
-          phone,
-          image: input.image,
-          isActive: true,
-          archivedAt: null,
-        },
-        select: { id: true },
-      })
-    : await prisma.person.create({
-        data: {
-          displayName: input.fullName,
-          fullName: input.fullName,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          email,
-          phone,
-          image: input.image,
-        },
-        select: { id: true },
-      })
-
-  await prisma.sourcePerson.upsert({
-    where: {
-      provider_remoteId: {
-        provider: input.provider,
-        remoteId: input.remoteId,
-      },
-    },
-    create: {
-      personId: person.id,
-      provider: input.provider,
-      remoteId: input.remoteId,
-      email,
-      phone,
-      fullName: input.fullName,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      image: input.image,
-      isActive: true,
-    },
-    update: {
-      personId: person.id,
-      email,
-      phone,
-      fullName: input.fullName,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      image: input.image,
-      isActive: true,
-    },
-  })
-
-  return person
+  return syncPerson({ ...input, provider: "ROCK" })
 }
 
 export async function upsertPcoSourcePerson(input: SourcePersonInput) {
-  const email = normalizeEmail(input.email)
-  const phone = normalizePhone(input.phone)
-  const existingSource = await prisma.sourcePerson.findUnique({
-    where: {
-      provider_remoteId: {
-        provider: input.provider,
-        remoteId: input.remoteId,
-      },
-    },
-    select: { personId: true },
-  })
-  const identityMatch = await findUniquePersonByIdentity(input)
-  const matchedPerson = existingSource
-    ? { id: existingSource.personId }
-    : identityMatch
-  if (!matchedPerson) return null
-
-  await prisma.sourcePerson.upsert({
-    where: {
-      provider_remoteId: {
-        provider: input.provider,
-        remoteId: input.remoteId,
-      },
-    },
-    create: {
-      personId: matchedPerson.id,
-      provider: input.provider,
-      remoteId: input.remoteId,
-      email,
-      phone,
-      fullName: input.fullName,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      image: input.image,
-      isActive: true,
-    },
-    update: {
-      personId: matchedPerson.id,
-      email,
-      phone,
-      fullName: input.fullName,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      image: input.image,
-      isActive: true,
-    },
-  })
-
-  return matchedPerson
+  return syncPerson({ ...input, provider: "PCO" })
 }
 
 export async function archivePeopleWithoutActiveSources() {
-  const people = await prisma.person.findMany({
-    select: {
-      id: true,
-      sourcePeople: {
-        select: { isActive: true },
-      },
-    },
-  })
-
-  const inactivePersonIds = people
-    .filter(
-      (person) =>
-        person.sourcePeople.length > 0 &&
-        person.sourcePeople.every((sourcePerson) => !sourcePerson.isActive)
-    )
-    .map((person) => person.id)
-
-  if (inactivePersonIds.length === 0) return
-
   await prisma.person.updateMany({
-    where: { id: { in: inactivePersonIds } },
+    where: {
+      sourcePeople: { some: {}, none: { isActive: true } },
+    },
     data: { isActive: false, archivedAt: new Date() },
   })
 }

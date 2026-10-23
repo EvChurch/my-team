@@ -624,5 +624,13 @@
     "questionBlockUntilCorrect": "Block until correct",
     "questionAllowContinue": "Allow continue after feedback",
     "questionBlockSlashMenuHint": "Ask one question with single or multiple answers."
+  },
+  "AccountLink": {
+    "title": "Connect your team profile",
+    "description": "We need to confirm which team profile belongs to you. Connect your own Planning Center account to continue.",
+    "connect": "Connect Planning Center",
+    "signOut": "Sign out and use another account",
+    "failed": "We couldn’t connect your profile. Check that you chose your church’s Planning Center account and try again.",
+    "unavailable": "Account connection is temporarily unavailable. Please try again later."
   }
 }
