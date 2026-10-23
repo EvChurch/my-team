@@ -7,6 +7,7 @@ import { prisma } from "@mt/api/db"
 import { fetchRockSchedulesSnapshot, fetchRockTeamsSnapshot } from "../rock.js"
 import {
   archivePeopleWithoutActiveSources,
+  backfillMembershipProvenance,
   upsertRockPerson,
 } from "../person-sync.js"
 
@@ -22,6 +23,7 @@ async function syncRockData(): Promise<void> {
 
   const { people, teams, positions, assignments, leaders, hierarchy } =
     await fetchRockTeamsSnapshot()
+  await backfillMembershipProvenance("ROCK", { leaders, assignments })
 
   const syncedPeople = new Set(people.map((p) => p.remoteId))
   const syncedTeams = teams.map((t) => t.where.remoteId_provider!.remoteId)

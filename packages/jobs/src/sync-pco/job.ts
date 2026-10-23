@@ -9,7 +9,7 @@ import {
   fetchSchedulesSnapshot,
   pcoScheduleHistoryCutoff,
 } from "../pco.js"
-import { archivePeopleWithoutActiveSources, findSourcePersonId, upsertPcoSourcePerson } from "../person-sync.js"
+import { backfillMembershipProvenance, archivePeopleWithoutActiveSources, findSourcePersonId, upsertPcoSourcePerson } from "../person-sync.js"
 
 export async function SyncPcoJob(): Promise<void> {
   await withSyncLock(async () => {
@@ -23,6 +23,7 @@ async function syncPcoData(): Promise<void> {
 
   const { people, serviceTypes, teams, leaders, positions, assignments } =
     await fetchTeamsSnapshot()
+  await backfillMembershipProvenance("PCO", { leaders, assignments })
 
   const syncedPeople = people.map((p) => p.remoteId)
   const syncedServiceTypes = serviceTypes.map(
@@ -66,7 +67,7 @@ async function syncPcoData(): Promise<void> {
   console.log("Updating Team Leaders")
 
   for (const leader of leaders) {
-    const personId = personIdsByRemoteId.get(leader.personRemoteId)
+    const personId = await findSourcePersonId("PCO", leader.personRemoteId, personIdsByRemoteId)
     if (!personId) continue
     try {
       await prisma.leader.upsert({
@@ -104,27 +105,15 @@ async function syncPcoData(): Promise<void> {
         },
       })
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025" &&
-        error.message.includes(
-          "An operation failed because it depends on one or more records that were required but not found."
-        )
-      ) {
-        console.error(
-          `Leader ${leader.remoteId} is missing a person or team`
-        )
-        continue
-      } else {
-        throw error
-      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === "P2002" || error.code === "P2025")) continue
+      throw error
     }
   }
 
   console.log("Updating Person Team Position Assignments")
 
   for (const assignment of assignments) {
-    const personId = personIdsByRemoteId.get(assignment.personRemoteId)
+    const personId = await findSourcePersonId("PCO", assignment.personRemoteId, personIdsByRemoteId)
     if (!personId) continue
     try {
       await prisma.assignment.upsert({

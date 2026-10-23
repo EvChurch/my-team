@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { reconcilePersonLinks } from "./person-reconciliation"
 import { readIdentityRepairPlan } from "./identity-repair-plan"
 import { prisma } from "@mt/api/db"
-import { findSourcePersonId, upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
+import { backfillMembershipProvenance, findSourcePersonId, upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
 
 const verifiedAccounts = vi.hoisted(() => new Map<string, string | null>())
 vi.mock("@mt/api/rock-login", () => ({ findRockLoginPerson: async (subject: string) => verifiedAccounts.get(subject) ?? null }))
@@ -152,7 +152,7 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     const schedule = await prisma.schedule.create({ data: { remoteId: "fixture-schedule", provider: "ROCK", personId: parent.id, personRemoteId: "test-child", teamId: team.id, serviceTypeName: "Fixture", status: "CONFIRMED", sortDate: new Date(), dates: "date", planRemoteId: "plan" } })
     expect((await reconcilePersonLinks(noLinks)).pendingReferences).toBe(1)
     expect(new Set((await prisma.sourcePerson.findMany()).map(s => s.personId)).size).toBe(1)
-    await prisma.assignment.update({ where: { id: assignment.id }, data: { personRemoteId: "test-child" } })
+    await backfillMembershipProvenance("ROCK", { assignments: [{ remoteId: assignment.remoteId, personRemoteId: "test-child" }], leaders: [] })
     expect((await reconcilePersonLinks(noLinks)).movedReferences).toBe(2)
     const child = await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "ROCK", remoteId: "test-child" } } })
     expect((await prisma.assignment.findUniqueOrThrow({ where: { id: assignment.id } })).personId).toBe(child.personId)

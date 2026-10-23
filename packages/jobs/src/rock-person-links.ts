@@ -76,7 +76,7 @@ export async function fetchPersonLinks(): Promise<PersonLinks> {
       last = row.id
       maps.push(row)
     }
-    if (rows.length < 500) break
+    if (rows.length === 0) break
   }
   const ids = [...new Set(maps.filter(m => m.translatorId === "RockRMS").map(m => m.actualId))]
   const aliases: PersonAlias[] = []

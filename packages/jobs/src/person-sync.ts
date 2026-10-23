@@ -95,3 +95,14 @@ export async function findSourcePersonId(provider: "PCO" | "ROCK", remoteId: str
   if (source) imported.set(remoteId, source.personId)
   return source?.personId ?? null
 }
+
+/** Save fresh upstream ownership even when a conflated canonical membership cannot be upserted yet. */
+export async function backfillMembershipProvenance(
+  provider: "PCO" | "ROCK",
+  snapshot: { leaders: Array<{ remoteId: string; personRemoteId: string }>; assignments: Array<{ remoteId: string; personRemoteId: string }> },
+) {
+  const leaders = JSON.stringify(snapshot.leaders.map(({ remoteId, personRemoteId }) => ({ remoteId, personRemoteId })))
+  const assignments = JSON.stringify(snapshot.assignments.map(({ remoteId, personRemoteId }) => ({ remoteId, personRemoteId })))
+  await prisma.$executeRaw`UPDATE "Leader" r SET "personRemoteId" = e->>'personRemoteId' FROM jsonb_array_elements(${leaders}::jsonb) e WHERE r.provider::text = ${provider} AND r.source = 'SYNCED' AND r."remoteId" = e->>'remoteId'`
+  await prisma.$executeRaw`UPDATE "Assignment" r SET "personRemoteId" = e->>'personRemoteId' FROM jsonb_array_elements(${assignments}::jsonb) e WHERE r.provider::text = ${provider} AND r.source = 'SYNCED' AND r."remoteId" = e->>'remoteId'`
+}

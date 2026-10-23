@@ -49,9 +49,9 @@ describe("plugin API snapshot validation", () => {
   })
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
   function server(rendered: unknown, aliasResponse: unknown = aliases) {
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       if (url.endsWith("/pcov2")) return Response.json({ account: "Planning Center" })
-      if (url.endsWith("/RenderTemplate")) return Response.json(rendered)
+      if (url.endsWith("/RenderTemplate")) return Response.json(String(init?.body).includes("Id > 0'") ? rendered : "[]")
       return Response.json(aliasResponse)
     }))
   }
@@ -66,6 +66,18 @@ describe("plugin API snapshot validation", () => {
     await expect(fetchPersonLinks()).rejects.toThrow("strictly ordered")
     server(JSON.stringify([map(1, "RockRMS", "90")]), [aliases[2]])
     await expect(fetchPersonLinks()).rejects.toThrow("Unexpected Rock person alias")
+  })
+  it("continues after short pages instead of mistaking a server cap for the end", async () => {
+    const rows = [map(1, "RockRMS", "90"), { ...map(1, "account", "123"), id: 2 }]
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/pcov2")) return Response.json({ account: "Planning Center" })
+      if (url.endsWith("/RenderTemplate")) {
+        const cursor = Number(String(init?.body).match(/Id > (\d+)/)?.[1])
+        return Response.json(JSON.stringify(rows.filter(row => row.id > cursor).slice(0, 1)))
+      }
+      return Response.json([aliases[0]])
+    }))
+    expect([...(await fetchPersonLinks()).pcoToRock]).toEqual([["123", "12"]])
   })
   it("rejects a changed PAT organization before reading mappings", async () => {
     vi.stubEnv("PCO_ORGANIZATION_ID", "other")
