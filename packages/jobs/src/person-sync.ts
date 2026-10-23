@@ -85,3 +85,13 @@ export async function archivePeopleWithoutActiveSources() {
     data: { isActive: false, archivedAt: new Date() },
   })
 }
+
+/** Historical schedules may belong to someone no longer in the current team snapshot. */
+export async function findSourcePersonId(provider: "PCO" | "ROCK", remoteId: string | undefined, imported: Map<string, string>) {
+  if (!remoteId) return null
+  const current = imported.get(remoteId)
+  if (current) return current
+  const source = await prisma.sourcePerson.findUnique({ where: { provider_remoteId: { provider, remoteId } }, select: { personId: true } })
+  if (source) imported.set(remoteId, source.personId)
+  return source?.personId ?? null
+}

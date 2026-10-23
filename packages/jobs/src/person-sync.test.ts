@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { reconcilePersonLinks } from "./person-reconciliation"
 import { readIdentityRepairPlan } from "./identity-repair-plan"
 import { prisma } from "@mt/api/db"
-import { upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
+import { findSourcePersonId, upsertPcoSourcePerson, upsertRockPerson, type SourcePersonInput } from "./person-sync"
 
 const verifiedAccounts = vi.hoisted(() => new Map<string, string | null>())
 vi.mock("@mt/api/rock-login", () => ({ findRockLoginPerson: async (subject: string) => verifiedAccounts.get(subject) ?? null }))
@@ -169,6 +169,15 @@ describe.skipIf(!enabled)("source person sync integration", () => {
     await reconcilePersonLinks(noLinks)
     expect((await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "ROCK", remoteId: "test-parent" } } })).personId).toBe(rock.id)
     expect((await prisma.sourcePerson.findUniqueOrThrow({ where: { provider_remoteId: { provider: "PCO", remoteId: "test-pco" } } })).personId).not.toBe(rock.id)
+  })
+
+  it("backfills historical schedules through exact source IDs without reactivating former members", async () => {
+    const original = await upsertPcoSourcePerson({ ...person, remoteId: "test-pco" })
+    await prisma.sourcePerson.updateMany({ data: { isActive: false } })
+    const imported = new Map<string, string>()
+    expect(await findSourcePersonId("PCO", "test-pco", imported)).toBe(original.id)
+    expect(await findSourcePersonId("ROCK", "test-pco", new Map())).toBeNull()
+    expect((await prisma.sourcePerson.findFirstOrThrow()).isActive).toBe(false)
   })
 
 })

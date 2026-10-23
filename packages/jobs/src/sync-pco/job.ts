@@ -9,7 +9,7 @@ import {
   fetchSchedulesSnapshot,
   pcoScheduleHistoryCutoff,
 } from "../pco.js"
-import { archivePeopleWithoutActiveSources, upsertPcoSourcePerson } from "../person-sync.js"
+import { archivePeopleWithoutActiveSources, findSourcePersonId, upsertPcoSourcePerson } from "../person-sync.js"
 
 export async function SyncPcoJob(): Promise<void> {
   await withSyncLock(async () => {
@@ -200,9 +200,7 @@ async function syncPcoData(): Promise<void> {
           }
         }
       ).person?.connect?.remoteId_provider?.remoteId
-      const personId = remotePersonId
-        ? personIdsByRemoteId.get(remotePersonId)
-        : null
+      const personId = await findSourcePersonId("PCO", remotePersonId, personIdsByRemoteId)
       if (!personId) continue
       const { person: _createPerson, ...createWithoutSourcePerson } =
         upsert.create
