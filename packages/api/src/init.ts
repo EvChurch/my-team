@@ -5,16 +5,7 @@ import { cache } from "react";
 import type { Session } from "next-auth";
 import { auth } from "@mt/auth";
 import { prisma } from "./db";
-
-function splitName(name: string): { firstName: string; lastName: string } {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { firstName: "My Team", lastName: "User" };
-  if (parts.length === 1) return { firstName: parts[0]!, lastName: "" };
-  return {
-    firstName: parts[0]!,
-    lastName: parts.slice(1).join(" "),
-  };
-}
+import { findRockLoginPerson, RockLoginUnavailable } from "./lib/rock-login";
 
 /**
  * Context available to all tRPC procedures.
@@ -29,24 +20,13 @@ export interface TRPCContext {
   personId: string | null;
   personIds: string[];
   accessToken: string | null;
+  identityError?: "unlinked" | "unavailable" | null;
   headers: Headers;
-}
-
-async function findCanonicalPersonByEmail(email: string | null) {
-  if (!email) return null;
-
-  const people = await prisma.person.findMany({
-    where: { email },
-    select: { id: true },
-    take: 2,
-  });
-
-  return people.length === 1 ? people[0]! : null;
 }
 
 /**
  * Creates the tRPC context for each request.
- * Looks up the Person record by PCO remoteId from session.
+ * Every request requires the live Auth0-to-Rock association and an active synced Rock source.
  */
 export const createTRPCContext = cache(
   async (opts?: { headers?: Headers }): Promise<TRPCContext> => {
@@ -54,41 +34,46 @@ export const createTRPCContext = cache(
 
     let personId: string | null = null;
 
+    let identityError: TRPCContext["identityError"] = null;
     if (session?.user?.auth0Id) {
-      const authAccount = await prisma.authAccount.findUnique({
-        where: {
-          provider_providerAccountId: {
-            provider: "auth0",
-            providerAccountId: session.user.auth0Id,
-          },
-        },
-        select: {
-          personId: true,
-        },
-      });
-
-      if (authAccount) {
-        personId = authAccount.personId;
-      } else {
-        const email = session.user.email ?? null;
-        const person = await findCanonicalPersonByEmail(email);
-
-        if (person) {
-          await prisma.authAccount.create({
-            data: {
-              personId: person.id,
-              provider: "auth0",
-              providerAccountId: session.user.auth0Id,
-              email,
-            },
+      const auth0Id = session.user.auth0Id;
+      try {
+        const remoteId = await findRockLoginPerson(auth0Id);
+        if (remoteId) {
+          personId = await prisma.$transaction(async (tx) => {
+            // Share the sync lock so source ownership cannot change mid-verification.
+            await tx.$queryRaw`SELECT pg_advisory_xact_lock(724193821)::text`;
+            const source = await tx.sourcePerson.findUnique({
+              where: { provider_remoteId: { provider: "ROCK", remoteId } },
+              include: { person: { include: { sourcePeople: {
+                where: { provider: "ROCK", isActive: true }, select: { remoteId: true },
+              } } } },
+            });
+            if (!source?.isActive || !source.person.isActive || source.person.sourcePeople.length !== 1) return null;
+            // PCO sources are optional and do not establish login ownership.
+            const existing = await tx.authAccount.findUnique({
+              where: { provider_providerAccountId: { provider: "auth0", providerAccountId: auth0Id } },
+              select: { personId: true },
+            });
+            if (existing) return existing.personId === source.personId ? source.personId : null;
+            const account = await tx.authAccount.upsert({
+              where: { provider_providerAccountId: { provider: "auth0", providerAccountId: auth0Id } },
+              update: {},
+              create: { personId: source.personId, provider: "auth0", providerAccountId: auth0Id, email: session.user.email ?? null },
+            });
+            return account.personId === source.personId ? source.personId : null;
           });
-          personId = person.id;
         }
+        if (!personId) identityError = "unlinked";
+      } catch (error) {
+        if (!(error instanceof RockLoginUnavailable)) throw error;
+        identityError = "unavailable";
       }
     }
 
     return {
       session,
+      identityError,
       profileId: personId,
       personId,
       personIds: personId ? [personId] : [],

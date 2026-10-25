@@ -1,3 +1,6 @@
+import { withSyncLock } from "../sync-lock.js"
+import { fetchPersonLinks } from "../rock-person-links.js"
+import { reconcilePersonLinks } from "../person-reconciliation.js"
 import { Prisma } from "@mt/api/prisma"
 import { prisma } from "@mt/api/db"
 
@@ -6,13 +9,21 @@ import {
   fetchSchedulesSnapshot,
   pcoScheduleHistoryCutoff,
 } from "../pco.js"
-import { archivePeopleWithoutActiveSources, upsertPcoSourcePerson } from "../person-sync.js"
+import { backfillMembershipProvenance, archivePeopleWithoutActiveSources, findSourcePersonId, upsertPcoSourcePerson } from "../person-sync.js"
 
 export async function SyncPcoJob(): Promise<void> {
+  await withSyncLock(async () => {
+    await syncPcoData()
+    console.log("Identity reconciliation", await reconcilePersonLinks(await fetchPersonLinks()))
+  })
+}
+
+async function syncPcoData(): Promise<void> {
   console.log("Fetching PCO data...")
 
   const { people, serviceTypes, teams, leaders, positions, assignments } =
     await fetchTeamsSnapshot()
+  await backfillMembershipProvenance("PCO", { leaders, assignments })
 
   const syncedPeople = people.map((p) => p.remoteId)
   const syncedServiceTypes = serviceTypes.map(
@@ -56,7 +67,7 @@ export async function SyncPcoJob(): Promise<void> {
   console.log("Updating Team Leaders")
 
   for (const leader of leaders) {
-    const personId = personIdsByRemoteId.get(leader.personRemoteId)
+    const personId = await findSourcePersonId("PCO", leader.personRemoteId, personIdsByRemoteId)
     if (!personId) continue
     try {
       await prisma.leader.upsert({
@@ -70,6 +81,7 @@ export async function SyncPcoJob(): Promise<void> {
           remoteId: leader.remoteId,
           provider: "PCO",
           person: { connect: { id: personId } },
+          personRemoteId: leader.personRemoteId,
           team: {
             connect: {
               remoteId_provider: {
@@ -81,6 +93,7 @@ export async function SyncPcoJob(): Promise<void> {
         },
         update: {
           person: { connect: { id: personId } },
+          personRemoteId: leader.personRemoteId,
           team: {
             connect: {
               remoteId_provider: {
@@ -92,27 +105,15 @@ export async function SyncPcoJob(): Promise<void> {
         },
       })
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025" &&
-        error.message.includes(
-          "An operation failed because it depends on one or more records that were required but not found."
-        )
-      ) {
-        console.error(
-          `Leader ${leader.remoteId} is missing a person or team`
-        )
-        continue
-      } else {
-        throw error
-      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === "P2002" || error.code === "P2025")) continue
+      throw error
     }
   }
 
   console.log("Updating Person Team Position Assignments")
 
   for (const assignment of assignments) {
-    const personId = personIdsByRemoteId.get(assignment.personRemoteId)
+    const personId = await findSourcePersonId("PCO", assignment.personRemoteId, personIdsByRemoteId)
     if (!personId) continue
     try {
       await prisma.assignment.upsert({
@@ -126,6 +127,7 @@ export async function SyncPcoJob(): Promise<void> {
           remoteId: assignment.remoteId,
           provider: "PCO",
           person: { connect: { id: personId } },
+          personRemoteId: assignment.personRemoteId,
           position: {
             connect: {
               remoteId_provider: {
@@ -137,6 +139,7 @@ export async function SyncPcoJob(): Promise<void> {
         },
         update: {
           person: { connect: { id: personId } },
+          personRemoteId: assignment.personRemoteId,
           position: {
             connect: {
               remoteId_provider: {
@@ -186,9 +189,7 @@ export async function SyncPcoJob(): Promise<void> {
           }
         }
       ).person?.connect?.remoteId_provider?.remoteId
-      const personId = remotePersonId
-        ? personIdsByRemoteId.get(remotePersonId)
-        : null
+      const personId = await findSourcePersonId("PCO", remotePersonId, personIdsByRemoteId)
       if (!personId) continue
       const { person: _createPerson, ...createWithoutSourcePerson } =
         upsert.create
@@ -199,10 +200,12 @@ export async function SyncPcoJob(): Promise<void> {
         create: {
           ...createWithoutSourcePerson,
           person: { connect: { id: personId } },
+          personRemoteId: remotePersonId,
         },
         update: {
           ...updateWithoutSourcePerson,
           person: { connect: { id: personId } },
+          personRemoteId: remotePersonId,
         },
       }
       let scheduleRecord: { id: string }

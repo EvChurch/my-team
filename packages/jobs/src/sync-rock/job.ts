@@ -1,17 +1,29 @@
+import { withSyncLock } from "../sync-lock.js"
+import { fetchPersonLinks } from "../rock-person-links.js"
+import { reconcilePersonLinks } from "../person-reconciliation.js"
 import { Prisma } from "@mt/api/prisma"
 import { prisma } from "@mt/api/db"
 
 import { fetchRockSchedulesSnapshot, fetchRockTeamsSnapshot } from "../rock.js"
 import {
   archivePeopleWithoutActiveSources,
+  backfillMembershipProvenance,
   upsertRockPerson,
 } from "../person-sync.js"
 
 export async function SyncRockJob(): Promise<void> {
+  await withSyncLock(async () => {
+    await syncRockData()
+    console.log("Identity reconciliation", await reconcilePersonLinks(await fetchPersonLinks()))
+  })
+}
+
+async function syncRockData(): Promise<void> {
   console.log("Fetching Rock data...")
 
   const { people, teams, positions, assignments, leaders, hierarchy } =
     await fetchRockTeamsSnapshot()
+  await backfillMembershipProvenance("ROCK", { leaders, assignments })
 
   const syncedPeople = new Set(people.map((p) => p.remoteId))
   const syncedTeams = teams.map((t) => t.where.remoteId_provider!.remoteId)
@@ -54,6 +66,7 @@ export async function SyncRockJob(): Promise<void> {
           remoteId: leader.remoteId,
           provider: "ROCK",
           person: { connect: { id: personId } },
+          personRemoteId: leader.personRemoteId,
           team: {
             connect: {
               remoteId_provider: {
@@ -65,6 +78,7 @@ export async function SyncRockJob(): Promise<void> {
         },
         update: {
           person: { connect: { id: personId } },
+          personRemoteId: leader.personRemoteId,
           team: {
             connect: {
               remoteId_provider: {
@@ -102,6 +116,7 @@ export async function SyncRockJob(): Promise<void> {
           remoteId: assignment.remoteId,
           provider: "ROCK",
           person: { connect: { id: personId } },
+          personRemoteId: assignment.personRemoteId,
           position: {
             connect: {
               remoteId_provider: {
@@ -113,6 +128,7 @@ export async function SyncRockJob(): Promise<void> {
         },
         update: {
           person: { connect: { id: personId } },
+          personRemoteId: assignment.personRemoteId,
           position: {
             connect: {
               remoteId_provider: {
@@ -286,10 +302,12 @@ export async function SyncRockJob(): Promise<void> {
         create: {
           ...createWithoutSourcePerson,
           person: { connect: { id: personId } },
+          personRemoteId: remotePersonId,
         },
         update: {
           ...updateWithoutSourcePerson,
           person: { connect: { id: personId } },
+          personRemoteId: remotePersonId,
         },
       }
       let scheduleRecord: { id: string }

@@ -624,5 +624,12 @@
     "questionBlockUntilCorrect": "Block until correct",
     "questionAllowContinue": "Allow continue after feedback",
     "questionBlockSlashMenuHint": "Ask one question with single or multiple answers."
+  },
+  "AccountLink": {
+    "title": "Unable to access My Team",
+    "description": "This sign-in must be connected to an active Rock person record to use My Team. Try again or sign out and use another account.",
+    "retry": "Try again",
+    "signOut": "Sign out and use another account",
+    "unavailable": "We couldn’t check your Rock account right now. Please try again shortly."
   }
 }

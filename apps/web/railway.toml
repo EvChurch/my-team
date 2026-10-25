@@ -1,19 +1,25 @@
 [build]
-builder = "railpack"
-buildCommand = "pnpm turbo build --filter=@mt/web..."
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 watchPatterns = [
   "/apps/web/**",
   "/packages/api/**",
   "/packages/auth/**",
   "/packages/jobs/**",
   "/package.json",
+  "/.nvmrc",
+  "/railpack.json",
+  "/Dockerfile",
+  "/.dockerignore",
+  "/pnpm-workspace.yaml",
+  "/scripts/update-security-ca.sh",
   "/pnpm-lock.yaml",
   "/turbo.json",
 ]
 
 [deploy]
 preDeployCommand = "pnpm --filter @mt/api exec prisma migrate deploy"
-startCommand = "mkdir -p apps/web/.next/standalone/apps/web/public apps/web/.next/standalone/apps/web/.next/static && if [ -d apps/web/public ]; then cp -r apps/web/public/. apps/web/.next/standalone/apps/web/public; fi && cp -r apps/web/.next/static/. apps/web/.next/standalone/apps/web/.next/static && node apps/web/.next/standalone/apps/web/server.js"
+startCommand = "sh apps/web/scripts/start-production.sh"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"

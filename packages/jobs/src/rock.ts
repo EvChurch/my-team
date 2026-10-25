@@ -331,7 +331,7 @@ function configuredGroupTypeIds(): number[] {
 
 async function fetchPcoMarkerValues(): Promise<Map<number, string>> {
   const attributes = await fetchRockPages(
-    "/api/Attributes?$filter=Key eq 'PCOMarker'&$select=Id,Key,Name",
+    "/api/Attributes?$filter=Key eq 'PCOMarker' and EntityType/Name eq 'Rock.Model.Group'&$select=Id,Key,Name",
     rockAttributesPayloadSchema
   )
   const pcoMarkerAttributeIds = attributes.map((attribute) => attribute.Id)
