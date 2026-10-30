@@ -18,14 +18,14 @@ importers:
   apps/web:
     dependencies:
       '@blocknote/core':
-        specifier: 0.55.0
-        version: 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+        specifier: 0.57.0
+        version: 0.57.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@blocknote/react':
-        specifier: 0.55.0
-        version: 0.55.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+        specifier: 0.57.0
+        version: 0.57.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@blocknote/shadcn':
-        specifier: 0.55.0
-        version: 0.55.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.2.2)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+        specifier: 0.57.0
+        version: 0.57.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.2.2)(typescript@5.9.3)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@dnd-kit/core':
         specifier: 6.3.1
         version: 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -79,7 +79,7 @@ importers:
         version: 16.3.8(@babel/core@7.29.7)(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: beta
-        version: 5.0.0-beta.32(next@16.3.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.32(next@16.3.8(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       next-intl:
         specifier: 4.8.3
         version: 4.8.3(@swc/helpers@0.5.23)(next@16.3.8(@babel/core@7.29.7)(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -89,6 +89,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      yjs:
+        specifier: 13.6.33
+        version: 13.6.33
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -205,7 +208,7 @@ importers:
         version: 16.3.8(@babel/core@7.29.7)(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: beta
-        version: 5.0.0-beta.32(next@16.3.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.32(next@16.3.8(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       prisma:
         specifier: ^7.5
         version: 7.5.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -226,7 +229,7 @@ importers:
         version: 0.41.3
       next-auth:
         specifier: beta
-        version: 5.0.0-beta.32(next@16.3.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.32(next@16.3.8(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@mt/typescript-config':
         specifier: workspace:*
@@ -538,15 +541,15 @@ packages:
       '@types/react':
         optional: true
 
-  '@blocknote/core@0.55.0':
-    resolution: {integrity: sha512-QRRnOuVDrt0pPwaCXQ/dc4gxQ3KEGkBC8Hh4hyl4lxOU+5TMLNKKX9gZgeGkq7WKVK2EZbnPea6pcx25aS5SGA==}
+  '@blocknote/core@0.57.0':
+    resolution: {integrity: sha512-zoNZwhhP/eL8T3aSZ4+lKJ/2Xs3aJYrF21AC3BiEgvb8hKX4VDAXq7iOMWTvgIcrDh05fpWfX7ZRqbXVc+3SKg==}
     peerDependencies:
-      '@y/prosemirror': ^2.0.0-6
+      '@y/prosemirror': ^2.0.0-15
       '@y/protocols': ^1.0.6-rc.1
-      '@y/y': ^14.0.0-rc.23
+      '@y/y': ^14.0.0-rc.26
       y-prosemirror: ^1.3.7
       y-protocols: ^1.0.6
-      yjs: ^13.6.27
+      yjs: ^13.6.33
     peerDependenciesMeta:
       '@y/prosemirror':
         optional: true
@@ -561,14 +564,14 @@ packages:
       yjs:
         optional: true
 
-  '@blocknote/react@0.55.0':
-    resolution: {integrity: sha512-t+4N8+3xHhlnesxpWhF3FZnoHcnwhO+VgHiz6WEx7kTOTgk2YH84EOD7FsPh/hCm3I9MH9cHuiMfo6W6PHj/9w==}
+  '@blocknote/react@0.57.0':
+    resolution: {integrity: sha512-YW5voLS39cwuD4M5sk3Mf0rERAorssLVeqHUM3XAi5PbKAmMPQOS2l3/8nvxhgzvd1XYTJqq8mk5IY48x87FTg==}
     peerDependencies:
       react: ^18.0 || ^19.0 || >= 19.0.0-rc
       react-dom: ^18.0 || ^19.0 || >= 19.0.0-rc
 
-  '@blocknote/shadcn@0.55.0':
-    resolution: {integrity: sha512-r00Rijcn0Gb9btkjEf1ojthQuJ5hxsHMRo/ljrk3xIlC7hlskEyR9/50E1Su9CIYTf61nzebTtHUZiXYyNx59A==}
+  '@blocknote/shadcn@0.57.0':
+    resolution: {integrity: sha512-+crQURdk5Vv3jvk8IXcwOIS2aAEQrYOm6ICezi4gGC4JXV0xQEv7KJPHDZ9B7U6cU7FQ0j8i2bl9K1vq//WarQ==}
     peerDependencies:
       react: ^18.0 || ^19.0 || >= 19.0.0-rc
       react-dom: ^18.0 || ^19.0 || >= 19.0.0-rc
@@ -640,9 +643,6 @@ packages:
 
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
-
-  '@emoji-mart/data@1.2.1':
-    resolution: {integrity: sha512-no2pQMWiBy6gpBEiqGeU77/bFejDqUTRY7KX+0+iur13op3bqUsXdnwoZs6Xb1zbv0gAj5VvS1PWoUUckSr5Dw==}
 
   '@esbuild/aix-ppc64@0.27.4':
     resolution: {integrity: sha512-cQPwL2mp2nSmHHJlCyoXgHGhbEPMrEEU5xhkcy3Hs/O7nGZqEpZ2sUtLaL9MORLtDfRvVl2/3PAuEkYZH0Ty8Q==}
@@ -1008,23 +1008,11 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@floating-ui/core@1.7.5':
-    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
-
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
 
-  '@floating-ui/dom@1.7.6':
-    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
-
   '@floating-ui/dom@1.8.0':
     resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
-
-  '@floating-ui/react-dom@2.1.8':
-    resolution: {integrity: sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
 
   '@floating-ui/react-dom@2.1.9':
     resolution: {integrity: sha512-JDjEFGCpImxDCA7JJKviA0M9+RtmJdj0m/NVU5IMgBK+AmZouAQQ7/+2GLH0GXXY0YMw9oXPB8hKdbPYg5QLYg==}
@@ -1037,9 +1025,6 @@ packages:
     peerDependencies:
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
-
-  '@floating-ui/utils@0.2.11':
-    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
@@ -3050,9 +3035,6 @@ packages:
   electron-to-chromium@1.5.436:
     resolution: {integrity: sha512-iG79/xCF3iThADicbgbES2+liFYmTvelo7jWcEfg6lQ+Adrh7zShrXSg2ZdEDLbKjJ298kGAKMnnzVWobp0L+g==}
 
-  emoji-mart@5.6.0:
-    resolution: {integrity: sha512-eJp3QRe79pjwa+duv+n7+5YsNhRcMl812EcFVwrnRvYKoNPoQb5qxU8DG6Bgwji0akHdp6D4Ln6tYLG58MFSow==}
-
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
 
@@ -3375,6 +3357,15 @@ packages:
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
+
+  frimousse@0.4.0:
+    resolution: {integrity: sha512-wA/1Xt9UTk51wYNpy+EvHKPUA4jdm4NuEFzSNNZxqT0Nxrj4RFwYByjRMuaq4qSLOco/ikDCpLKesB8W1w2q+Q==}
+    peerDependencies:
+      react: ^18 || ^19
+      typescript: '>=5.1.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   fs-extra@8.1.0:
     resolution: {integrity: sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==}
@@ -3798,8 +3789,8 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  lib0@1.0.0-rc.22:
-    resolution: {integrity: sha512-KNefJloRQIsWncTF2tIcRqQXSQ7bDRYHwVSUhf1lY2P65Rej4WWFnen6L8L+odJQIo1ZNJGVVjK2WzqB9a+B/g==}
+  lib0@1.0.0-rc.36:
+    resolution: {integrity: sha512-7t/I+PCQqakal22rhXq5giOUtDP/RfecQtdeKvzCtnAvPkxSLAE+/Zvzi/kJDopg+hBAYKo46qmxmlkhX0tYlQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -5173,8 +5164,8 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
-  yjs@13.6.31:
-    resolution: {integrity: sha512-Eq+5BRfbeGyqGVrTJL3bEcr8gKkxPuyuoHmAwpk52fDb8kOVMrfVSTRPd6yiGgX5Fskb96qCRjzjbRjrL4YEnw==}
+  yjs@13.6.33:
+    resolution: {integrity: sha512-q/UYvr1gOk4XII+Cu1CW2dINjYqJJFifTzogEaIARznrvX7uOlHsdTEXcnOBMuIsrCGEEKdNxi74kyMLZlKVfw==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   ylru@1.4.0:
@@ -5611,9 +5602,8 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@blocknote/core@0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
+  '@blocknote/core@0.57.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
     dependencies:
-      '@emoji-mart/data': 1.2.1
       '@handlewithcare/prosemirror-inputrules': 0.1.4(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)
       '@shikijs/types': 4.5.0
       '@tiptap/core': 3.31.4(@tiptap/pm@3.31.4)
@@ -5625,9 +5615,8 @@ snapshots:
       '@tiptap/extension-underline': 3.31.4(@tiptap/core@3.31.4(@tiptap/pm@3.31.4))
       '@tiptap/extensions': 3.31.4(@tiptap/core@3.31.4(@tiptap/pm@3.31.4))(@tiptap/pm@3.31.4)
       '@tiptap/pm': 3.31.4
-      emoji-mart: 5.6.0
       fast-deep-equal: 3.1.3
-      lib0: 1.0.0-rc.22
+      lib0: 1.0.0-rc.36
       prosemirror-highlight: 0.15.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.2)(prosemirror-view@1.42.6)
       prosemirror-model: 1.25.12
       prosemirror-state: 1.4.4
@@ -5635,9 +5624,9 @@ snapshots:
       prosemirror-transform: 1.12.2
       prosemirror-view: 1.42.6
     optionalDependencies:
-      y-prosemirror: 1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
-      y-protocols: 1.0.7(yjs@13.6.31)
-      yjs: 13.6.31
+      y-prosemirror: 1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+      y-protocols: 1.0.7(yjs@13.6.33)
+      yjs: 13.6.33
     transitivePeerDependencies:
       - '@lezer/common'
       - '@lezer/highlight'
@@ -5647,16 +5636,15 @@ snapshots:
       - refractor
       - sugar-high
 
-  '@blocknote/react@0.55.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
+  '@blocknote/react@0.57.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
     dependencies:
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
-      '@emoji-mart/data': 1.2.1
+      '@blocknote/core': 0.57.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@floating-ui/react': 0.27.19(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tiptap/core': 3.31.4(@tiptap/pm@3.31.4)
       '@tiptap/pm': 3.31.4
       '@tiptap/react': 3.31.4(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.4(@tiptap/pm@3.31.4))(@tiptap/pm@3.31.4)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      emoji-mart: 5.6.0
       fast-deep-equal: 3.1.3
+      frimousse: 0.4.0(react@19.2.4)(typescript@5.9.3)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       use-sync-external-store: 1.6.0(react@19.2.4)
@@ -5676,15 +5664,16 @@ snapshots:
       - lowlight
       - refractor
       - sugar-high
+      - typescript
       - y-prosemirror
       - y-protocols
       - yjs
 
-  '@blocknote/shadcn@0.55.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.2.2)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
+  '@blocknote/shadcn@0.57.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.2.2)(typescript@5.9.3)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
     dependencies:
       '@base-ui/react': 1.8.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@blocknote/core': 0.55.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
-      '@blocknote/react': 0.55.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+      '@blocknote/core': 0.57.0(@types/hast@3.0.5)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+      '@blocknote/react': 0.57.0(@floating-ui/dom@1.8.0)(@types/hast@3.0.5)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)(y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       lucide-react: 0.525.0(react@19.2.4)
@@ -5708,6 +5697,7 @@ snapshots:
       - lowlight
       - refractor
       - sugar-high
+      - typescript
       - y-prosemirror
       - y-protocols
       - yjs
@@ -5790,8 +5780,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
-
-  '@emoji-mart/data@1.2.1': {}
 
   '@esbuild/aix-ppc64@0.27.4':
     optional: true
@@ -6021,29 +6009,14 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@floating-ui/core@1.7.5':
-    dependencies:
-      '@floating-ui/utils': 0.2.11
-
   '@floating-ui/core@1.8.0':
     dependencies:
       '@floating-ui/utils': 0.2.12
-
-  '@floating-ui/dom@1.7.6':
-    dependencies:
-      '@floating-ui/core': 1.7.5
-      '@floating-ui/utils': 0.2.11
 
   '@floating-ui/dom@1.8.0':
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/utils': 0.2.12
-
-  '@floating-ui/react-dom@2.1.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@floating-ui/dom': 1.7.6
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
 
   '@floating-ui/react-dom@2.1.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -6053,13 +6026,11 @@ snapshots:
 
   '@floating-ui/react@0.27.19(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@floating-ui/utils': 0.2.11
+      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@floating-ui/utils': 0.2.12
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       tabbable: 6.5.0
-
-  '@floating-ui/utils@0.2.11': {}
 
   '@floating-ui/utils@0.2.12': {}
 
@@ -7841,8 +7812,6 @@ snapshots:
 
   electron-to-chromium@1.5.436: {}
 
-  emoji-mart@5.6.0: {}
-
   emoji-regex@9.2.2: {}
 
   empathic@2.0.0: {}
@@ -8501,6 +8470,12 @@ snapshots:
 
   fresh@0.5.2: {}
 
+  frimousse@0.4.0(react@19.2.4)(typescript@5.9.3):
+    dependencies:
+      react: 19.2.4
+    optionalDependencies:
+      typescript: 5.9.3
+
   fs-extra@8.1.0:
     dependencies:
       graceful-fs: 4.2.11
@@ -8822,8 +8797,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic.js@0.2.5:
-    optional: true
+  isomorphic.js@0.2.5: {}
 
   iterator.prototype@1.1.5:
     dependencies:
@@ -8945,9 +8919,8 @@ snapshots:
   lib0@0.2.119:
     dependencies:
       isomorphic.js: 0.2.5
-    optional: true
 
-  lib0@1.0.0-rc.22: {}
+  lib0@1.0.0-rc.36: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -9131,7 +9104,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  next-auth@5.0.0-beta.32(next@16.3.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
+  next-auth@5.0.0-beta.32(next@16.3.8(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@auth/core': 0.41.3
       next: 16.3.8(@babel/core@7.29.7)(@types/node@20.19.37)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -10413,28 +10386,27 @@ snapshots:
 
   xtend@4.0.2: {}
 
-  y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31):
+  y-prosemirror@1.3.7(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33):
     dependencies:
       lib0: 0.2.119
       prosemirror-model: 1.25.12
       prosemirror-state: 1.4.4
       prosemirror-view: 1.42.6
-      y-protocols: 1.0.7(yjs@13.6.31)
-      yjs: 13.6.31
+      y-protocols: 1.0.7(yjs@13.6.33)
+      yjs: 13.6.33
     optional: true
 
-  y-protocols@1.0.7(yjs@13.6.31):
+  y-protocols@1.0.7(yjs@13.6.33):
     dependencies:
       lib0: 0.2.119
-      yjs: 13.6.31
+      yjs: 13.6.33
     optional: true
 
   yallist@3.1.1: {}
 
-  yjs@13.6.31:
+  yjs@13.6.33:
     dependencies:
       lib0: 0.2.119
-    optional: true
 
   ylru@1.4.0: {}
 
