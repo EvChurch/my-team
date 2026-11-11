@@ -14,7 +14,7 @@
     "@mt/api": "workspace:*",
     "pg": "^8.23.1",
     "pg-boss": "^10.4.2",
-    "zod": "^3"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@mt/typescript-config": "workspace:*",
