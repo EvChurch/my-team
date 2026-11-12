@@ -369,7 +369,7 @@ export const trainingRouter = createTRPCRouter({
         moduleId: z.string(),
         quizAnswerId: z.string().optional(),
         courseQuestionAnswers: z
-          .record(z.union([z.string(), z.array(z.string())]))
+          .record(z.string(), z.union([z.string(), z.array(z.string())]))
           .optional(),
       }),
     )
