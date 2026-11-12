@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-assert.equal(process.version, "v22.23.4");
+assert.equal(process.version, "v22.23.5");
 assert.equal(process.env.SSL_CERT_DIR, "/usr/local/share/security-ca/certs");
 const badHosts = [
   "dv-g3b-emudhra.we-have-a-problem.com",

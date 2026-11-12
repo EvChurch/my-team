@@ -3,7 +3,7 @@
 The serving Node and OS certificate stores were patched previously. The managed
 Railpack bootstrap still uses an affected certificate store before application
 install hooks can run. Build both existing services from a digest-pinned official
-Node 22.23.4 image instead. Filter the inherited CA selection before the first apt
+Node 22.23.5 image instead. Filter the inherited CA selection before the first apt
 network request, refresh it, and keep all OpenSSL clients on the filtered hashed
 directory before installing pnpm or dependencies.
 
