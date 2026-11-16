@@ -13,7 +13,7 @@
     "@mt/api": "workspace:*",
     "@mt/jobs": "workspace:*",
     "@t3-oss/env-core": "0.13.11",
-    "zod": "4.3.6"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@mt/typescript-config": "workspace:*",
